@@ -13,7 +13,27 @@ pub struct ApplicationError {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum ApplicationErrorCode {
+    SourceNotFound,
+    SourceNotFile,
+    SourceUnreadable,
+    InvalidPdf,
+    PageOutOfBounds,
+    InvalidRequest,
+    PdfRuntimeUnavailable,
+    OutputNotWritable,
+    OutputAlreadyExists,
+    RenderingFailed,
+    EncodingFailed,
     Internal,
+}
+
+impl ApplicationError {
+    pub(crate) fn new(code: ApplicationErrorCode, message: &'static str) -> Self {
+        Self {
+            code,
+            message: message.to_owned(),
+        }
+    }
 }
 
 impl Display for ApplicationError {

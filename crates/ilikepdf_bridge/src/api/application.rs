@@ -15,12 +15,54 @@ pub struct ApplicationError {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ApplicationErrorCode {
+    SourceNotFound,
+    SourceNotFile,
+    SourceUnreadable,
+    InvalidPdf,
+    PageOutOfBounds,
+    InvalidRequest,
+    PdfRuntimeUnavailable,
+    OutputNotWritable,
+    OutputAlreadyExists,
+    RenderingFailed,
+    EncodingFailed,
     Internal,
 }
 
 impl From<ilikepdf_core::ApplicationError> for ApplicationError {
     fn from(error: ilikepdf_core::ApplicationError) -> Self {
         let code = match error.code {
+            ilikepdf_core::ApplicationErrorCode::SourceNotFound => {
+                ApplicationErrorCode::SourceNotFound
+            }
+            ilikepdf_core::ApplicationErrorCode::SourceNotFile => {
+                ApplicationErrorCode::SourceNotFile
+            }
+            ilikepdf_core::ApplicationErrorCode::SourceUnreadable => {
+                ApplicationErrorCode::SourceUnreadable
+            }
+            ilikepdf_core::ApplicationErrorCode::InvalidPdf => ApplicationErrorCode::InvalidPdf,
+            ilikepdf_core::ApplicationErrorCode::PageOutOfBounds => {
+                ApplicationErrorCode::PageOutOfBounds
+            }
+            ilikepdf_core::ApplicationErrorCode::InvalidRequest => {
+                ApplicationErrorCode::InvalidRequest
+            }
+            ilikepdf_core::ApplicationErrorCode::PdfRuntimeUnavailable => {
+                ApplicationErrorCode::PdfRuntimeUnavailable
+            }
+            ilikepdf_core::ApplicationErrorCode::OutputNotWritable => {
+                ApplicationErrorCode::OutputNotWritable
+            }
+            ilikepdf_core::ApplicationErrorCode::OutputAlreadyExists => {
+                ApplicationErrorCode::OutputAlreadyExists
+            }
+            ilikepdf_core::ApplicationErrorCode::RenderingFailed => {
+                ApplicationErrorCode::RenderingFailed
+            }
+            ilikepdf_core::ApplicationErrorCode::EncodingFailed => {
+                ApplicationErrorCode::EncodingFailed
+            }
             ilikepdf_core::ApplicationErrorCode::Internal => ApplicationErrorCode::Internal,
             _ => ApplicationErrorCode::Internal,
         };

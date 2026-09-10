@@ -1,0 +1,104 @@
+%PDF-1.3
+%“Œ‹ž ReportLab Generated PDF document (opensource)
+1 0 obj
+<<
+/F1 2 0 R
+>>
+endobj
+2 0 obj
+<<
+/BaseFont /Helvetica /Encoding /WinAnsiEncoding /Name /F1 /Subtype /Type1 /Type /Font
+>>
+endobj
+3 0 obj
+<<
+/Contents 8 0 R /MediaBox [ 0 0 300 200 ] /Parent 7 0 R /Resources <<
+/Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
+>> /Rotate 0 /Trans <<
+
+>> 
+  /Type /Page
+>>
+endobj
+4 0 obj
+<<
+/Contents 9 0 R /MediaBox [ 0 0 200 300 ] /Parent 7 0 R /Resources <<
+/Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
+>> /Rotate 0 /Trans <<
+
+>> 
+  /Type /Page
+>>
+endobj
+5 0 obj
+<<
+/PageMode /UseNone /Pages 7 0 R /Type /Catalog
+>>
+endobj
+6 0 obj
+<<
+/Author (ilikepdf contributors) /CreationDate (D:20000101000000+00'00') /Creator (anonymous) /Keywords () /ModDate (D:20000101000000+00'00') /Producer (ReportLab PDF Library - \(opensource\)) 
+  /Subject (unspecified) /Title (ilikepdf deterministic rendering fixture) /Trapped /False
+>>
+endobj
+7 0 obj
+<<
+/Count 2 /Kids [ 3 0 R 4 0 R ] /Type /Pages
+>>
+endobj
+8 0 obj
+<<
+/Length 151
+>>
+stream
+1 0 0 1 0 0 cm  BT /F1 12 Tf 14.4 TL ET
+BT /F1 18 Tf 21.6 TL ET
+BT 1 0 0 1 30 145 Tm (ilikepdf page one) Tj T* ET
+.7 .14 .09 rg
+n 30 45 240 70 re f*
+ 
+endstream
+endobj
+9 0 obj
+<<
+/Length 268
+>>
+stream
+1 0 0 1 0 0 cm  BT /F1 12 Tf 14.4 TL ET
+BT /F1 18 Tf 21.6 TL ET
+BT 1 0 0 1 25 245 Tm (ilikepdf page two) Tj T* ET
+n
+155 135 m
+155 165.3757 130.3757 190 100 190 c
+69.62434 190 45 165.3757 45 135 c
+45 104.6243 69.62434 80 100 80 c
+130.3757 80 155 104.6243 155 135 c
+S
+ 
+endstream
+endobj
+xref
+0 10
+0000000000 65535 f 
+0000000061 00000 n 
+0000000092 00000 n 
+0000000199 00000 n 
+0000000392 00000 n 
+0000000585 00000 n 
+0000000653 00000 n 
+0000000958 00000 n 
+0000001023 00000 n 
+0000001224 00000 n 
+trailer
+<<
+/ID 
+[<d9dc2170d9714b4b7adb8ff4653bc5e7><d9dc2170d9714b4b7adb8ff4653bc5e7>]
+% ReportLab generated PDF document -- digest (opensource)
+
+/Info 6 0 R
+/Root 5 0 R
+/Size 10
+>>
+startxref
+1542
+%%EOF

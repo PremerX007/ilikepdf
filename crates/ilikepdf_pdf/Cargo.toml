@@ -1,0 +1,16 @@
+[package]
+name = "ilikepdf_pdf"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+image = { version = "0.25.10", default-features = false, features = ["png"] }
+pdfium-render = { version = "=0.9.4", default-features = false, features = ["image_025", "pdfium_7881", "thread_safe"] }
+
+[dev-dependencies]
+tempfile = "3.27.0"

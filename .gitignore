@@ -1,5 +1,6 @@
 # Local tool downloads and build caches
 .tooling/
+tmp/
 **/target/
 **/build/
 **/.dart_tool/
@@ -26,4 +27,3 @@ Thumbs.db
 # Flutter build artifacts
 *.symbols
 *.map.json
-

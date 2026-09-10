@@ -32,7 +32,20 @@ class ApplicationError implements FrbException {
           message == other.message;
 }
 
-enum ApplicationErrorCode { internal }
+enum ApplicationErrorCode {
+  sourceNotFound,
+  sourceNotFile,
+  sourceUnreadable,
+  invalidPdf,
+  pageOutOfBounds,
+  invalidRequest,
+  pdfRuntimeUnavailable,
+  outputNotWritable,
+  outputAlreadyExists,
+  renderingFailed,
+  encodingFailed,
+  internal,
+}
 
 /// Application metadata exposed to Dart through a typed bridge contract.
 class ApplicationInfo {

@@ -1,16 +1,21 @@
 import 'package:flutter/material.dart';
 
+import 'package:ilikepdf/src/app/pdf_preview/pdf_preview_panel.dart';
+import 'package:ilikepdf/src/app/pdf_preview/pdf_preview_workflow.dart';
+
 class IlikepdfApp extends StatelessWidget {
   const IlikepdfApp({
     required this.applicationName,
     required this.coreVersion,
     required this.localOnly,
+    required this.pdfWorkflow,
     super.key,
   });
 
   final String applicationName;
   final String coreVersion;
   final bool localOnly;
+  final PdfPreviewWorkflow pdfWorkflow;
 
   @override
   Widget build(BuildContext context) {
@@ -23,33 +28,12 @@ class IlikepdfApp extends StatelessWidget {
       ),
       home: Scaffold(
         appBar: AppBar(title: Text(applicationName)),
-        body: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 520),
-            child: Padding(
-              padding: const EdgeInsets.all(32),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.picture_as_pdf_outlined, size: 72),
-                  const SizedBox(height: 24),
-                  Text(
-                    'Local PDF tools are being prepared.',
-                    style: Theme.of(context).textTheme.headlineSmall,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    localOnly
-                        ? 'Privacy mode: local processing only'
-                        : 'Privacy mode unavailable',
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  Text('Rust core $coreVersion'),
-                ],
-              ),
-            ),
+        body: PdfPreviewPanel(workflow: pdfWorkflow),
+        bottomNavigationBar: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Text(
+            '${localOnly ? 'Privacy mode: local processing only' : 'Privacy mode unavailable'} · Rust core $coreVersion',
+            textAlign: TextAlign.center,
           ),
         ),
       ),

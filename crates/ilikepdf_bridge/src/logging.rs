@@ -36,6 +36,8 @@ impl Log for PrivacySafeLogger {
 pub(crate) enum Event {
     ApplicationInfoRequested,
     CoreInitialized,
+    PdfDocumentOpenRequested,
+    PdfPageRenderRequested,
 }
 
 impl Event {
@@ -43,6 +45,8 @@ impl Event {
         match self {
             Self::ApplicationInfoRequested => "application_info_requested",
             Self::CoreInitialized => "core_initialized",
+            Self::PdfDocumentOpenRequested => "pdf_document_open_requested",
+            Self::PdfPageRenderRequested => "pdf_page_render_requested",
         }
     }
 }
