@@ -1,0 +1,29 @@
+# Local tool downloads and build caches
+.tooling/
+**/target/
+**/build/
+**/.dart_tool/
+**/.pub/
+**/.pub-cache/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/coverage/
+
+# Editors and operating systems
+.idea/
+.vscode/
+*.iml
+*.swp
+.DS_Store
+Thumbs.db
+
+# Local configuration and sensitive files
+.env
+.env.*
+!.env.example
+*.log
+
+# Flutter build artifacts
+*.symbols
+*.map.json
+

@@ -1,0 +1,17 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  language:
+    strict-casts: true
+    strict-inference: true
+    strict-raw-types: true
+  exclude:
+    - build/**
+    - lib/src/rust/**
+    - windows/**
+
+linter:
+  rules:
+    directives_ordering: true
+    prefer_single_quotes: true
+    unawaited_futures: true

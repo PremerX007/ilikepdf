@@ -1,0 +1,6 @@
+[toolchain]
+# Required beside the native-assets crate. Keep synchronized with the workspace toolchain.
+channel = "1.98.1"
+components = ["clippy", "rustfmt"]
+profile = "minimal"
+targets = ["x86_64-pc-windows-msvc"]

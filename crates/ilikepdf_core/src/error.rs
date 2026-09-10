@@ -1,0 +1,40 @@
+use std::error::Error;
+use std::fmt::{self, Display, Formatter};
+
+pub type ApplicationResult<T> = Result<T, ApplicationError>;
+
+/// An application failure with a machine-readable code and safe display message.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ApplicationError {
+    pub code: ApplicationErrorCode,
+    pub message: String,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum ApplicationErrorCode {
+    Internal,
+}
+
+impl Display for ApplicationError {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> fmt::Result {
+        formatter.write_str(&self.message)
+    }
+}
+
+impl Error for ApplicationError {}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn structured_error_has_a_safe_display_message() {
+        let error = ApplicationError {
+            code: ApplicationErrorCode::Internal,
+            message: "Unable to complete the operation".to_owned(),
+        };
+
+        assert_eq!(error.to_string(), "Unable to complete the operation");
+    }
+}
