@@ -13,6 +13,14 @@ pub enum PdfErrorKind {
     RenderFailed,
     EncodeFailed,
     OutputWriteFailed,
+    UnsupportedImageFormat,
+    MalformedImage,
+    ImageDecodeFailed,
+    ImageOrientationFailed,
+    DocumentCreateFailed,
+    PageCreateFailed,
+    ImagePlacementFailed,
+    SaveFailed,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -38,6 +46,14 @@ impl Display for PdfError {
             PdfErrorKind::RenderFailed => "PDF render failed",
             PdfErrorKind::EncodeFailed => "PNG encoding failed",
             PdfErrorKind::OutputWriteFailed => "PNG output write failed",
+            PdfErrorKind::UnsupportedImageFormat => "unsupported image format",
+            PdfErrorKind::MalformedImage => "malformed image",
+            PdfErrorKind::ImageDecodeFailed => "image decode failed",
+            PdfErrorKind::ImageOrientationFailed => "image orientation processing failed",
+            PdfErrorKind::DocumentCreateFailed => "PDF document creation failed",
+            PdfErrorKind::PageCreateFailed => "PDF page creation failed",
+            PdfErrorKind::ImagePlacementFailed => "PDF image placement failed",
+            PdfErrorKind::SaveFailed => "PDF save failed",
         })
     }
 }

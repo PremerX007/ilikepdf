@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "dev.ilikepdf" "\0"
-            VALUE "FileDescription", "ilikepdf" "\0"
+            VALUE "FileDescription", "iLikePDF" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "ilikepdf" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2026 dev.ilikepdf. All rights reserved." "\0"
             VALUE "OriginalFilename", "ilikepdf.exe" "\0"
-            VALUE "ProductName", "ilikepdf" "\0"
+            VALUE "ProductName", "iLikePDF" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

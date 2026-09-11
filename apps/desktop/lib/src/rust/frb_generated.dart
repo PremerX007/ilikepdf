@@ -4,6 +4,7 @@
 // ignore_for_file: unused_import, unused_element, unnecessary_import, duplicate_ignore, invalid_use_of_internal_member, annotate_overrides, non_constant_identifier_names, curly_braces_in_flow_control_structures, prefer_const_literals_to_create_immutables, unused_field
 
 import 'api/application.dart';
+import 'api/image_to_pdf.dart';
 import 'api/pdf_export.dart';
 import 'api/pdf_preview.dart';
 
@@ -71,7 +72,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.13.0';
 
   @override
-  int get rustContentHash => 1576194715;
+  int get rustContentHash => -1228066786;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -83,6 +84,10 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
 }
 
 abstract class RustLibApi extends BaseApi {
+  Stream<ImagePdfUpdate> crateApiImageToPdfCreatePdfsFromImages({
+    required CreateImagePdfRequest request,
+  });
+
   Stream<PdfExportUpdate> crateApiPdfExportExportPdfToImages({
     required ExportPdfToImagesRequest request,
   });
@@ -109,6 +114,50 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   });
 
   @override
+  Stream<ImagePdfUpdate> crateApiImageToPdfCreatePdfsFromImages({
+    required CreateImagePdfRequest request,
+  }) {
+    final progressSink = RustStreamSink<ImagePdfUpdate>();
+    unawaited(
+      handler.executeNormal(
+        NormalTask(
+          callFfi: (port_) {
+            final serializer = SseSerializer(generalizedFrbRustBinding);
+            sse_encode_box_autoadd_create_image_pdf_request(
+              request,
+              serializer,
+            );
+            sse_encode_StreamSink_image_pdf_update_Sse(
+              progressSink,
+              serializer,
+            );
+            pdeCallFfi(
+              generalizedFrbRustBinding,
+              serializer,
+              funcId: 1,
+              port: port_,
+            );
+          },
+          codec: SseCodec(
+            decodeSuccessData: sse_decode_unit,
+            decodeErrorData: null,
+          ),
+          constMeta: kCrateApiImageToPdfCreatePdfsFromImagesConstMeta,
+          argValues: [request, progressSink],
+          apiImpl: this,
+        ),
+      ),
+    );
+    return progressSink.stream;
+  }
+
+  TaskConstMeta get kCrateApiImageToPdfCreatePdfsFromImagesConstMeta =>
+      const TaskConstMeta(
+        debugName: "create_pdfs_from_images",
+        argNames: ["request", "progressSink"],
+      );
+
+  @override
   Stream<PdfExportUpdate> crateApiPdfExportExportPdfToImages({
     required ExportPdfToImagesRequest request,
   }) {
@@ -129,7 +178,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             pdeCallFfi(
               generalizedFrbRustBinding,
               serializer,
-              funcId: 1,
+              funcId: 2,
               port: port_,
             );
           },
@@ -161,7 +210,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 2,
+            funcId: 3,
             port: port_,
           );
         },
@@ -188,7 +237,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 3,
+            funcId: 4,
             port: port_,
           );
         },
@@ -218,7 +267,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 4,
+            funcId: 5,
             port: port_,
           );
         },
@@ -251,7 +300,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 5,
+            funcId: 6,
             port: port_,
           );
         },
@@ -273,6 +322,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   AnyhowException dco_decode_AnyhowException(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return AnyhowException(raw as String);
+  }
+
+  @protected
+  RustStreamSink<ImagePdfUpdate> dco_decode_StreamSink_image_pdf_update_Sse(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    throw UnimplementedError();
   }
 
   @protected
@@ -333,6 +390,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  CreateImagePdfRequest dco_decode_box_autoadd_create_image_pdf_request(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_create_image_pdf_request(raw);
+  }
+
+  @protected
   ExportPdfToImagesRequest dco_decode_box_autoadd_export_pdf_to_images_request(
     dynamic raw,
   ) {
@@ -361,6 +426,22 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  CreateImagePdfRequest dco_decode_create_image_pdf_request(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 6)
+      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    return CreateImagePdfRequest(
+      sourcePaths: dco_decode_list_String(arr[0]),
+      destinationDirectory: dco_decode_String(arr[1]),
+      pageSize: dco_decode_image_pdf_page_size(arr[2]),
+      orientation: dco_decode_image_pdf_orientation(arr[3]),
+      margin: dco_decode_image_pdf_margin(arr[4]),
+      merge: dco_decode_bool(arr[5]),
+    );
+  }
+
+  @protected
   ExportPdfToImagesRequest dco_decode_export_pdf_to_images_request(
     dynamic raw,
   ) {
@@ -385,6 +466,46 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   int dco_decode_i_32(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as int;
+  }
+
+  @protected
+  ImagePdfMargin dco_decode_image_pdf_margin(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return ImagePdfMargin.values[raw as int];
+  }
+
+  @protected
+  ImagePdfOrientation dco_decode_image_pdf_orientation(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return ImagePdfOrientation.values[raw as int];
+  }
+
+  @protected
+  ImagePdfPageSize dco_decode_image_pdf_page_size(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return ImagePdfPageSize.values[raw as int];
+  }
+
+  @protected
+  ImagePdfStatus dco_decode_image_pdf_status(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return ImagePdfStatus.values[raw as int];
+  }
+
+  @protected
+  ImagePdfUpdate dco_decode_image_pdf_update(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 6)
+      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    return ImagePdfUpdate(
+      status: dco_decode_image_pdf_status(arr[0]),
+      totalImageCount: dco_decode_u_32(arr[1]),
+      completedImageCount: dco_decode_u_32(arr[2]),
+      currentImage: dco_decode_opt_box_autoadd_u_32(arr[3]),
+      outputFiles: dco_decode_list_String(arr[4]),
+      error: dco_decode_opt_box_autoadd_application_error(arr[5]),
+    );
   }
 
   @protected
@@ -528,6 +649,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  RustStreamSink<ImagePdfUpdate> sse_decode_StreamSink_image_pdf_update_Sse(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    throw UnimplementedError('Unreachable ()');
+  }
+
+  @protected
   RustStreamSink<PdfExportUpdate> sse_decode_StreamSink_pdf_export_update_Sse(
     SseDeserializer deserializer,
   ) {
@@ -587,6 +716,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  CreateImagePdfRequest sse_decode_box_autoadd_create_image_pdf_request(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_create_image_pdf_request(deserializer));
+  }
+
+  @protected
   ExportPdfToImagesRequest sse_decode_box_autoadd_export_pdf_to_images_request(
     SseDeserializer deserializer,
   ) {
@@ -617,6 +754,27 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  CreateImagePdfRequest sse_decode_create_image_pdf_request(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_sourcePaths = sse_decode_list_String(deserializer);
+    var var_destinationDirectory = sse_decode_String(deserializer);
+    var var_pageSize = sse_decode_image_pdf_page_size(deserializer);
+    var var_orientation = sse_decode_image_pdf_orientation(deserializer);
+    var var_margin = sse_decode_image_pdf_margin(deserializer);
+    var var_merge = sse_decode_bool(deserializer);
+    return CreateImagePdfRequest(
+      sourcePaths: var_sourcePaths,
+      destinationDirectory: var_destinationDirectory,
+      pageSize: var_pageSize,
+      orientation: var_orientation,
+      margin: var_margin,
+      merge: var_merge,
+    );
+  }
+
+  @protected
   ExportPdfToImagesRequest sse_decode_export_pdf_to_images_request(
     SseDeserializer deserializer,
   ) {
@@ -641,6 +799,57 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   int sse_decode_i_32(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return deserializer.buffer.getInt32();
+  }
+
+  @protected
+  ImagePdfMargin sse_decode_image_pdf_margin(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var inner = sse_decode_i_32(deserializer);
+    return ImagePdfMargin.values[inner];
+  }
+
+  @protected
+  ImagePdfOrientation sse_decode_image_pdf_orientation(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var inner = sse_decode_i_32(deserializer);
+    return ImagePdfOrientation.values[inner];
+  }
+
+  @protected
+  ImagePdfPageSize sse_decode_image_pdf_page_size(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var inner = sse_decode_i_32(deserializer);
+    return ImagePdfPageSize.values[inner];
+  }
+
+  @protected
+  ImagePdfStatus sse_decode_image_pdf_status(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var inner = sse_decode_i_32(deserializer);
+    return ImagePdfStatus.values[inner];
+  }
+
+  @protected
+  ImagePdfUpdate sse_decode_image_pdf_update(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_status = sse_decode_image_pdf_status(deserializer);
+    var var_totalImageCount = sse_decode_u_32(deserializer);
+    var var_completedImageCount = sse_decode_u_32(deserializer);
+    var var_currentImage = sse_decode_opt_box_autoadd_u_32(deserializer);
+    var var_outputFiles = sse_decode_list_String(deserializer);
+    var var_error = sse_decode_opt_box_autoadd_application_error(deserializer);
+    return ImagePdfUpdate(
+      status: var_status,
+      totalImageCount: var_totalImageCount,
+      completedImageCount: var_completedImageCount,
+      currentImage: var_currentImage,
+      outputFiles: var_outputFiles,
+      error: var_error,
+    );
   }
 
   @protected
@@ -826,6 +1035,23 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_StreamSink_image_pdf_update_Sse(
+    RustStreamSink<ImagePdfUpdate> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(
+      self.setupAndSerialize(
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_image_pdf_update,
+          decodeErrorData: sse_decode_AnyhowException,
+        ),
+      ),
+      serializer,
+    );
+  }
+
+  @protected
   void sse_encode_StreamSink_pdf_export_update_Sse(
     RustStreamSink<PdfExportUpdate> self,
     SseSerializer serializer,
@@ -894,6 +1120,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_box_autoadd_create_image_pdf_request(
+    CreateImagePdfRequest self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_create_image_pdf_request(self, serializer);
+  }
+
+  @protected
   void sse_encode_box_autoadd_export_pdf_to_images_request(
     ExportPdfToImagesRequest self,
     SseSerializer serializer,
@@ -927,6 +1162,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_create_image_pdf_request(
+    CreateImagePdfRequest self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_list_String(self.sourcePaths, serializer);
+    sse_encode_String(self.destinationDirectory, serializer);
+    sse_encode_image_pdf_page_size(self.pageSize, serializer);
+    sse_encode_image_pdf_orientation(self.orientation, serializer);
+    sse_encode_image_pdf_margin(self.margin, serializer);
+    sse_encode_bool(self.merge, serializer);
+  }
+
+  @protected
   void sse_encode_export_pdf_to_images_request(
     ExportPdfToImagesRequest self,
     SseSerializer serializer,
@@ -947,6 +1196,56 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   void sse_encode_i_32(int self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     serializer.buffer.putInt32(self);
+  }
+
+  @protected
+  void sse_encode_image_pdf_margin(
+    ImagePdfMargin self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
+  void sse_encode_image_pdf_orientation(
+    ImagePdfOrientation self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
+  void sse_encode_image_pdf_page_size(
+    ImagePdfPageSize self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
+  void sse_encode_image_pdf_status(
+    ImagePdfStatus self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
+  void sse_encode_image_pdf_update(
+    ImagePdfUpdate self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_image_pdf_status(self.status, serializer);
+    sse_encode_u_32(self.totalImageCount, serializer);
+    sse_encode_u_32(self.completedImageCount, serializer);
+    sse_encode_opt_box_autoadd_u_32(self.currentImage, serializer);
+    sse_encode_list_String(self.outputFiles, serializer);
+    sse_encode_opt_box_autoadd_application_error(self.error, serializer);
   }
 
   @protected

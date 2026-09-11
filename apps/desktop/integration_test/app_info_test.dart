@@ -13,7 +13,7 @@ void main() {
   ) async {
     final info = await getApplicationInfo();
 
-    expect(info.name, 'ilikepdf');
+    expect(info.name, 'iLikePDF');
     expect(info.version, '0.1.0');
     expect(info.localOnly, isTrue);
   });

@@ -176,12 +176,14 @@ void main() {
 
     await tester.pumpWidget(
       IlikepdfApp(
-        applicationName: 'ilikepdf',
+        applicationName: 'iLikePDF',
         coreVersion: '0.1.0',
         localOnly: true,
         pdfToImageWorkflow: workflow,
       ),
     );
+    await tester.tap(find.byKey(const ValueKey('tool-card-pdf-to-images')));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Select PDF'));
     await tester.pumpAndSettle();
     expect(find.text('2 pages'), findsOneWidget);

@@ -105,25 +105,116 @@ void main() {
 
   tearDownAll(() => previewDirectory.delete(recursive: true));
 
-  testWidgets('shows core version and local-only status', (
+  testWidgets('shows an unobtrusive version without redundant local chrome', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
       IlikepdfApp(
-        applicationName: 'ilikepdf',
+        applicationName: 'iLikePDF',
         coreVersion: '0.1.0',
         localOnly: true,
         pdfToImageWorkflow: FakePdfToImageWorkflow(previewPath: previewPath),
       ),
     );
 
-    expect(find.text('ilikepdf'), findsOneWidget);
+    expect(find.text('iLikePDF'), findsOneWidget);
+    expect(find.byKey(const ValueKey('application-version')), findsOneWidget);
+    expect(find.text('Version 0.1.0'), findsOneWidget);
+    expect(find.textContaining('Files stay on this computer'), findsNothing);
+    expect(find.textContaining('Local processing'), findsNothing);
+    expect(find.text('PDF tools'), findsOneWidget);
     expect(
-      find.textContaining('Privacy mode: local processing only'),
+      find.byKey(const ValueKey('tool-card-pdf-to-images')),
       findsOneWidget,
     );
-    expect(find.textContaining('Rust core 0.1.0'), findsOneWidget);
-    expect(find.text('PDF to images'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('tool-card-images-to-pdf')),
+      findsOneWidget,
+    );
+    expect(find.text('Coming soon'), findsNWidgets(5));
+  });
+
+  testWidgets('implemented cards navigate and back returns Home', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      IlikepdfApp(
+        applicationName: 'iLikePDF',
+        coreVersion: '0.1.0',
+        localOnly: true,
+        pdfToImageWorkflow: FakePdfToImageWorkflow(previewPath: previewPath),
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('tool-card-images-to-pdf')));
+    await tester.pumpAndSettle();
+    expect(find.text('Images to PDF'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('tool-workspace-surface')),
+      findsOneWidget,
+    );
+    await tester.tap(find.byKey(const ValueKey('back-home-button')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('tool-card-pdf-to-images')));
+    await tester.pumpAndSettle();
+    expect(find.text('PDF to Images'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('back-home-button')));
+    await tester.pumpAndSettle();
+    expect(find.text('PDF tools'), findsOneWidget);
+  });
+
+  testWidgets('coming-soon cards cannot open unfinished tools', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      IlikepdfApp(
+        applicationName: 'iLikePDF',
+        coreVersion: '0.1.0',
+        localOnly: true,
+        pdfToImageWorkflow: FakePdfToImageWorkflow(previewPath: previewPath),
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('tool-card-merge-pdf')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('PDF tools'), findsOneWidget);
+    expect(find.byKey(const ValueKey('back-home-button')), findsNothing);
+  });
+
+  testWidgets('tool workspace uses columns wide and stacks when narrow', (
+    WidgetTester tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1280, 760);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+    await tester.pumpWidget(
+      IlikepdfApp(
+        applicationName: 'iLikePDF',
+        coreVersion: '0.1.0',
+        localOnly: true,
+        pdfToImageWorkflow: FakePdfToImageWorkflow(previewPath: previewPath),
+      ),
+    );
+    await tester.tap(find.byKey(const ValueKey('tool-card-images-to-pdf')));
+    await tester.pumpAndSettle();
+
+    final workspace = find.byKey(const ValueKey('tool-workspace-surface'));
+    final settings = find.byKey(const ValueKey('tool-settings-panel'));
+    expect(
+      tester.getRect(workspace).right,
+      lessThan(tester.getRect(settings).left),
+    );
+
+    tester.view.physicalSize = const Size(760, 900);
+    await tester.pumpAndSettle();
+    expect(
+      tester.getRect(settings).top,
+      greaterThan(tester.getRect(workspace).bottom),
+    );
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('selection starts a compact preview with streamlined quality', (
@@ -132,12 +223,13 @@ void main() {
     final workflow = FakePdfToImageWorkflow(previewPath: previewPath);
     await tester.pumpWidget(
       IlikepdfApp(
-        applicationName: 'ilikepdf',
+        applicationName: 'iLikePDF',
         coreVersion: '0.1.0',
         localOnly: true,
         pdfToImageWorkflow: workflow,
       ),
     );
+    await _openPdfToImages(tester);
 
     await tester.tap(find.text('Select PDF'));
     await tester.pumpAndSettle();
@@ -169,12 +261,13 @@ void main() {
       final workflow = FakePdfToImageWorkflow(previewPath: previewPath);
       await tester.pumpWidget(
         IlikepdfApp(
-          applicationName: 'ilikepdf',
+          applicationName: 'iLikePDF',
           coreVersion: '0.1.0',
           localOnly: true,
           pdfToImageWorkflow: workflow,
         ),
       );
+      await _openPdfToImages(tester);
 
       await tester.tap(find.text('Select PDF'));
       await tester.pumpAndSettle();
@@ -209,12 +302,13 @@ void main() {
     final workflow = FakePdfToImageWorkflow(previewPath: previewPath);
     await tester.pumpWidget(
       IlikepdfApp(
-        applicationName: 'ilikepdf',
+        applicationName: 'iLikePDF',
         coreVersion: '0.1.0',
         localOnly: true,
         pdfToImageWorkflow: workflow,
       ),
     );
+    await _openPdfToImages(tester);
 
     await tester.tap(find.text('Select PDF'));
     await tester.pumpAndSettle();
@@ -239,12 +333,13 @@ void main() {
     );
     await tester.pumpWidget(
       IlikepdfApp(
-        applicationName: 'ilikepdf',
+        applicationName: 'iLikePDF',
         coreVersion: '0.1.0',
         localOnly: true,
         pdfToImageWorkflow: workflow,
       ),
     );
+    await _openPdfToImages(tester);
 
     await tester.tap(find.text('Select PDF'));
     await tester.pumpAndSettle();
@@ -269,12 +364,13 @@ void main() {
       );
       await tester.pumpWidget(
         IlikepdfApp(
-          applicationName: 'ilikepdf',
+          applicationName: 'iLikePDF',
           coreVersion: '0.1.0',
           localOnly: true,
           pdfToImageWorkflow: workflow,
         ),
       );
+      await _openPdfToImages(tester);
 
       await tester.tap(find.text('Select PDF'));
       await tester.pumpAndSettle();
@@ -291,4 +387,9 @@ void main() {
       );
     },
   );
+}
+
+Future<void> _openPdfToImages(WidgetTester tester) async {
+  await tester.tap(find.byKey(const ValueKey('tool-card-pdf-to-images')));
+  await tester.pumpAndSettle();
 }

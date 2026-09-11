@@ -1,9 +1,15 @@
 # ilikepdf
 
-ilikepdf is an open-source, privacy-first Windows PDF toolkit. The application is
-currently at its foundation milestone: Flutter provides the desktop presentation
-layer, while Rust owns application logic and future PDF/native integrations.
-Documents are processed locally and are never uploaded.
+ilikepdf is an open-source, privacy-first Windows PDF toolkit. Flutter provides
+the desktop presentation layer while Rust owns application logic and native PDF
+integration. Documents and images are processed locally and are never uploaded.
+
+Current production workflows include PDF-to-PNG export and Image-to-PDF creation.
+Image-to-PDF accepts JPG/JPEG, PNG, and WebP images, supports ordered merged or
+separate output, accepts native Windows Explorer drag-and-drop, and allocates a
+numbered filename instead of overwriting an existing PDF. The desktop home and
+two-column tool workspace form the reusable visual shell for future local PDF
+tools.
 
 ## Prerequisites
 
@@ -38,8 +44,10 @@ cd apps/desktop
 dart format --output=none --set-exit-if-changed lib test integration_test hook
 flutter analyze
 flutter test
-flutter build windows
+flutter build windows --release
 flutter test integration_test/app_info_test.dart -d windows
+flutter test integration_test/pdf_preview_test.dart -d windows
+flutter test integration_test/image_to_pdf_test.dart -d windows
 ```
 
 See [docs/architecture.md](docs/architecture.md) for boundaries and privacy

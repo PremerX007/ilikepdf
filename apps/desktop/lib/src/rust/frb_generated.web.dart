@@ -7,6 +7,7 @@
 // ignore_for_file: argument_type_not_assignable
 
 import 'api/application.dart';
+import 'api/image_to_pdf.dart';
 import 'api/pdf_export.dart';
 import 'api/pdf_preview.dart';
 
@@ -27,6 +28,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   AnyhowException dco_decode_AnyhowException(dynamic raw);
+
+  @protected
+  RustStreamSink<ImagePdfUpdate> dco_decode_StreamSink_image_pdf_update_Sse(
+    dynamic raw,
+  );
 
   @protected
   RustStreamSink<PdfExportUpdate> dco_decode_StreamSink_pdf_export_update_Sse(
@@ -52,6 +58,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ApplicationError dco_decode_box_autoadd_application_error(dynamic raw);
 
   @protected
+  CreateImagePdfRequest dco_decode_box_autoadd_create_image_pdf_request(
+    dynamic raw,
+  );
+
+  @protected
   ExportPdfToImagesRequest dco_decode_box_autoadd_export_pdf_to_images_request(
     dynamic raw,
   );
@@ -68,6 +79,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   int dco_decode_box_autoadd_u_32(dynamic raw);
 
   @protected
+  CreateImagePdfRequest dco_decode_create_image_pdf_request(dynamic raw);
+
+  @protected
   ExportPdfToImagesRequest dco_decode_export_pdf_to_images_request(dynamic raw);
 
   @protected
@@ -75,6 +89,21 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   int dco_decode_i_32(dynamic raw);
+
+  @protected
+  ImagePdfMargin dco_decode_image_pdf_margin(dynamic raw);
+
+  @protected
+  ImagePdfOrientation dco_decode_image_pdf_orientation(dynamic raw);
+
+  @protected
+  ImagePdfPageSize dco_decode_image_pdf_page_size(dynamic raw);
+
+  @protected
+  ImagePdfStatus dco_decode_image_pdf_status(dynamic raw);
+
+  @protected
+  ImagePdfUpdate dco_decode_image_pdf_update(dynamic raw);
 
   @protected
   List<String> dco_decode_list_String(dynamic raw);
@@ -128,6 +157,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   AnyhowException sse_decode_AnyhowException(SseDeserializer deserializer);
 
   @protected
+  RustStreamSink<ImagePdfUpdate> sse_decode_StreamSink_image_pdf_update_Sse(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   RustStreamSink<PdfExportUpdate> sse_decode_StreamSink_pdf_export_update_Sse(
     SseDeserializer deserializer,
   );
@@ -155,6 +189,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  CreateImagePdfRequest sse_decode_box_autoadd_create_image_pdf_request(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   ExportPdfToImagesRequest sse_decode_box_autoadd_export_pdf_to_images_request(
     SseDeserializer deserializer,
   );
@@ -173,6 +212,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   int sse_decode_box_autoadd_u_32(SseDeserializer deserializer);
 
   @protected
+  CreateImagePdfRequest sse_decode_create_image_pdf_request(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   ExportPdfToImagesRequest sse_decode_export_pdf_to_images_request(
     SseDeserializer deserializer,
   );
@@ -182,6 +226,23 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   int sse_decode_i_32(SseDeserializer deserializer);
+
+  @protected
+  ImagePdfMargin sse_decode_image_pdf_margin(SseDeserializer deserializer);
+
+  @protected
+  ImagePdfOrientation sse_decode_image_pdf_orientation(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  ImagePdfPageSize sse_decode_image_pdf_page_size(SseDeserializer deserializer);
+
+  @protected
+  ImagePdfStatus sse_decode_image_pdf_status(SseDeserializer deserializer);
+
+  @protected
+  ImagePdfUpdate sse_decode_image_pdf_update(SseDeserializer deserializer);
 
   @protected
   List<String> sse_decode_list_String(SseDeserializer deserializer);
@@ -246,6 +307,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_StreamSink_image_pdf_update_Sse(
+    RustStreamSink<ImagePdfUpdate> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_StreamSink_pdf_export_update_Sse(
     RustStreamSink<PdfExportUpdate> self,
     SseSerializer serializer,
@@ -282,6 +349,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_box_autoadd_create_image_pdf_request(
+    CreateImagePdfRequest self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_box_autoadd_export_pdf_to_images_request(
     ExportPdfToImagesRequest self,
     SseSerializer serializer,
@@ -303,6 +376,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_box_autoadd_u_32(int self, SseSerializer serializer);
 
   @protected
+  void sse_encode_create_image_pdf_request(
+    CreateImagePdfRequest self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_export_pdf_to_images_request(
     ExportPdfToImagesRequest self,
     SseSerializer serializer,
@@ -313,6 +392,36 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_i_32(int self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_image_pdf_margin(
+    ImagePdfMargin self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_image_pdf_orientation(
+    ImagePdfOrientation self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_image_pdf_page_size(
+    ImagePdfPageSize self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_image_pdf_status(
+    ImagePdfStatus self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_image_pdf_update(
+    ImagePdfUpdate self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_list_String(List<String> self, SseSerializer serializer);

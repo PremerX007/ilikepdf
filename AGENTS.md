@@ -28,6 +28,14 @@ all generated changes. Before a pull request, run:
 - Windows integration tests in `integration_test/`, including `app_info_test.dart`
   and `pdf_preview_test.dart`
 
+Codex and the interactive Windows user can have isolated views of the user-wide
+Pub cache even when both paths display as `%LOCALAPPDATA%\Pub\Cache`. After Codex
+adds or updates a hosted Flutter dependency and finishes its own validation, run
+`flutter clean` as the final handoff step and do not regenerate `.dart_tool` or
+`build/` afterward. This ensures the user's next direct `flutter build` or
+`flutter run` resolves packages in the user's own environment instead of reusing
+Codex-generated package metadata that points into Codex's cache view.
+
 ## Coding, Testing, and Native Dependencies
 
 Use standard `rustfmt` and Dart formatting. Files/modules use `snake_case`;

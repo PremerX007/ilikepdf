@@ -333,16 +333,8 @@ mod tests {
             .join(name)
     }
 
-    fn renderer() -> PdfRenderer {
-        let library = Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("..")
-            .join("..")
-            .join("third_party")
-            .join("pdfium")
-            .join("windows")
-            .join("x64")
-            .join("pdfium.dll");
-        PdfRenderer::from_library_path(&library).expect("vendored PDFium runtime should load")
+    fn renderer() -> &'static PdfRenderer {
+        crate::test_pdf_renderer()
     }
 
     fn working_copy(
@@ -364,7 +356,7 @@ mod tests {
         let mut progress = Vec::new();
 
         let result = export_pdf_to_images_with_backend(
-            &renderer(),
+            renderer(),
             ExportPdfToImagesRequest {
                 source_path: source.clone(),
                 destination_directory: destination.clone(),
@@ -413,7 +405,7 @@ mod tests {
         let source_before = fs::read(&source).expect("fixture should be readable");
 
         let result = export_pdf_to_images_with_backend(
-            &renderer(),
+            renderer(),
             ExportPdfToImagesRequest {
                 source_path: source.clone(),
                 destination_directory: destination.clone(),
@@ -440,7 +432,7 @@ mod tests {
         let (_directory, source, destination) = working_copy("one_page.pdf", "ใบแจ้งหนี้.pdf");
 
         let result = export_pdf_to_images_with_backend(
-            &renderer(),
+            renderer(),
             ExportPdfToImagesRequest {
                 source_path: source,
                 destination_directory: destination.clone(),
@@ -464,7 +456,7 @@ mod tests {
         let backend = renderer();
 
         let standard = export_pdf_to_images_with_backend(
-            &backend,
+            backend,
             ExportPdfToImagesRequest {
                 source_path: source.clone(),
                 destination_directory: standard_directory.path().to_path_buf(),
@@ -474,7 +466,7 @@ mod tests {
         )
         .expect("standard export should succeed");
         let high = export_pdf_to_images_with_backend(
-            &backend,
+            backend,
             ExportPdfToImagesRequest {
                 source_path: source,
                 destination_directory: high_directory.path().to_path_buf(),
@@ -502,7 +494,7 @@ mod tests {
         fs::write(&existing, b"existing").expect("collision content should be created");
 
         let failure = export_pdf_to_images_with_backend(
-            &renderer(),
+            renderer(),
             ExportPdfToImagesRequest {
                 source_path: source,
                 destination_directory: destination,
@@ -535,7 +527,7 @@ mod tests {
         fs::write(&existing, b"existing").expect("collision should be created");
 
         let failure = export_pdf_to_images_with_backend(
-            &renderer(),
+            renderer(),
             ExportPdfToImagesRequest {
                 source_path: source,
                 destination_directory: destination,
@@ -592,7 +584,7 @@ mod tests {
         let destination = tempfile::tempdir().expect("temporary directory should be created");
 
         let failure = export_pdf_to_images_with_backend(
-            &renderer(),
+            renderer(),
             ExportPdfToImagesRequest {
                 source_path: fixture("malformed.pdf"),
                 destination_directory: destination.path().to_path_buf(),
@@ -611,7 +603,7 @@ mod tests {
         let missing = directory.path().join("missing");
 
         let failure = export_pdf_to_images_with_backend(
-            &renderer(),
+            renderer(),
             ExportPdfToImagesRequest {
                 source_path: fixture("two_page.pdf"),
                 destination_directory: missing,
@@ -661,7 +653,7 @@ mod tests {
     }
 
     struct FailOnSecondPageBackend {
-        renderer: PdfRenderer,
+        renderer: &'static PdfRenderer,
     }
 
     impl PdfBackend for FailOnSecondPageBackend {

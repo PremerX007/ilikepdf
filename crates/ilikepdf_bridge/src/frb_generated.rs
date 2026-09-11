@@ -39,7 +39,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.13.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 1576194715;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -1228066786;
 
 // Section: executor
 
@@ -47,6 +47,49 @@ flutter_rust_bridge::frb_generated_default_handler!();
 
 // Section: wire_funcs
 
+fn wire__crate__api__image_to_pdf__create_pdfs_from_images_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "create_pdfs_from_images",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_request =
+                <crate::api::image_to_pdf::CreateImagePdfRequest>::sse_decode(&mut deserializer);
+            let api_progress_sink = <StreamSink<
+                crate::api::image_to_pdf::ImagePdfUpdate,
+                flutter_rust_bridge::for_generated::SseCodec,
+            >>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, ()>((move || {
+                    let output_ok = Ok::<_, ()>({
+                        crate::api::image_to_pdf::create_pdfs_from_images(
+                            api_request,
+                            api_progress_sink,
+                        );
+                    })?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
 fn wire__crate__api__pdf_export__export_pdf_to_images_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -239,6 +282,19 @@ impl SseDecode for flutter_rust_bridge::for_generated::anyhow::Error {
 
 impl SseDecode
     for StreamSink<
+        crate::api::image_to_pdf::ImagePdfUpdate,
+        flutter_rust_bridge::for_generated::SseCodec,
+    >
+{
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <String>::sse_decode(deserializer);
+        return StreamSink::deserialize(inner);
+    }
+}
+
+impl SseDecode
+    for StreamSink<
         crate::api::pdf_export::PdfExportUpdate,
         flutter_rust_bridge::for_generated::SseCodec,
     >
@@ -290,7 +346,16 @@ impl SseDecode for crate::api::application::ApplicationErrorCode {
             11 => crate::api::application::ApplicationErrorCode::OutputWriteFailed,
             12 => crate::api::application::ApplicationErrorCode::RenderingFailed,
             13 => crate::api::application::ApplicationErrorCode::EncodingFailed,
-            14 => crate::api::application::ApplicationErrorCode::Internal,
+            14 => crate::api::application::ApplicationErrorCode::UnsupportedImageFormat,
+            15 => crate::api::application::ApplicationErrorCode::MalformedImage,
+            16 => crate::api::application::ApplicationErrorCode::ImageDecodeFailed,
+            17 => crate::api::application::ApplicationErrorCode::ImageOrientationFailed,
+            18 => crate::api::application::ApplicationErrorCode::DuplicateOutputName,
+            19 => crate::api::application::ApplicationErrorCode::PdfDocumentCreationFailed,
+            20 => crate::api::application::ApplicationErrorCode::PdfPageCreationFailed,
+            21 => crate::api::application::ApplicationErrorCode::ImagePlacementFailed,
+            22 => crate::api::application::ApplicationErrorCode::PdfSaveFailed,
+            23 => crate::api::application::ApplicationErrorCode::Internal,
             _ => unreachable!("Invalid variant for ApplicationErrorCode: {}", inner),
         };
     }
@@ -314,6 +379,28 @@ impl SseDecode for bool {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         deserializer.cursor.read_u8().unwrap() != 0
+    }
+}
+
+impl SseDecode for crate::api::image_to_pdf::CreateImagePdfRequest {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_sourcePaths = <Vec<String>>::sse_decode(deserializer);
+        let mut var_destinationDirectory = <String>::sse_decode(deserializer);
+        let mut var_pageSize =
+            <crate::api::image_to_pdf::ImagePdfPageSize>::sse_decode(deserializer);
+        let mut var_orientation =
+            <crate::api::image_to_pdf::ImagePdfOrientation>::sse_decode(deserializer);
+        let mut var_margin = <crate::api::image_to_pdf::ImagePdfMargin>::sse_decode(deserializer);
+        let mut var_merge = <bool>::sse_decode(deserializer);
+        return crate::api::image_to_pdf::CreateImagePdfRequest {
+            source_paths: var_sourcePaths,
+            destination_directory: var_destinationDirectory,
+            page_size: var_pageSize,
+            orientation: var_orientation,
+            margin: var_margin,
+            merge: var_merge,
+        };
     }
 }
 
@@ -342,6 +429,78 @@ impl SseDecode for i32 {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         deserializer.cursor.read_i32::<NativeEndian>().unwrap()
+    }
+}
+
+impl SseDecode for crate::api::image_to_pdf::ImagePdfMargin {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::image_to_pdf::ImagePdfMargin::None,
+            1 => crate::api::image_to_pdf::ImagePdfMargin::Small,
+            2 => crate::api::image_to_pdf::ImagePdfMargin::Big,
+            _ => unreachable!("Invalid variant for ImagePdfMargin: {}", inner),
+        };
+    }
+}
+
+impl SseDecode for crate::api::image_to_pdf::ImagePdfOrientation {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::image_to_pdf::ImagePdfOrientation::Portrait,
+            1 => crate::api::image_to_pdf::ImagePdfOrientation::Landscape,
+            _ => unreachable!("Invalid variant for ImagePdfOrientation: {}", inner),
+        };
+    }
+}
+
+impl SseDecode for crate::api::image_to_pdf::ImagePdfPageSize {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::image_to_pdf::ImagePdfPageSize::Fit,
+            1 => crate::api::image_to_pdf::ImagePdfPageSize::A4,
+            2 => crate::api::image_to_pdf::ImagePdfPageSize::UsLetter,
+            _ => unreachable!("Invalid variant for ImagePdfPageSize: {}", inner),
+        };
+    }
+}
+
+impl SseDecode for crate::api::image_to_pdf::ImagePdfStatus {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::image_to_pdf::ImagePdfStatus::Running,
+            1 => crate::api::image_to_pdf::ImagePdfStatus::Complete,
+            2 => crate::api::image_to_pdf::ImagePdfStatus::Failed,
+            _ => unreachable!("Invalid variant for ImagePdfStatus: {}", inner),
+        };
+    }
+}
+
+impl SseDecode for crate::api::image_to_pdf::ImagePdfUpdate {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_status = <crate::api::image_to_pdf::ImagePdfStatus>::sse_decode(deserializer);
+        let mut var_totalImageCount = <u32>::sse_decode(deserializer);
+        let mut var_completedImageCount = <u32>::sse_decode(deserializer);
+        let mut var_currentImage = <Option<u32>>::sse_decode(deserializer);
+        let mut var_outputFiles = <Vec<String>>::sse_decode(deserializer);
+        let mut var_error =
+            <Option<crate::api::application::ApplicationError>>::sse_decode(deserializer);
+        return crate::api::image_to_pdf::ImagePdfUpdate {
+            status: var_status,
+            total_image_count: var_totalImageCount,
+            completed_image_count: var_completedImageCount,
+            current_image: var_currentImage,
+            output_files: var_outputFiles,
+            error: var_error,
+        };
     }
 }
 
@@ -546,23 +705,29 @@ fn pde_ffi_dispatcher_primary_impl(
 ) {
     // Codec=Pde (Serialization + dispatch), see doc to use other codecs
     match func_id {
-        1 => wire__crate__api__pdf_export__export_pdf_to_images_impl(
+        1 => wire__crate__api__image_to_pdf__create_pdfs_from_images_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        2 => wire__crate__api__application__get_application_info_impl(
+        2 => wire__crate__api__pdf_export__export_pdf_to_images_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        3 => wire__crate__api__lifecycle__initialize_impl(port, ptr, rust_vec_len, data_len),
-        4 => {
+        3 => wire__crate__api__application__get_application_info_impl(
+            port,
+            ptr,
+            rust_vec_len,
+            data_len,
+        ),
+        4 => wire__crate__api__lifecycle__initialize_impl(port, ptr, rust_vec_len, data_len),
+        5 => {
             wire__crate__api__pdf_preview__open_pdf_document_impl(port, ptr, rust_vec_len, data_len)
         }
-        5 => wire__crate__api__pdf_preview__render_pdf_page_impl(port, ptr, rust_vec_len, data_len),
+        6 => wire__crate__api__pdf_preview__render_pdf_page_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -620,7 +785,16 @@ impl flutter_rust_bridge::IntoDart for crate::api::application::ApplicationError
             Self::OutputWriteFailed => 11.into_dart(),
             Self::RenderingFailed => 12.into_dart(),
             Self::EncodingFailed => 13.into_dart(),
-            Self::Internal => 14.into_dart(),
+            Self::UnsupportedImageFormat => 14.into_dart(),
+            Self::MalformedImage => 15.into_dart(),
+            Self::ImageDecodeFailed => 16.into_dart(),
+            Self::ImageOrientationFailed => 17.into_dart(),
+            Self::DuplicateOutputName => 18.into_dart(),
+            Self::PdfDocumentCreationFailed => 19.into_dart(),
+            Self::PdfPageCreationFailed => 20.into_dart(),
+            Self::ImagePlacementFailed => 21.into_dart(),
+            Self::PdfSaveFailed => 22.into_dart(),
+            Self::Internal => 23.into_dart(),
             _ => unreachable!(),
         }
     }
@@ -659,6 +833,31 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::application::ApplicationInfo>
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::image_to_pdf::CreateImagePdfRequest {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.source_paths.into_into_dart().into_dart(),
+            self.destination_directory.into_into_dart().into_dart(),
+            self.page_size.into_into_dart().into_dart(),
+            self.orientation.into_into_dart().into_dart(),
+            self.margin.into_into_dart().into_dart(),
+            self.merge.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::image_to_pdf::CreateImagePdfRequest
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::image_to_pdf::CreateImagePdfRequest>
+    for crate::api::image_to_pdf::CreateImagePdfRequest
+{
+    fn into_into_dart(self) -> crate::api::image_to_pdf::CreateImagePdfRequest {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
 impl flutter_rust_bridge::IntoDart for crate::api::pdf_export::ExportPdfToImagesRequest {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
@@ -677,6 +876,118 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::pdf_export::ExportPdfToImages
     for crate::api::pdf_export::ExportPdfToImagesRequest
 {
     fn into_into_dart(self) -> crate::api::pdf_export::ExportPdfToImagesRequest {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::image_to_pdf::ImagePdfMargin {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self {
+            Self::None => 0.into_dart(),
+            Self::Small => 1.into_dart(),
+            Self::Big => 2.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::image_to_pdf::ImagePdfMargin
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::image_to_pdf::ImagePdfMargin>
+    for crate::api::image_to_pdf::ImagePdfMargin
+{
+    fn into_into_dart(self) -> crate::api::image_to_pdf::ImagePdfMargin {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::image_to_pdf::ImagePdfOrientation {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self {
+            Self::Portrait => 0.into_dart(),
+            Self::Landscape => 1.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::image_to_pdf::ImagePdfOrientation
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::image_to_pdf::ImagePdfOrientation>
+    for crate::api::image_to_pdf::ImagePdfOrientation
+{
+    fn into_into_dart(self) -> crate::api::image_to_pdf::ImagePdfOrientation {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::image_to_pdf::ImagePdfPageSize {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self {
+            Self::Fit => 0.into_dart(),
+            Self::A4 => 1.into_dart(),
+            Self::UsLetter => 2.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::image_to_pdf::ImagePdfPageSize
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::image_to_pdf::ImagePdfPageSize>
+    for crate::api::image_to_pdf::ImagePdfPageSize
+{
+    fn into_into_dart(self) -> crate::api::image_to_pdf::ImagePdfPageSize {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::image_to_pdf::ImagePdfStatus {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self {
+            Self::Running => 0.into_dart(),
+            Self::Complete => 1.into_dart(),
+            Self::Failed => 2.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::image_to_pdf::ImagePdfStatus
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::image_to_pdf::ImagePdfStatus>
+    for crate::api::image_to_pdf::ImagePdfStatus
+{
+    fn into_into_dart(self) -> crate::api::image_to_pdf::ImagePdfStatus {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::image_to_pdf::ImagePdfUpdate {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.status.into_into_dart().into_dart(),
+            self.total_image_count.into_into_dart().into_dart(),
+            self.completed_image_count.into_into_dart().into_dart(),
+            self.current_image.into_into_dart().into_dart(),
+            self.output_files.into_into_dart().into_dart(),
+            self.error.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::image_to_pdf::ImagePdfUpdate
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::image_to_pdf::ImagePdfUpdate>
+    for crate::api::image_to_pdf::ImagePdfUpdate
+{
+    fn into_into_dart(self) -> crate::api::image_to_pdf::ImagePdfUpdate {
         self
     }
 }
@@ -845,6 +1156,18 @@ impl SseEncode for flutter_rust_bridge::for_generated::anyhow::Error {
 
 impl SseEncode
     for StreamSink<
+        crate::api::image_to_pdf::ImagePdfUpdate,
+        flutter_rust_bridge::for_generated::SseCodec,
+    >
+{
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        unimplemented!("")
+    }
+}
+
+impl SseEncode
+    for StreamSink<
         crate::api::pdf_export::PdfExportUpdate,
         flutter_rust_bridge::for_generated::SseCodec,
     >
@@ -889,7 +1212,16 @@ impl SseEncode for crate::api::application::ApplicationErrorCode {
                 crate::api::application::ApplicationErrorCode::OutputWriteFailed => 11,
                 crate::api::application::ApplicationErrorCode::RenderingFailed => 12,
                 crate::api::application::ApplicationErrorCode::EncodingFailed => 13,
-                crate::api::application::ApplicationErrorCode::Internal => 14,
+                crate::api::application::ApplicationErrorCode::UnsupportedImageFormat => 14,
+                crate::api::application::ApplicationErrorCode::MalformedImage => 15,
+                crate::api::application::ApplicationErrorCode::ImageDecodeFailed => 16,
+                crate::api::application::ApplicationErrorCode::ImageOrientationFailed => 17,
+                crate::api::application::ApplicationErrorCode::DuplicateOutputName => 18,
+                crate::api::application::ApplicationErrorCode::PdfDocumentCreationFailed => 19,
+                crate::api::application::ApplicationErrorCode::PdfPageCreationFailed => 20,
+                crate::api::application::ApplicationErrorCode::ImagePlacementFailed => 21,
+                crate::api::application::ApplicationErrorCode::PdfSaveFailed => 22,
+                crate::api::application::ApplicationErrorCode::Internal => 23,
                 _ => {
                     unimplemented!("");
                 }
@@ -915,6 +1247,18 @@ impl SseEncode for bool {
     }
 }
 
+impl SseEncode for crate::api::image_to_pdf::CreateImagePdfRequest {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <Vec<String>>::sse_encode(self.source_paths, serializer);
+        <String>::sse_encode(self.destination_directory, serializer);
+        <crate::api::image_to_pdf::ImagePdfPageSize>::sse_encode(self.page_size, serializer);
+        <crate::api::image_to_pdf::ImagePdfOrientation>::sse_encode(self.orientation, serializer);
+        <crate::api::image_to_pdf::ImagePdfMargin>::sse_encode(self.margin, serializer);
+        <bool>::sse_encode(self.merge, serializer);
+    }
+}
+
 impl SseEncode for crate::api::pdf_export::ExportPdfToImagesRequest {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -935,6 +1279,85 @@ impl SseEncode for i32 {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         serializer.cursor.write_i32::<NativeEndian>(self).unwrap();
+    }
+}
+
+impl SseEncode for crate::api::image_to_pdf::ImagePdfMargin {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                crate::api::image_to_pdf::ImagePdfMargin::None => 0,
+                crate::api::image_to_pdf::ImagePdfMargin::Small => 1,
+                crate::api::image_to_pdf::ImagePdfMargin::Big => 2,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
+    }
+}
+
+impl SseEncode for crate::api::image_to_pdf::ImagePdfOrientation {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                crate::api::image_to_pdf::ImagePdfOrientation::Portrait => 0,
+                crate::api::image_to_pdf::ImagePdfOrientation::Landscape => 1,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
+    }
+}
+
+impl SseEncode for crate::api::image_to_pdf::ImagePdfPageSize {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                crate::api::image_to_pdf::ImagePdfPageSize::Fit => 0,
+                crate::api::image_to_pdf::ImagePdfPageSize::A4 => 1,
+                crate::api::image_to_pdf::ImagePdfPageSize::UsLetter => 2,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
+    }
+}
+
+impl SseEncode for crate::api::image_to_pdf::ImagePdfStatus {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                crate::api::image_to_pdf::ImagePdfStatus::Running => 0,
+                crate::api::image_to_pdf::ImagePdfStatus::Complete => 1,
+                crate::api::image_to_pdf::ImagePdfStatus::Failed => 2,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
+    }
+}
+
+impl SseEncode for crate::api::image_to_pdf::ImagePdfUpdate {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <crate::api::image_to_pdf::ImagePdfStatus>::sse_encode(self.status, serializer);
+        <u32>::sse_encode(self.total_image_count, serializer);
+        <u32>::sse_encode(self.completed_image_count, serializer);
+        <Option<u32>>::sse_encode(self.current_image, serializer);
+        <Vec<String>>::sse_encode(self.output_files, serializer);
+        <Option<crate::api::application::ApplicationError>>::sse_encode(self.error, serializer);
     }
 }
 

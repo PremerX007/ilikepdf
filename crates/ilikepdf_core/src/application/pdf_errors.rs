@@ -41,6 +41,38 @@ impl From<PdfError> for ApplicationError {
                 ApplicationErrorCode::OutputWriteFailed,
                 "The PNG data could not be written",
             ),
+            PdfErrorKind::UnsupportedImageFormat => (
+                ApplicationErrorCode::UnsupportedImageFormat,
+                "Select a JPG, JPEG, PNG, or WebP image",
+            ),
+            PdfErrorKind::MalformedImage => (
+                ApplicationErrorCode::MalformedImage,
+                "The selected image is malformed or corrupted",
+            ),
+            PdfErrorKind::ImageDecodeFailed => (
+                ApplicationErrorCode::ImageDecodeFailed,
+                "The selected image could not be decoded",
+            ),
+            PdfErrorKind::ImageOrientationFailed => (
+                ApplicationErrorCode::ImageOrientationFailed,
+                "The selected image orientation could not be processed",
+            ),
+            PdfErrorKind::DocumentCreateFailed => (
+                ApplicationErrorCode::PdfDocumentCreationFailed,
+                "The PDF document could not be created",
+            ),
+            PdfErrorKind::PageCreateFailed => (
+                ApplicationErrorCode::PdfPageCreationFailed,
+                "A PDF page could not be created",
+            ),
+            PdfErrorKind::ImagePlacementFailed => (
+                ApplicationErrorCode::ImagePlacementFailed,
+                "An image could not be placed on its PDF page",
+            ),
+            PdfErrorKind::SaveFailed => (
+                ApplicationErrorCode::PdfSaveFailed,
+                "The PDF document could not be saved",
+            ),
             _ => (
                 ApplicationErrorCode::Internal,
                 "Unable to complete the PDF operation",

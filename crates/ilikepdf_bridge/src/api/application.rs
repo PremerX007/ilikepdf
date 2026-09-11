@@ -29,6 +29,15 @@ pub enum ApplicationErrorCode {
     OutputWriteFailed,
     RenderingFailed,
     EncodingFailed,
+    UnsupportedImageFormat,
+    MalformedImage,
+    ImageDecodeFailed,
+    ImageOrientationFailed,
+    DuplicateOutputName,
+    PdfDocumentCreationFailed,
+    PdfPageCreationFailed,
+    ImagePlacementFailed,
+    PdfSaveFailed,
     Internal,
 }
 
@@ -75,6 +84,33 @@ impl From<ilikepdf_core::ApplicationError> for ApplicationError {
             ilikepdf_core::ApplicationErrorCode::EncodingFailed => {
                 ApplicationErrorCode::EncodingFailed
             }
+            ilikepdf_core::ApplicationErrorCode::UnsupportedImageFormat => {
+                ApplicationErrorCode::UnsupportedImageFormat
+            }
+            ilikepdf_core::ApplicationErrorCode::MalformedImage => {
+                ApplicationErrorCode::MalformedImage
+            }
+            ilikepdf_core::ApplicationErrorCode::ImageDecodeFailed => {
+                ApplicationErrorCode::ImageDecodeFailed
+            }
+            ilikepdf_core::ApplicationErrorCode::ImageOrientationFailed => {
+                ApplicationErrorCode::ImageOrientationFailed
+            }
+            ilikepdf_core::ApplicationErrorCode::DuplicateOutputName => {
+                ApplicationErrorCode::DuplicateOutputName
+            }
+            ilikepdf_core::ApplicationErrorCode::PdfDocumentCreationFailed => {
+                ApplicationErrorCode::PdfDocumentCreationFailed
+            }
+            ilikepdf_core::ApplicationErrorCode::PdfPageCreationFailed => {
+                ApplicationErrorCode::PdfPageCreationFailed
+            }
+            ilikepdf_core::ApplicationErrorCode::ImagePlacementFailed => {
+                ApplicationErrorCode::ImagePlacementFailed
+            }
+            ilikepdf_core::ApplicationErrorCode::PdfSaveFailed => {
+                ApplicationErrorCode::PdfSaveFailed
+            }
             ilikepdf_core::ApplicationErrorCode::Internal => ApplicationErrorCode::Internal,
             _ => ApplicationErrorCode::Internal,
         };
@@ -107,7 +143,7 @@ mod tests {
     fn maps_core_metadata_to_the_bridge_contract() {
         let info = get_application_info().expect("static application metadata should be valid");
 
-        assert_eq!(info.name, "ilikepdf");
+        assert_eq!(info.name, "iLikePDF");
         assert_eq!(info.version, env!("CARGO_PKG_VERSION"));
         assert!(info.local_only);
     }

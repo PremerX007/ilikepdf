@@ -2,6 +2,9 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:ilikepdf/src/app/pdf_to_image/pdf_to_image_workflow.dart';
+import 'package:ilikepdf/src/app/shared/destination_picker.dart';
+import 'package:ilikepdf/src/app/shared/file_drop_zone.dart';
+import 'package:ilikepdf/src/app/shared/tool_workspace.dart';
 
 class PdfToImagePanel extends StatefulWidget {
   const PdfToImagePanel({required this.workflow, super.key});
@@ -39,7 +42,7 @@ class _PdfToImagePanelState extends State<PdfToImagePanel> {
     } on Object {
       if (mounted) {
         setState(() {
-          _interactionError = 'This PDF could not be opened locally.';
+          _interactionError = 'This PDF could not be opened.';
         });
       }
     } finally {
@@ -134,7 +137,7 @@ class _PdfToImagePanelState extends State<PdfToImagePanel> {
     } on Object {
       if (mounted) {
         setState(() {
-          _interactionError = 'The PDF could not be exported locally.';
+          _interactionError = 'The PDF could not be exported.';
         });
       }
     } finally {
@@ -175,129 +178,128 @@ class _PdfToImagePanelState extends State<PdfToImagePanel> {
   @override
   Widget build(BuildContext context) {
     final selected = _selectedPdf;
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 900),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'PDF to images',
-                style: Theme.of(context).textTheme.headlineMedium,
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Export every PDF page as a PNG. Your document stays on this computer.',
-              ),
-              const SizedBox(height: 24),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: FilledButton.icon(
-                  onPressed: _isBusy ? null : _selectPdf,
-                  icon: const Icon(Icons.file_open_outlined),
-                  label: const Text('Select PDF'),
+    return ToolWorkspace(
+      title: 'PDF to Images',
+      description: 'Export every PDF page as a PNG image.',
+      workspace: selected == null
+          ? Material(
+              type: MaterialType.transparency,
+              child: InkWell(
+                key: const ValueKey('empty-pdf-workspace'),
+                onTap: _isBusy ? null : _selectPdf,
+                borderRadius: BorderRadius.circular(17),
+                child: EmptyFileDropContent(
+                  title: 'Choose a PDF to begin',
+                  formats: 'One PDF · Every page exported as PNG',
+                  actionLabel: 'Select PDF',
+                  onAction: _selectPdf,
+                  icon: Icons.picture_as_pdf_outlined,
+                  enabled: !_isBusy,
                 ),
               ),
-              if (_interactionError case final error?) ...[
-                const SizedBox(height: 16),
-                _FeedbackMessage(message: error, isError: true),
-              ],
-              if (selected != null) ...[
-                const SizedBox(height: 24),
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        _DocumentSummary(
-                          selected: selected,
-                          renderedPage: _renderedPage,
-                          isPreviewing: _isPreviewing,
-                          previewError: _previewError,
-                        ),
-                        const SizedBox(height: 24),
-                        Text(
-                          'Export quality',
-                          style: Theme.of(context).textTheme.titleSmall,
-                        ),
-                        const SizedBox(height: 8),
-                        _QualityOption(
-                          title: 'Standard',
-                          selected: _quality == PdfImageQuality.standard,
-                          onTap: _isBusy
-                              ? null
-                              : () => setState(() {
-                                  _quality = PdfImageQuality.standard;
-                                  _exportUpdate = null;
-                                }),
-                        ),
-                        const SizedBox(height: 8),
-                        _QualityOption(
-                          title: 'High',
-                          selected: _quality == PdfImageQuality.highQuality,
-                          onTap: _isBusy
-                              ? null
-                              : () => setState(() {
-                                  _quality = PdfImageQuality.highQuality;
-                                  _exportUpdate = null;
-                                }),
-                        ),
-                        const SizedBox(height: 24),
-                        Text(
-                          'Destination',
-                          style: Theme.of(context).textTheme.titleSmall,
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: SelectableText(
-                                _destinationDirectory ?? 'No folder selected',
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            OutlinedButton.icon(
-                              onPressed: _isBusy ? null : _chooseDestination,
-                              icon: const Icon(Icons.folder_open_outlined),
-                              label: const Text('Choose folder'),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 24),
-                        Wrap(
-                          spacing: 12,
-                          runSpacing: 12,
-                          children: [
-                            FilledButton.icon(
-                              onPressed:
-                                  _isBusy ||
-                                      selected.pageCount == 0 ||
-                                      _destinationDirectory == null
-                                  ? null
-                                  : _exportAllPages,
-                              icon: const Icon(Icons.collections_outlined),
-                              label: const Text('Convert to images'),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-              if (_exportUpdate case final update?) ...[
-                const SizedBox(height: 20),
-                _ExportFeedback(update: update),
-              ],
-            ],
-          ),
-        ),
+            )
+          : _buildDocumentWorkspace(selected),
+      settings: _buildSettings(selected),
+      status: _buildStatus(),
+      primaryAction: PrimaryToolAction(
+        key: const ValueKey('convert-to-images-action'),
+        label: 'Convert to images',
+        runningLabel: 'Converting…',
+        icon: Icons.collections_outlined,
+        isRunning: _isExporting,
+        onPressed:
+            _isBusy ||
+                selected == null ||
+                selected.pageCount == 0 ||
+                _destinationDirectory == null
+            ? null
+            : _exportAllPages,
       ),
     );
+  }
+
+  Widget _buildDocumentWorkspace(SelectedPdf selected) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Selected document',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ),
+              OutlinedButton.icon(
+                onPressed: _isBusy ? null : _selectPdf,
+                icon: const Icon(Icons.swap_horiz_rounded),
+                label: const Text('Select PDF'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          _DocumentSummary(
+            selected: selected,
+            renderedPage: _renderedPage,
+            isPreviewing: _isPreviewing,
+            previewError: _previewError,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSettings(SelectedPdf? selected) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text('Export settings', style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 18),
+        Text('Export quality', style: Theme.of(context).textTheme.titleSmall),
+        const SizedBox(height: 8),
+        _QualityOption(
+          title: 'Standard',
+          selected: _quality == PdfImageQuality.standard,
+          onTap: _isBusy
+              ? null
+              : () => setState(() {
+                  _quality = PdfImageQuality.standard;
+                  _exportUpdate = null;
+                }),
+        ),
+        const SizedBox(height: 8),
+        _QualityOption(
+          title: 'High',
+          selected: _quality == PdfImageQuality.highQuality,
+          onTap: _isBusy
+              ? null
+              : () => setState(() {
+                  _quality = PdfImageQuality.highQuality;
+                  _exportUpdate = null;
+                }),
+        ),
+        const SizedBox(height: 20),
+        const Divider(),
+        const SizedBox(height: 10),
+        DestinationPicker(
+          path: _destinationDirectory,
+          placeholder: 'Select a PDF to set a destination',
+          onChoose: _isBusy || selected == null ? null : _chooseDestination,
+        ),
+      ],
+    );
+  }
+
+  Widget? _buildStatus() {
+    if (_interactionError case final error?) {
+      return _FeedbackMessage(message: error, isError: true);
+    }
+    if (_exportUpdate case final update?) {
+      return _ExportFeedback(update: update);
+    }
+    return null;
   }
 }
 

@@ -38,6 +38,7 @@ pub(crate) enum Event {
     CoreInitialized,
     PdfDocumentOpenRequested,
     PdfImageExportRequested,
+    ImagePdfCreationRequested,
     PdfPageRenderRequested,
 }
 
@@ -48,6 +49,7 @@ impl Event {
             Self::CoreInitialized => "core_initialized",
             Self::PdfDocumentOpenRequested => "pdf_document_open_requested",
             Self::PdfImageExportRequested => "pdf_image_export_requested",
+            Self::ImagePdfCreationRequested => "image_pdf_creation_requested",
             Self::PdfPageRenderRequested => "pdf_page_render_requested",
         }
     }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:ilikepdf/src/app/app.dart';
+import 'package:ilikepdf/src/app/image_to_pdf/image_to_pdf_workflow.dart';
 import 'package:ilikepdf/src/app/pdf_to_image/pdf_to_image_workflow.dart';
 import 'package:ilikepdf/src/rust/api/application.dart';
 import 'package:ilikepdf/src/rust/frb_generated.dart';
@@ -16,6 +17,7 @@ Future<void> main() async {
       coreVersion: applicationInfo.version,
       localOnly: applicationInfo.localOnly,
       pdfToImageWorkflow: const LocalPdfToImageWorkflow(),
+      imageToPdfWorkflow: const LocalImageToPdfWorkflow(),
     ),
   );
 }

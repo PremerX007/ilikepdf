@@ -27,6 +27,15 @@ pub enum ApplicationErrorCode {
     OutputWriteFailed,
     RenderingFailed,
     EncodingFailed,
+    UnsupportedImageFormat,
+    MalformedImage,
+    ImageDecodeFailed,
+    ImageOrientationFailed,
+    DuplicateOutputName,
+    PdfDocumentCreationFailed,
+    PdfPageCreationFailed,
+    ImagePlacementFailed,
+    PdfSaveFailed,
     Internal,
 }
 

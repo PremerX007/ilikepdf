@@ -36,6 +36,11 @@ Flutter picker/widget -> typed bridge DTO -> core preview workflow
 Flutter export panel -> typed progress stream -> core PDF-to-image export job
   -> one page at a time at 150/300 DPI -> temporary PNG -> PDFium 7881
   -> atomic non-clobber publish -> progress/completion/structured failure
+
+Flutter image arranger -> typed progress stream -> core Image-to-PDF job
+  -> one decoded/oriented image at a time -> engine-neutral page layout
+  -> PDFium 7881 document/page/image objects -> private temporary PDF
+  -> atomic non-clobber publish -> progress/completion/structured failure
 ```
 
 Preview stays width-based for display use. Production export derives each page's
@@ -86,3 +91,58 @@ safe user-facing messages.
 Long-running Rust calls should remain asynchronous from Dart's perspective and
 must add progress and cancellation when introduced. Keep native execution behind
 boundaries that can later move into an isolated worker process.
+
+## Image-to-PDF behavior
+
+Image-to-PDF accepts `.jpg`, `.jpeg`, `.png`, and `.webp`. Both the extension and
+actual decodability are validated. Phase 1A.3 does not support TIFF, animated or
+multi-frame image semantics, image editing, OCR, compression controls, or page
+sizes beyond Fit, A4, and US Letter. Source metadata is read only when necessary
+for visual orientation and is not copied into the generated PDF.
+
+Each selected image creates exactly one page in the displayed order. Fit mode
+uses the visually oriented pixel dimensions and a deterministic logical 96 PPI
+mapping (`pixels / 96 * 72` points); it always has zero margin and ignores the
+stored standard-page orientation choice. A4 uses 210 x 297 mm and US Letter uses
+215.9 x 279.4 mm, swapped for landscape. Standard pages support 0 mm, 10 mm, or
+20 mm equal margins. Images are centered in the available content box, scaled up
+or down without distortion, and are never cropped.
+
+Merged mode creates one PDF whose name uses the stem of the first image in the
+final conversion order, regardless of the number of images. Reordering therefore
+changes both page order and the merged output name; `images.pdf` is not used.
+Separate mode starts from `<image-stem>.pdf` for each image directly in the
+selected directory. Duplicate stems and existing output names are resolved in
+current image order with the lowest available ` (n)` suffix, such as `scan.pdf`,
+`scan (1).pdf`, and `scan (2).pdf`. Name matching is case-insensitive to match
+Windows filesystem behavior. The first selected image's parent directory is the
+initial destination; an explicitly selected custom destination survives adding,
+removing, and reordering images.
+
+Existing outputs are never overwritten. Image-to-PDF publishes through an atomic
+no-clobber operation and retries with the next available running number if a name
+becomes occupied between allocation and publication. Merged output is published
+only after the complete document is saved successfully. Separate output validates
+every input before publication, then creates PDFs sequentially; structured
+failures include already-published paths if a later filesystem operation fails.
+Full-resolution decoded buffers are held one image at a time and released after
+placement.
+
+## Desktop tool workspace
+
+The desktop presentation opens on a home grid whose enabled cards navigate to
+implemented tools. Placeholder cards are visibly marked as coming soon and have
+no navigation action. Tool pages use a shared presentation scaffold: a scrollable
+file/page workspace on the left and a stable, tool-specific settings inspector on
+the right, with the primary action anchored at the inspector bottom. At narrow
+desktop widths the inspector moves below the workspace. Shared widgets accept
+typed content and callbacks and do not own conversion, validation, or filesystem
+state.
+
+Ordered workflows use reusable preview cards and a reorderable grid; the owning
+tool remains the single source of ordering state. Image-to-PDF wraps both empty
+and populated workspaces in one native file-drop target. Picker paths and dropped
+paths pass through the same `ImageToPdfWorkflow.prepareImagePaths()` ingestion
+method before entering the same core conversion path. Native Windows Explorer
+drop events are supplied by the pinned `desktop_drop 0.8.4` package because
+`file_selector` provides native pickers but not a desktop drop target.

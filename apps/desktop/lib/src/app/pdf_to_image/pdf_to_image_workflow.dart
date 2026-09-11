@@ -61,6 +61,15 @@ enum PdfExportProblemCode {
   outputWriteFailed,
   renderingFailed,
   encodingFailed,
+  unsupportedImageFormat,
+  malformedImage,
+  imageDecodeFailed,
+  imageOrientationFailed,
+  duplicateOutputName,
+  pdfDocumentCreationFailed,
+  pdfPageCreationFailed,
+  imagePlacementFailed,
+  pdfSaveFailed,
   internal,
 }
 
@@ -215,6 +224,24 @@ class LocalPdfToImageWorkflow implements PdfToImageWorkflow {
           PdfExportProblemCode.renderingFailed,
         rust_application.ApplicationErrorCode.encodingFailed =>
           PdfExportProblemCode.encodingFailed,
+        rust_application.ApplicationErrorCode.unsupportedImageFormat =>
+          PdfExportProblemCode.unsupportedImageFormat,
+        rust_application.ApplicationErrorCode.malformedImage =>
+          PdfExportProblemCode.malformedImage,
+        rust_application.ApplicationErrorCode.imageDecodeFailed =>
+          PdfExportProblemCode.imageDecodeFailed,
+        rust_application.ApplicationErrorCode.imageOrientationFailed =>
+          PdfExportProblemCode.imageOrientationFailed,
+        rust_application.ApplicationErrorCode.duplicateOutputName =>
+          PdfExportProblemCode.duplicateOutputName,
+        rust_application.ApplicationErrorCode.pdfDocumentCreationFailed =>
+          PdfExportProblemCode.pdfDocumentCreationFailed,
+        rust_application.ApplicationErrorCode.pdfPageCreationFailed =>
+          PdfExportProblemCode.pdfPageCreationFailed,
+        rust_application.ApplicationErrorCode.imagePlacementFailed =>
+          PdfExportProblemCode.imagePlacementFailed,
+        rust_application.ApplicationErrorCode.pdfSaveFailed =>
+          PdfExportProblemCode.pdfSaveFailed,
         rust_application.ApplicationErrorCode.internal =>
           PdfExportProblemCode.internal,
       },

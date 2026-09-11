@@ -47,6 +47,15 @@ enum ApplicationErrorCode {
   outputWriteFailed,
   renderingFailed,
   encodingFailed,
+  unsupportedImageFormat,
+  malformedImage,
+  imageDecodeFailed,
+  imageOrientationFailed,
+  duplicateOutputName,
+  pdfDocumentCreationFailed,
+  pdfPageCreationFailed,
+  imagePlacementFailed,
+  pdfSaveFailed,
   internal,
 }
 

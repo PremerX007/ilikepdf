@@ -1,6 +1,7 @@
 #![forbid(unsafe_code)]
 
 mod error;
+mod image_pdf;
 mod pdfium_engine;
 mod runtime;
 
@@ -10,6 +11,10 @@ use std::path::{Path, PathBuf};
 use pdfium_render::prelude::Pdfium;
 
 pub use error::{PdfError, PdfErrorKind};
+pub use image_pdf::{
+    ImageInfo, ImagePdfLayout, ImagePdfMargin, ImagePdfOrientation, ImagePdfPageInfo,
+    ImagePdfPageSize, ImagePdfRequest, ImagePdfResult,
+};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct PdfPageSize {
@@ -73,6 +78,19 @@ impl PdfRenderer {
     ) -> Result<RenderedPage, PdfError> {
         pdfium_engine::render_page_to_png_at_dpi(&self.pdfium, request, output)
     }
+
+    pub fn create_image_pdf<W: Write + 'static>(
+        &self,
+        request: ImagePdfRequest,
+        output: &mut W,
+        on_page_complete: impl FnMut(ImagePdfPageInfo),
+    ) -> Result<ImagePdfResult, PdfError> {
+        image_pdf::create_image_pdf(&self.pdfium, request, output, on_page_complete)
+    }
+
+    pub fn inspect_image(&self, source_path: &Path) -> Result<ImageInfo, PdfError> {
+        image_pdf::inspect_image(source_path)
+    }
 }
 
 pub fn inspect_document(source_path: &Path) -> Result<PdfDocumentInfo, PdfError> {
@@ -91,4 +109,16 @@ pub fn render_page_to_png_at_dpi(
     output: &mut (impl Write + Seek),
 ) -> Result<RenderedPage, PdfError> {
     pdfium_engine::render_page_to_png_at_dpi(runtime::pdfium()?, request, output)
+}
+
+pub fn create_image_pdf<W: Write + 'static>(
+    request: ImagePdfRequest,
+    output: &mut W,
+    on_page_complete: impl FnMut(ImagePdfPageInfo),
+) -> Result<ImagePdfResult, PdfError> {
+    image_pdf::create_image_pdf(runtime::pdfium()?, request, output, on_page_complete)
+}
+
+pub fn inspect_image(source_path: &Path) -> Result<ImageInfo, PdfError> {
+    image_pdf::inspect_image(source_path)
 }
