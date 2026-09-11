@@ -31,6 +31,13 @@ pub struct PdfRenderRequest {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PdfDpiRenderRequest {
+    pub source_path: PathBuf,
+    pub page_index: u32,
+    pub dpi: u16,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RenderedPage {
     pub width_pixels: u32,
     pub height_pixels: u32,
@@ -58,6 +65,14 @@ impl PdfRenderer {
     ) -> Result<RenderedPage, PdfError> {
         pdfium_engine::render_page_to_png(&self.pdfium, request, output)
     }
+
+    pub fn render_page_to_png_at_dpi(
+        &self,
+        request: PdfDpiRenderRequest,
+        output: &mut (impl Write + Seek),
+    ) -> Result<RenderedPage, PdfError> {
+        pdfium_engine::render_page_to_png_at_dpi(&self.pdfium, request, output)
+    }
 }
 
 pub fn inspect_document(source_path: &Path) -> Result<PdfDocumentInfo, PdfError> {
@@ -69,4 +84,11 @@ pub fn render_page_to_png(
     output: &mut (impl Write + Seek),
 ) -> Result<RenderedPage, PdfError> {
     pdfium_engine::render_page_to_png(runtime::pdfium()?, request, output)
+}
+
+pub fn render_page_to_png_at_dpi(
+    request: PdfDpiRenderRequest,
+    output: &mut (impl Write + Seek),
+) -> Result<RenderedPage, PdfError> {
+    pdfium_engine::render_page_to_png_at_dpi(runtime::pdfium()?, request, output)
 }

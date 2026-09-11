@@ -4,6 +4,7 @@
 // ignore_for_file: unused_import, unused_element, unnecessary_import, duplicate_ignore, invalid_use_of_internal_member, annotate_overrides, non_constant_identifier_names, curly_braces_in_flow_control_structures, prefer_const_literals_to_create_immutables, unused_field
 
 import 'api/application.dart';
+import 'api/pdf_export.dart';
 import 'api/pdf_preview.dart';
 
 import 'dart:async';
@@ -70,7 +71,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.13.0';
 
   @override
-  int get rustContentHash => -1811900869;
+  int get rustContentHash => 1576194715;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -82,6 +83,10 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
 }
 
 abstract class RustLibApi extends BaseApi {
+  Stream<PdfExportUpdate> crateApiPdfExportExportPdfToImages({
+    required ExportPdfToImagesRequest request,
+  });
+
   Future<ApplicationInfo> crateApiApplicationGetApplicationInfo();
 
   Future<void> crateApiLifecycleInitialize();
@@ -104,6 +109,50 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   });
 
   @override
+  Stream<PdfExportUpdate> crateApiPdfExportExportPdfToImages({
+    required ExportPdfToImagesRequest request,
+  }) {
+    final progressSink = RustStreamSink<PdfExportUpdate>();
+    unawaited(
+      handler.executeNormal(
+        NormalTask(
+          callFfi: (port_) {
+            final serializer = SseSerializer(generalizedFrbRustBinding);
+            sse_encode_box_autoadd_export_pdf_to_images_request(
+              request,
+              serializer,
+            );
+            sse_encode_StreamSink_pdf_export_update_Sse(
+              progressSink,
+              serializer,
+            );
+            pdeCallFfi(
+              generalizedFrbRustBinding,
+              serializer,
+              funcId: 1,
+              port: port_,
+            );
+          },
+          codec: SseCodec(
+            decodeSuccessData: sse_decode_unit,
+            decodeErrorData: null,
+          ),
+          constMeta: kCrateApiPdfExportExportPdfToImagesConstMeta,
+          argValues: [request, progressSink],
+          apiImpl: this,
+        ),
+      ),
+    );
+    return progressSink.stream;
+  }
+
+  TaskConstMeta get kCrateApiPdfExportExportPdfToImagesConstMeta =>
+      const TaskConstMeta(
+        debugName: "export_pdf_to_images",
+        argNames: ["request", "progressSink"],
+      );
+
+  @override
   Future<ApplicationInfo> crateApiApplicationGetApplicationInfo() {
     return handler.executeNormal(
       NormalTask(
@@ -112,7 +161,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 1,
+            funcId: 2,
             port: port_,
           );
         },
@@ -139,7 +188,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 2,
+            funcId: 3,
             port: port_,
           );
         },
@@ -169,7 +218,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 3,
+            funcId: 4,
             port: port_,
           );
         },
@@ -202,7 +251,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 4,
+            funcId: 5,
             port: port_,
           );
         },
@@ -219,6 +268,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   TaskConstMeta get kCrateApiPdfPreviewRenderPdfPageConstMeta =>
       const TaskConstMeta(debugName: "render_pdf_page", argNames: ["request"]);
+
+  @protected
+  AnyhowException dco_decode_AnyhowException(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return AnyhowException(raw as String);
+  }
+
+  @protected
+  RustStreamSink<PdfExportUpdate> dco_decode_StreamSink_pdf_export_update_Sse(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    throw UnimplementedError();
+  }
 
   @protected
   String dco_decode_String(dynamic raw) {
@@ -264,6 +327,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  ApplicationError dco_decode_box_autoadd_application_error(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_application_error(raw);
+  }
+
+  @protected
+  ExportPdfToImagesRequest dco_decode_box_autoadd_export_pdf_to_images_request(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_export_pdf_to_images_request(raw);
+  }
+
+  @protected
   PdfPageSize dco_decode_box_autoadd_pdf_page_size(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_pdf_page_size(raw);
@@ -275,6 +352,27 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_render_pdf_page_request(raw);
+  }
+
+  @protected
+  int dco_decode_box_autoadd_u_32(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as int;
+  }
+
+  @protected
+  ExportPdfToImagesRequest dco_decode_export_pdf_to_images_request(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return ExportPdfToImagesRequest(
+      sourcePath: dco_decode_String(arr[0]),
+      destinationDirectory: dco_decode_String(arr[1]),
+      quality: dco_decode_pdf_export_quality(arr[2]),
+    );
   }
 
   @protected
@@ -290,6 +388,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<String> dco_decode_list_String(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_String).toList();
+  }
+
+  @protected
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as Uint8List;
@@ -302,9 +406,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  ApplicationError? dco_decode_opt_box_autoadd_application_error(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_application_error(raw);
+  }
+
+  @protected
   PdfPageSize? dco_decode_opt_box_autoadd_pdf_page_size(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_box_autoadd_pdf_page_size(raw);
+  }
+
+  @protected
+  int? dco_decode_opt_box_autoadd_u_32(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_u_32(raw);
   }
 
   @protected
@@ -316,6 +432,34 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     return PdfDocumentInfo(
       pageCount: dco_decode_u_32(arr[0]),
       firstPageSize: dco_decode_opt_box_autoadd_pdf_page_size(arr[1]),
+    );
+  }
+
+  @protected
+  PdfExportQuality dco_decode_pdf_export_quality(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return PdfExportQuality.values[raw as int];
+  }
+
+  @protected
+  PdfExportStatus dco_decode_pdf_export_status(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return PdfExportStatus.values[raw as int];
+  }
+
+  @protected
+  PdfExportUpdate dco_decode_pdf_export_update(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 6)
+      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    return PdfExportUpdate(
+      status: dco_decode_pdf_export_status(arr[0]),
+      totalPageCount: dco_decode_u_32(arr[1]),
+      completedPageCount: dco_decode_u_32(arr[2]),
+      currentPage: dco_decode_opt_box_autoadd_u_32(arr[3]),
+      outputFiles: dco_decode_list_String(arr[4]),
+      error: dco_decode_opt_box_autoadd_application_error(arr[5]),
     );
   }
 
@@ -377,6 +521,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  AnyhowException sse_decode_AnyhowException(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var inner = sse_decode_String(deserializer);
+    return AnyhowException(inner);
+  }
+
+  @protected
+  RustStreamSink<PdfExportUpdate> sse_decode_StreamSink_pdf_export_update_Sse(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    throw UnimplementedError('Unreachable ()');
+  }
+
+  @protected
   String sse_decode_String(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var inner = sse_decode_list_prim_u_8_strict(deserializer);
@@ -420,6 +579,22 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  ApplicationError sse_decode_box_autoadd_application_error(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_application_error(deserializer));
+  }
+
+  @protected
+  ExportPdfToImagesRequest sse_decode_box_autoadd_export_pdf_to_images_request(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_export_pdf_to_images_request(deserializer));
+  }
+
+  @protected
   PdfPageSize sse_decode_box_autoadd_pdf_page_size(
     SseDeserializer deserializer,
   ) {
@@ -436,6 +611,27 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  int sse_decode_box_autoadd_u_32(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_u_32(deserializer));
+  }
+
+  @protected
+  ExportPdfToImagesRequest sse_decode_export_pdf_to_images_request(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_sourcePath = sse_decode_String(deserializer);
+    var var_destinationDirectory = sse_decode_String(deserializer);
+    var var_quality = sse_decode_pdf_export_quality(deserializer);
+    return ExportPdfToImagesRequest(
+      sourcePath: var_sourcePath,
+      destinationDirectory: var_destinationDirectory,
+      quality: var_quality,
+    );
+  }
+
+  @protected
   double sse_decode_f_64(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return deserializer.buffer.getFloat64();
@@ -445,6 +641,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   int sse_decode_i_32(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return deserializer.buffer.getInt32();
+  }
+
+  @protected
+  List<String> sse_decode_list_String(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <String>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_String(deserializer));
+    }
+    return ans_;
   }
 
   @protected
@@ -466,6 +674,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  ApplicationError? sse_decode_opt_box_autoadd_application_error(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_application_error(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
   PdfPageSize? sse_decode_opt_box_autoadd_pdf_page_size(
     SseDeserializer deserializer,
   ) {
@@ -473,6 +694,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
     if (sse_decode_bool(deserializer)) {
       return (sse_decode_box_autoadd_pdf_page_size(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  int? sse_decode_opt_box_autoadd_u_32(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_u_32(deserializer));
     } else {
       return null;
     }
@@ -488,6 +720,39 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     return PdfDocumentInfo(
       pageCount: var_pageCount,
       firstPageSize: var_firstPageSize,
+    );
+  }
+
+  @protected
+  PdfExportQuality sse_decode_pdf_export_quality(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var inner = sse_decode_i_32(deserializer);
+    return PdfExportQuality.values[inner];
+  }
+
+  @protected
+  PdfExportStatus sse_decode_pdf_export_status(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var inner = sse_decode_i_32(deserializer);
+    return PdfExportStatus.values[inner];
+  }
+
+  @protected
+  PdfExportUpdate sse_decode_pdf_export_update(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_status = sse_decode_pdf_export_status(deserializer);
+    var var_totalPageCount = sse_decode_u_32(deserializer);
+    var var_completedPageCount = sse_decode_u_32(deserializer);
+    var var_currentPage = sse_decode_opt_box_autoadd_u_32(deserializer);
+    var var_outputFiles = sse_decode_list_String(deserializer);
+    var var_error = sse_decode_opt_box_autoadd_application_error(deserializer);
+    return PdfExportUpdate(
+      status: var_status,
+      totalPageCount: var_totalPageCount,
+      completedPageCount: var_completedPageCount,
+      currentPage: var_currentPage,
+      outputFiles: var_outputFiles,
+      error: var_error,
     );
   }
 
@@ -552,6 +817,32 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_AnyhowException(
+    AnyhowException self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.message, serializer);
+  }
+
+  @protected
+  void sse_encode_StreamSink_pdf_export_update_Sse(
+    RustStreamSink<PdfExportUpdate> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(
+      self.setupAndSerialize(
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_pdf_export_update,
+          decodeErrorData: sse_decode_AnyhowException,
+        ),
+      ),
+      serializer,
+    );
+  }
+
+  @protected
   void sse_encode_String(String self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_list_prim_u_8_strict(utf8.encoder.convert(self), serializer);
@@ -594,6 +885,24 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_box_autoadd_application_error(
+    ApplicationError self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_application_error(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_export_pdf_to_images_request(
+    ExportPdfToImagesRequest self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_export_pdf_to_images_request(self, serializer);
+  }
+
+  @protected
   void sse_encode_box_autoadd_pdf_page_size(
     PdfPageSize self,
     SseSerializer serializer,
@@ -612,6 +921,23 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_box_autoadd_u_32(int self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_u_32(self, serializer);
+  }
+
+  @protected
+  void sse_encode_export_pdf_to_images_request(
+    ExportPdfToImagesRequest self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.sourcePath, serializer);
+    sse_encode_String(self.destinationDirectory, serializer);
+    sse_encode_pdf_export_quality(self.quality, serializer);
+  }
+
+  @protected
   void sse_encode_f_64(double self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     serializer.buffer.putFloat64(self);
@@ -621,6 +947,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   void sse_encode_i_32(int self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     serializer.buffer.putInt32(self);
+  }
+
+  @protected
+  void sse_encode_list_String(List<String> self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_String(item, serializer);
+    }
   }
 
   @protected
@@ -644,6 +979,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_opt_box_autoadd_application_error(
+    ApplicationError? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_application_error(self, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_opt_box_autoadd_pdf_page_size(
     PdfPageSize? self,
     SseSerializer serializer,
@@ -657,6 +1005,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_opt_box_autoadd_u_32(int? self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_u_32(self, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_pdf_document_info(
     PdfDocumentInfo self,
     SseSerializer serializer,
@@ -664,6 +1022,38 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_u_32(self.pageCount, serializer);
     sse_encode_opt_box_autoadd_pdf_page_size(self.firstPageSize, serializer);
+  }
+
+  @protected
+  void sse_encode_pdf_export_quality(
+    PdfExportQuality self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
+  void sse_encode_pdf_export_status(
+    PdfExportStatus self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
+  void sse_encode_pdf_export_update(
+    PdfExportUpdate self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_pdf_export_status(self.status, serializer);
+    sse_encode_u_32(self.totalPageCount, serializer);
+    sse_encode_u_32(self.completedPageCount, serializer);
+    sse_encode_opt_box_autoadd_u_32(self.currentPage, serializer);
+    sse_encode_list_String(self.outputFiles, serializer);
+    sse_encode_opt_box_autoadd_application_error(self.error, serializer);
   }
 
   @protected

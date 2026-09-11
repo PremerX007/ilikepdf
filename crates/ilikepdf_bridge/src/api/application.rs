@@ -22,8 +22,11 @@ pub enum ApplicationErrorCode {
     PageOutOfBounds,
     InvalidRequest,
     PdfRuntimeUnavailable,
+    InvalidOutputDirectory,
+    PermissionDenied,
     OutputNotWritable,
     OutputAlreadyExists,
+    OutputWriteFailed,
     RenderingFailed,
     EncodingFailed,
     Internal,
@@ -51,11 +54,20 @@ impl From<ilikepdf_core::ApplicationError> for ApplicationError {
             ilikepdf_core::ApplicationErrorCode::PdfRuntimeUnavailable => {
                 ApplicationErrorCode::PdfRuntimeUnavailable
             }
+            ilikepdf_core::ApplicationErrorCode::InvalidOutputDirectory => {
+                ApplicationErrorCode::InvalidOutputDirectory
+            }
+            ilikepdf_core::ApplicationErrorCode::PermissionDenied => {
+                ApplicationErrorCode::PermissionDenied
+            }
             ilikepdf_core::ApplicationErrorCode::OutputNotWritable => {
                 ApplicationErrorCode::OutputNotWritable
             }
             ilikepdf_core::ApplicationErrorCode::OutputAlreadyExists => {
                 ApplicationErrorCode::OutputAlreadyExists
+            }
+            ilikepdf_core::ApplicationErrorCode::OutputWriteFailed => {
+                ApplicationErrorCode::OutputWriteFailed
             }
             ilikepdf_core::ApplicationErrorCode::RenderingFailed => {
                 ApplicationErrorCode::RenderingFailed

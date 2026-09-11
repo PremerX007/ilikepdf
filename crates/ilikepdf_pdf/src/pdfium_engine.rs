@@ -5,7 +5,12 @@ use std::path::Path;
 use image::ImageFormat;
 use pdfium_render::prelude::{PdfRenderConfig, Pdfium};
 
-use crate::{PdfDocumentInfo, PdfError, PdfErrorKind, PdfPageSize, PdfRenderRequest, RenderedPage};
+use crate::{
+    PdfDocumentInfo, PdfDpiRenderRequest, PdfError, PdfErrorKind, PdfPageSize, PdfRenderRequest,
+    RenderedPage,
+};
+
+const PDF_POINTS_PER_INCH: f32 = 72.0;
 
 pub(crate) fn inspect_document(
     pdfium: &Pdfium,
@@ -35,8 +40,51 @@ pub(crate) fn render_page_to_png(
         .pages()
         .get(page_index)
         .map_err(|_| PdfError::new(PdfErrorKind::PageOutOfBounds))?;
+    render_page_with_config(
+        &page,
+        PdfRenderConfig::new().set_target_width(target_width),
+        output,
+    )
+}
+
+pub(crate) fn render_page_to_png_at_dpi(
+    pdfium: &Pdfium,
+    request: PdfDpiRenderRequest,
+    output: &mut (impl Write + Seek),
+) -> Result<RenderedPage, PdfError> {
+    validate_source(&request.source_path)?;
+    if request.dpi == 0 {
+        return Err(PdfError::new(PdfErrorKind::RenderFailed));
+    }
+
+    let document = pdfium
+        .load_pdf_from_file(&request.source_path, None)
+        .map_err(|_| PdfError::new(PdfErrorKind::InvalidDocument))?;
+    let page_index = i32::try_from(request.page_index)
+        .map_err(|_| PdfError::new(PdfErrorKind::PageOutOfBounds))?;
+    if page_index >= document.pages().len() {
+        return Err(PdfError::new(PdfErrorKind::PageOutOfBounds));
+    }
+    let page = document
+        .pages()
+        .get(page_index)
+        .map_err(|_| PdfError::new(PdfErrorKind::PageOutOfBounds))?;
+    let scale = f32::from(request.dpi) / PDF_POINTS_PER_INCH;
+
+    render_page_with_config(
+        &page,
+        PdfRenderConfig::new().scale_page_by_factor(scale),
+        output,
+    )
+}
+
+fn render_page_with_config(
+    page: &pdfium_render::prelude::PdfPage<'_>,
+    config: PdfRenderConfig,
+    output: &mut (impl Write + Seek),
+) -> Result<RenderedPage, PdfError> {
     let bitmap = page
-        .render_with_config(&PdfRenderConfig::new().set_target_width(target_width))
+        .render_with_config(&config)
         .map_err(|_| PdfError::new(PdfErrorKind::RenderFailed))?;
     let width_pixels =
         u32::try_from(bitmap.width()).map_err(|_| PdfError::new(PdfErrorKind::RenderFailed))?;

@@ -27,12 +27,29 @@ Rust bridge adapter -> Rust application core -> native/PDF infrastructure
 - `third_party/pdfium/windows/x64/` contains the pinned, licensed runtime. CMake
   copies `pdfium.dll` beside the Windows executable and installs its notices.
 
-The current PDF path is intentionally narrow:
+The PDF paths are intentionally separated by purpose:
 
 ```text
 Flutter picker/widget -> typed bridge DTO -> core preview workflow
   -> temporary PNG -> ilikepdf_pdf -> PDFium 7881 -> atomic publish -> Flutter image
+
+Flutter export panel -> typed progress stream -> core PDF-to-image export job
+  -> one page at a time at 150/300 DPI -> temporary PNG -> PDFium 7881
+  -> atomic non-clobber publish -> progress/completion/structured failure
 ```
+
+Preview stays width-based for display use. Production export derives each page's
+pixel dimensions from its rotated PDF point dimensions and selected DPI. Export is
+sequential so rendered page memory and native resources are released before the
+next page begins; completed output paths remain available if a later page fails.
+
+PDF-to-image output follows a stable, page-count-based convention. A one-page
+document writes `<source-stem>-page-0001.png` directly into the selected
+destination. A multi-page document creates `<destination>/<source-stem>/` and
+writes `<source-stem>-page-0001.png`, `<source-stem>-page-0002.png`, and so on
+inside it. Page numbers use at least four digits, Unicode source stems are
+preserved, and an existing required output file or document folder is treated as
+a collision rather than overwritten or reused.
 
 Opening and rendering are worker-pool calls from Dart. A later job boundary can
 move the native adapter into a worker process without changing presentation

@@ -14,7 +14,7 @@ Future<ApplicationInfo> getApplicationInfo() =>
     RustLib.instance.api.crateApiApplicationGetApplicationInfo();
 
 /// Structured errors exposed to Dart. Add error codes instead of returning raw strings.
-class ApplicationError implements FrbException {
+class ApplicationError {
   final ApplicationErrorCode code;
   final String message;
 
@@ -40,8 +40,11 @@ enum ApplicationErrorCode {
   pageOutOfBounds,
   invalidRequest,
   pdfRuntimeUnavailable,
+  invalidOutputDirectory,
+  permissionDenied,
   outputNotWritable,
   outputAlreadyExists,
+  outputWriteFailed,
   renderingFailed,
   encodingFailed,
   internal,

@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
 
-import 'package:ilikepdf/src/app/pdf_preview/pdf_preview_panel.dart';
-import 'package:ilikepdf/src/app/pdf_preview/pdf_preview_workflow.dart';
+import 'package:ilikepdf/src/app/pdf_to_image/pdf_to_image_panel.dart';
+import 'package:ilikepdf/src/app/pdf_to_image/pdf_to_image_workflow.dart';
 
 class IlikepdfApp extends StatelessWidget {
   const IlikepdfApp({
     required this.applicationName,
     required this.coreVersion,
     required this.localOnly,
-    required this.pdfWorkflow,
+    required this.pdfToImageWorkflow,
     super.key,
   });
 
   final String applicationName;
   final String coreVersion;
   final bool localOnly;
-  final PdfPreviewWorkflow pdfWorkflow;
+  final PdfToImageWorkflow pdfToImageWorkflow;
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +28,7 @@ class IlikepdfApp extends StatelessWidget {
       ),
       home: Scaffold(
         appBar: AppBar(title: Text(applicationName)),
-        body: PdfPreviewPanel(workflow: pdfWorkflow),
+        body: PdfToImagePanel(workflow: pdfToImageWorkflow),
         bottomNavigationBar: Padding(
           padding: const EdgeInsets.all(12),
           child: Text(

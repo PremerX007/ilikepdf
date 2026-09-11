@@ -3,7 +3,8 @@ use std::io::Cursor;
 use std::path::{Path, PathBuf};
 use std::sync::OnceLock;
 
-use ilikepdf_pdf::{PdfErrorKind, PdfRenderRequest, PdfRenderer};
+use ilikepdf_pdf::{PdfDpiRenderRequest, PdfErrorKind, PdfRenderRequest, PdfRenderer};
+use image::GenericImageView;
 
 fn fixture(name: &str) -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -66,6 +67,31 @@ fn renders_first_page_to_a_valid_png_without_changing_source() {
 }
 
 #[test]
+fn renders_each_page_at_150_dpi_using_its_point_dimensions() {
+    let source = fixture("two_page.pdf");
+
+    let first = render_at_dpi(&source, 0, 150);
+    let second = render_at_dpi(&source, 1, 150);
+
+    assert_eq!(first, (625, 417));
+    assert_eq!(second, (417, 625));
+}
+
+#[test]
+fn renders_300_dpi_larger_than_150_dpi_with_the_same_aspect_ratio() {
+    let source = fixture("two_page.pdf");
+
+    let standard = render_at_dpi(&source, 0, 150);
+    let high_quality = render_at_dpi(&source, 0, 300);
+
+    assert_eq!(high_quality, (1250, 833));
+    assert!(high_quality.0 > standard.0);
+    assert!(high_quality.1 > standard.1);
+    assert!((standard.0 as f64 / standard.1 as f64 - 1.5).abs() < 0.01);
+    assert!((high_quality.0 as f64 / high_quality.1 as f64 - 1.5).abs() < 0.01);
+}
+
+#[test]
 fn rejects_page_index_outside_document() {
     let mut output = Cursor::new(Vec::new());
     let error = renderer()
@@ -111,4 +137,27 @@ fn rejects_malformed_pdf() {
         .expect_err("malformed data should be rejected");
 
     assert_eq!(error.kind, PdfErrorKind::InvalidDocument);
+}
+
+fn render_at_dpi(source: &Path, page_index: u32, dpi: u16) -> (u32, u32) {
+    let mut output = Cursor::new(Vec::new());
+    let rendered = renderer()
+        .render_page_to_png_at_dpi(
+            PdfDpiRenderRequest {
+                source_path: source.to_path_buf(),
+                page_index,
+                dpi,
+            },
+            &mut output,
+        )
+        .expect("page should render at the requested DPI");
+    let decoded =
+        image::load_from_memory_with_format(&output.into_inner(), image::ImageFormat::Png)
+            .expect("rendered bytes should decode as PNG");
+
+    assert_eq!(
+        decoded.dimensions(),
+        (rendered.width_pixels, rendered.height_pixels)
+    );
+    decoded.dimensions()
 }
