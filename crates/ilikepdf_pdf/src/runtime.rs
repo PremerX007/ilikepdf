@@ -31,14 +31,4 @@ pub(crate) fn load(library_path: &Path) -> Result<Pdfium, PdfError> {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn missing_runtime_is_a_structured_error() {
-        let error = load(Path::new("definitely-missing-pdfium.dll"))
-            .expect_err("a missing runtime must not bind");
-
-        assert_eq!(error.kind, PdfErrorKind::RuntimeUnavailable);
-    }
-}
+mod tests;

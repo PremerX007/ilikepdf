@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use crate::frb_generated::StreamSink;
 
 use super::application::ApplicationError;
+use super::mapping::paths_to_strings;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PdfExportQuality {
@@ -101,14 +102,8 @@ pub fn export_pdf_to_images(
         ilikepdf_core::ExportPdfToImagesRequest {
             source_path: PathBuf::from(request.source_path),
             destination_directory: PathBuf::from(request.destination_directory),
-            quality: match request.quality {
-                PdfExportQuality::Standard => ilikepdf_core::PdfExportQuality::Standard,
-                PdfExportQuality::HighQuality => ilikepdf_core::PdfExportQuality::HighQuality,
-            },
-            format: match request.format {
-                PdfExportFormat::Png => ilikepdf_core::PdfExportFormat::Png,
-                PdfExportFormat::Jpg => ilikepdf_core::PdfExportFormat::Jpg,
-            },
+            quality: request.quality.into(),
+            format: request.format.into(),
         },
         |progress| {
             let _ = progress_sink.add(PdfExportUpdate {
@@ -157,23 +152,10 @@ pub fn export_pdf_batch_to_images(
                 .into_iter()
                 .map(PathBuf::from)
                 .collect(),
-            destination_mode: match request.destination_mode {
-                PdfBatchDestinationMode::NextToSourceFiles => {
-                    ilikepdf_core::PdfBatchDestinationMode::NextToSourceFiles
-                }
-                PdfBatchDestinationMode::CustomFolder => {
-                    ilikepdf_core::PdfBatchDestinationMode::CustomFolder
-                }
-            },
+            destination_mode: request.destination_mode.into(),
             custom_destination_directory: request.custom_destination_directory.map(PathBuf::from),
-            quality: match request.quality {
-                PdfExportQuality::Standard => ilikepdf_core::PdfExportQuality::Standard,
-                PdfExportQuality::HighQuality => ilikepdf_core::PdfExportQuality::HighQuality,
-            },
-            format: match request.format {
-                PdfExportFormat::Png => ilikepdf_core::PdfExportFormat::Png,
-                PdfExportFormat::Jpg => ilikepdf_core::PdfExportFormat::Jpg,
-            },
+            quality: request.quality.into(),
+            format: request.format.into(),
         },
         |progress| {
             let _ = progress_sink.add(PdfBatchExportUpdate {
@@ -242,13 +224,6 @@ pub fn export_pdf_batch_to_images(
         },
     };
     let _ = progress_sink.add(update);
-}
-
-fn paths_to_strings(paths: Vec<PathBuf>) -> Vec<String> {
-    paths
-        .into_iter()
-        .map(|path| path.to_string_lossy().into_owned())
-        .collect()
 }
 
 fn map_batch_documents(

@@ -27,6 +27,30 @@ Rust bridge adapter -> Rust application core -> native/PDF infrastructure
 - `third_party/pdfium/windows/x64/` contains the pinned, licensed runtime. CMake
   copies `pdfium.dll` beside the Windows executable and installs its notices.
 
+Rust unit tests remain `#[cfg(test)]` child modules under `src/` so they can
+exercise private implementation details without widening production visibility.
+To keep production modules readable, a module such as `foo.rs` declares only
+`mod tests;`, while its unit-test implementation lives in `foo/tests.rs`.
+Crate-level `tests/` directories remain reserved for integration tests that use
+the same public API available to external consumers.
+
+`ilikepdf_core::lib.rs` is the only supported public façade for application
+workflows. Internal module paths are intentionally private so feature code can be
+reorganized without creating a second API or changing bridge consumers.
+
+### Rust change map
+
+| Change | Primary owner |
+| --- | --- |
+| Dart-visible request, result, progress, or error shape | `ilikepdf_bridge/src/api/` |
+| PDF preview, single export, or batch behavior | `ilikepdf_core/src/application/pdf_to_images/` |
+| Image-to-PDF workflow and output naming | `ilikepdf_core/src/application/image_to_pdf/` |
+| Destination validation, collision policy, and atomic publication | `ilikepdf_core/src/application/output/` |
+| PDFium page rendering and document inspection | `ilikepdf_pdf/src/pdfium_engine.rs` |
+| PNG/JPG encoding policy | `ilikepdf_pdf/src/pdfium_engine/image_encoding.rs` |
+| Image decoding, layout, and PDFium image placement | `ilikepdf_pdf/src/image_pdf/` |
+| Bundled PDFium loading | `ilikepdf_pdf/src/runtime.rs` |
+
 The PDF paths are intentionally separated by purpose:
 
 ```text

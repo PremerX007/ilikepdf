@@ -1,4 +1,9 @@
 #![forbid(unsafe_code)]
+//! Native PDF infrastructure for rendering pages and creating image-backed PDFs.
+//!
+//! The free functions use the bundled application runtime. `PdfRenderer` is the
+//! explicit-runtime façade used by native integration tests and alternate hosts;
+//! both paths delegate to the same private PDFium implementation modules.
 
 mod error;
 mod image_pdf;

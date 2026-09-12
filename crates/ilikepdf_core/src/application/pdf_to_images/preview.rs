@@ -1,39 +1,14 @@
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use ilikepdf_pdf::PdfRenderRequest;
 
-use super::image_output::PendingImageOutput;
+use crate::application::output::PendingImageOutput;
 use crate::{ApplicationError, ApplicationErrorCode, ApplicationResult};
 
 const MIN_RENDER_WIDTH: u32 = 64;
 const MAX_RENDER_WIDTH: u32 = 8192;
 
-#[derive(Debug, Clone, PartialEq)]
-pub struct PdfPageSize {
-    pub width_points: f64,
-    pub height_points: f64,
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct PdfDocumentInfo {
-    pub page_count: u32,
-    pub first_page_size: Option<PdfPageSize>,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct RenderPdfPageRequest {
-    pub source_path: PathBuf,
-    pub page_index: u32,
-    pub target_width: u32,
-    pub destination_path: Option<PathBuf>,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct RenderPdfPageResult {
-    pub output_path: PathBuf,
-    pub width_pixels: u32,
-    pub height_pixels: u32,
-}
+use super::model::{PdfDocumentInfo, PdfPageSize, RenderPdfPageRequest, RenderPdfPageResult};
 
 pub fn inspect_pdf_document(source_path: &Path) -> ApplicationResult<PdfDocumentInfo> {
     let info = ilikepdf_pdf::inspect_document(source_path).map_err(ApplicationError::from)?;
@@ -75,19 +50,4 @@ pub fn render_pdf_page(request: RenderPdfPageRequest) -> ApplicationResult<Rende
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn rejects_unsafe_render_widths_before_creating_output() {
-        let error = render_pdf_page(RenderPdfPageRequest {
-            source_path: PathBuf::from("not-opened.pdf"),
-            page_index: 0,
-            target_width: 63,
-            destination_path: None,
-        })
-        .expect_err("small render widths should be rejected");
-
-        assert_eq!(error.code, ApplicationErrorCode::InvalidRequest);
-    }
-}
+mod tests;

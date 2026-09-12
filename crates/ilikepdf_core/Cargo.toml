@@ -10,4 +10,4 @@ path = "src/lib.rs"
 
 [dependencies]
 ilikepdf_pdf = { path = "../ilikepdf_pdf" }
-tempfile = "3.27.0"
+tempfile.workspace = true

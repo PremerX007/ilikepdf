@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use crate::frb_generated::StreamSink;
 
 use super::application::ApplicationError;
+use super::mapping::paths_to_strings;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ImagePdfPageSize {
@@ -66,20 +67,9 @@ pub fn create_pdfs_from_images(
                 .map(PathBuf::from)
                 .collect(),
             destination_directory: PathBuf::from(request.destination_directory),
-            page_size: match request.page_size {
-                ImagePdfPageSize::Fit => ilikepdf_core::ImagePdfPageSize::Fit,
-                ImagePdfPageSize::A4 => ilikepdf_core::ImagePdfPageSize::A4,
-                ImagePdfPageSize::UsLetter => ilikepdf_core::ImagePdfPageSize::UsLetter,
-            },
-            orientation: match request.orientation {
-                ImagePdfOrientation::Portrait => ilikepdf_core::ImagePdfOrientation::Portrait,
-                ImagePdfOrientation::Landscape => ilikepdf_core::ImagePdfOrientation::Landscape,
-            },
-            margin: match request.margin {
-                ImagePdfMargin::None => ilikepdf_core::ImagePdfMargin::None,
-                ImagePdfMargin::Small => ilikepdf_core::ImagePdfMargin::Small,
-                ImagePdfMargin::Big => ilikepdf_core::ImagePdfMargin::Big,
-            },
+            page_size: request.page_size.into(),
+            orientation: request.orientation.into(),
+            margin: request.margin.into(),
             merge: request.merge,
         },
         |progress| {
@@ -113,11 +103,4 @@ pub fn create_pdfs_from_images(
         },
     };
     let _ = progress_sink.add(update);
-}
-
-fn paths_to_strings(paths: Vec<PathBuf>) -> Vec<String> {
-    paths
-        .into_iter()
-        .map(|path| path.to_string_lossy().into_owned())
-        .collect()
 }
