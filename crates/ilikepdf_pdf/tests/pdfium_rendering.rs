@@ -104,7 +104,7 @@ fn renders_a_page_to_a_valid_jpg_at_the_requested_dpi() {
             PdfDpiRenderRequest {
                 source_path: source.clone(),
                 page_index: 0,
-                dpi: 150,
+                dpi: 300,
             },
             PdfImageFormat::Jpg,
             &mut output,
@@ -115,7 +115,7 @@ fn renders_a_page_to_a_valid_jpg_at_the_requested_dpi() {
         .expect("rendered bytes should decode as JPG");
 
     assert_eq!(&bytes[..3], b"\xff\xd8\xff");
-    assert_eq!(decoded.dimensions(), (625, 417));
+    assert_eq!(decoded.dimensions(), (1250, 833));
     assert_eq!(
         decoded.dimensions(),
         (rendered.width_pixels, rendered.height_pixels)
@@ -123,6 +123,38 @@ fn renders_a_page_to_a_valid_jpg_at_the_requested_dpi() {
     assert_eq!(
         fs::read(source).expect("fixture should remain readable"),
         before
+    );
+}
+
+#[test]
+fn jpg_quality_preserves_the_rendered_page_with_high_fidelity() {
+    let source = fixture("two_page.pdf");
+    let png_bytes = render_image_bytes(&source, PdfImageFormat::Png);
+    let jpg_bytes = render_image_bytes(&source, PdfImageFormat::Jpg);
+    let png = image::load_from_memory_with_format(&png_bytes, image::ImageFormat::Png)
+        .expect("rendered PNG should decode")
+        .into_rgb8();
+    let jpg = image::load_from_memory_with_format(&jpg_bytes, image::ImageFormat::Jpeg)
+        .expect("rendered JPG should decode")
+        .into_rgb8();
+
+    assert_eq!(jpg.dimensions(), png.dimensions());
+    let squared_error = png
+        .as_raw()
+        .iter()
+        .zip(jpg.as_raw())
+        .map(|(expected, actual)| {
+            let difference = f64::from(*expected) - f64::from(*actual);
+            difference * difference
+        })
+        .sum::<f64>();
+    let mean_squared_error = squared_error / png.as_raw().len() as f64;
+    let peak_signal_to_noise_ratio =
+        10.0 * (f64::from(u8::MAX).powi(2) / mean_squared_error).log10();
+
+    assert!(
+        peak_signal_to_noise_ratio >= 38.0,
+        "quality-90 JPG PSNR {peak_signal_to_noise_ratio:.2} dB fell below the fidelity floor"
     );
 }
 
@@ -195,4 +227,20 @@ fn render_at_dpi(source: &Path, page_index: u32, dpi: u16) -> (u32, u32) {
         (rendered.width_pixels, rendered.height_pixels)
     );
     decoded.dimensions()
+}
+
+fn render_image_bytes(source: &Path, format: PdfImageFormat) -> Vec<u8> {
+    let mut output = Cursor::new(Vec::new());
+    renderer()
+        .render_page_to_image_at_dpi(
+            PdfDpiRenderRequest {
+                source_path: source.to_path_buf(),
+                page_index: 0,
+                dpi: 150,
+            },
+            format,
+            &mut output,
+        )
+        .expect("page should render at the requested format");
+    output.into_inner()
 }

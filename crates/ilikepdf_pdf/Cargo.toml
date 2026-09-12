@@ -10,6 +10,7 @@ path = "src/lib.rs"
 
 [dependencies]
 image = { version = "0.25.10", default-features = false, features = ["jpeg", "png", "webp"] }
+jpeg-rusturbo = "=0.9.2"
 pdfium-render = { version = "=0.9.4", default-features = false, features = ["image_025", "pdfium_7881", "thread_safe"] }
 
 [dev-dependencies]

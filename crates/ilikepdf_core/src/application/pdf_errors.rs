@@ -35,11 +35,11 @@ impl From<PdfError> for ApplicationError {
             ),
             PdfErrorKind::EncodeFailed => (
                 ApplicationErrorCode::EncodingFailed,
-                "The rendered page could not be encoded as PNG",
+                "The rendered page could not be encoded as an image",
             ),
             PdfErrorKind::OutputWriteFailed => (
                 ApplicationErrorCode::OutputWriteFailed,
-                "The PNG data could not be written",
+                "The image data could not be written",
             ),
             PdfErrorKind::UnsupportedImageFormat => (
                 ApplicationErrorCode::UnsupportedImageFormat,

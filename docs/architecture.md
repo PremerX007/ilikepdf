@@ -56,6 +56,11 @@ compact page-1 thumbnail, while production export continues to render each page
 independently at Standard 150 DPI or High 300 DPI. Export format is an independent
 typed choice: PNG is the default lossless output, while JPG uses fixed quality 90.
 Preview rendering remains PNG-only and never determines the export format.
+Production PNG uses the `png` crate's fast lossless encoder. JPG uses a
+runtime-dispatched SIMD encoder with 4:4:4 chroma sampling so colored text and
+graphics retain full chroma resolution. Both encoders consume PDFium's RGBA
+buffer directly where supported and write through a buffered stream before the
+temporary output is flushed and atomically published.
 
 The default `Next to source files` destination resolves a separate base directory
 from each source PDF. `Custom folder` uses one selected base directory for every
