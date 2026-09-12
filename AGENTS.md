@@ -6,13 +6,23 @@
 state under `lib/src/app/` and generated bridge code under `lib/src/rust/`.
 `crates/ilikepdf_bridge/` is the thin FFI adapter, `crates/ilikepdf_core/` owns
 application and filesystem workflows, and `crates/ilikepdf_pdf/` isolates native
-PDF engines. Vendored runtimes and notices live under `third_party/`. Keep tests
+rendering/creation infrastructure. `crates/ilikepdf_qpdf/` owns the current qpdf
+CLI structural-PDF adapter, process runner, and bundled-runtime resolver. Vendored
+runtimes and notices live under `third_party/`. Keep tests
 in each ecosystem's `test/`, `integration_test/`, or Rust test modules. Read
 `docs/architecture.md` before adding a layer or dependency.
 
 Flutter must never manipulate PDFs, start subprocesses, or invoke PDFium, qpdf,
 or native libraries directly. Use operation-focused Rust modules; do not create
 catch-all `utils`, `helpers`, `pdf.rs`, or `service.rs` files.
+
+Structural PDF application logic must depend on `StructuralPdfEngine`, never on
+qpdf executable names, command switches, process output, or exit codes. Keep all
+process-specific concepts and platform-specific runtime layout inside qpdf
+infrastructure. Invoke bundled qpdf directly without a shell and never resolve it
+from system `PATH`. Never log passwords, full qpdf command lines, document paths,
+or raw diagnostics; future secret input belongs in the Rust infrastructure
+boundary and must avoid unnecessary command-line exposure.
 
 ## Build, Test, and Development Commands
 
@@ -25,8 +35,8 @@ all generated changes. Before a pull request, run:
 - `cargo test --workspace --all-targets`
 - `dart format --output=none --set-exit-if-changed lib test integration_test hook`
 - `flutter analyze`, `flutter test`, and `flutter build windows --release`
-- Windows integration tests in `integration_test/`, including `app_info_test.dart`
-  and `pdf_preview_test.dart`
+- Windows integration tests in `integration_test/`, including `app_info_test.dart`,
+  `pdf_preview_test.dart`, and `image_to_pdf_test.dart`
 
 Codex and the interactive Windows user can have isolated views of the user-wide
 Pub cache even when both paths display as `%LOCALAPPDATA%\Pub\Cache`. After Codex

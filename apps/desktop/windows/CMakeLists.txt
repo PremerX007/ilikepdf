@@ -74,6 +74,10 @@ set(INSTALL_BUNDLE_LIB_DIR "${CMAKE_INSTALL_PREFIX}")
 set(PDFIUM_DISTRIBUTION_DIR
   "${CMAKE_CURRENT_SOURCE_DIR}/../../../third_party/pdfium/windows/x64")
 set(PDFIUM_RUNTIME "${PDFIUM_DISTRIBUTION_DIR}/pdfium.dll")
+set(QPDF_SOURCE_ROOT
+  "${CMAKE_CURRENT_SOURCE_DIR}/../../../third_party/qpdf")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/qpdf_runtime.cmake")
+configure_qpdf_runtime("${QPDF_SOURCE_ROOT}")
 
 if(NOT EXISTS "${PDFIUM_RUNTIME}")
   message(FATAL_ERROR "Pinned PDFium runtime is missing: ${PDFIUM_RUNTIME}")
@@ -98,6 +102,20 @@ install(FILES
   COMPONENT Runtime)
 install(DIRECTORY "${PDFIUM_DISTRIBUTION_DIR}/licenses/"
   DESTINATION "${INSTALL_BUNDLE_DATA_DIR}/third_party/pdfium/licenses"
+  COMPONENT Runtime)
+
+set(QPDF_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/runtime/qpdf")
+install(FILES ${QPDF_RUNTIME_FILES}
+  DESTINATION "${QPDF_INSTALL_DIR}/bin"
+  COMPONENT Runtime)
+install(FILES ${QPDF_LICENSE_FILES}
+  DESTINATION "${QPDF_INSTALL_DIR}/licenses"
+  COMPONENT Runtime)
+install(FILES ${QPDF_PROVENANCE_FILES}
+  DESTINATION "${QPDF_INSTALL_DIR}/provenance"
+  COMPONENT Runtime)
+install(FILES "${QPDF_RUNTIME_MANIFEST}" "${QPDF_RUNTIME_README}"
+  DESTINATION "${QPDF_INSTALL_DIR}"
   COMPONENT Runtime)
 
 if(PLUGIN_BUNDLED_LIBRARIES)

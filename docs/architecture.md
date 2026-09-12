@@ -7,7 +7,7 @@ Flutter presentation
         |
 generated flutter_rust_bridge contract
         |
-Rust bridge adapter -> Rust application core -> native/PDF infrastructure
+Rust bridge adapter -> Rust application core -> native PDF infrastructure
 ```
 
 ## Boundaries
@@ -24,6 +24,10 @@ Rust bridge adapter -> Rust application core -> native/PDF infrastructure
 - `crates/ilikepdf_pdf/` is the native PDF infrastructure adapter. Its public
   request/result types are engine-neutral; PDFium bindings and errors remain
   private and are mapped into stable core error categories.
+- `crates/ilikepdf_qpdf/` is the current structural-PDF infrastructure adapter.
+  It translates the core capability contract into direct qpdf CLI invocations,
+  owns process execution and bundled-runtime resolution, and exposes no process
+  details through the application boundary.
 - `third_party/pdfium/windows/x64/` contains the pinned, licensed runtime. CMake
   copies `pdfium.dll` beside the Windows executable and installs its notices.
 
@@ -50,6 +54,8 @@ reorganized without creating a second API or changing bridge consumers.
 | PNG/JPG encoding policy | `ilikepdf_pdf/src/pdfium_engine/image_encoding.rs` |
 | Image decoding, layout, and PDFium image placement | `ilikepdf_pdf/src/image_pdf/` |
 | Bundled PDFium loading | `ilikepdf_pdf/src/runtime.rs` |
+| Structural validation and safe rewrite orchestration | `ilikepdf_core/src/application/structural_pdf/` |
+| qpdf CLI semantics, process execution, and runtime lookup | `ilikepdf_qpdf/src/` |
 
 The PDF paths are intentionally separated by purpose:
 
@@ -130,6 +136,105 @@ The adapter pins `pdfium-render` to the released `pdfium_7881` ABI and bundles
 PDFium `151.0.7881.0`. Exact artifact/DLL hashes, source URLs, build flags, and
 licenses are recorded in `third_party/pdfium/README.md` and its adjacent notice
 files. Upgrade the binding feature and runtime as one reviewed change.
+
+## Structural PDF engine
+
+PDFium remains the rendering, preview, page-thumbnail, visual verification, and
+existing Image-to-PDF engine. Content-preserving structural transformations are
+separate. The application depends on the small `StructuralPdfEngine` capability
+contract, whose Phase 1B.1 operations are runtime probing, structural validation,
+and an internal content-preserving rewrite. The current implementation is
+`QpdfCliEngine`:
+
+```text
+Flutter presentation
+        |
+typed flutter_rust_bridge boundary
+        |
+Rust application/core -> StructuralPdfEngine
+                              |
+                         QpdfCliEngine
+                              |
+                       QpdfProcessRunner
+                              |
+                      QpdfRuntimeResolver
+                              |
+                    bundled qpdf executable
+```
+
+The contract uses `Path`/`PathBuf`, typed version and result models, and stable
+domain errors. It has no executable names, command switches, exit codes, process
+handles, stdout, stderr, shell quoting, or Windows layout concepts. Core tests use
+a small fake engine for orchestration and publication decisions. The qpdf crate
+has real-runtime tests, while the application-level rewrite test coordinates qpdf
+with PDFium to reopen the output, compare page counts, and render a representative
+page.
+
+`QpdfCliEngine` owns qpdf command semantics and interpretation of qpdf's success,
+warning, invalid-document, and failure exits. `QpdfProcessRunner` is the single
+owner of `Command` setup: it launches the resolved executable directly, passes
+each path as a separate OS argument, never invokes a shell, drains stdout and
+stderr concurrently, and retains at most 32 KiB from each diagnostic stream.
+User-facing errors contain only stable messages. The runner does not log command
+lines, document paths, or diagnostics. qpdf executable/helper override environment
+variables are removed. The process is contained inside infrastructure, leaving a
+future runner free to retain and terminate a child for cancellation without
+exposing process objects to core.
+
+`QpdfRuntimeResolver` locates only the controlled relocatable layout relative to
+the application executable:
+
+```text
+ilikepdf.exe
+pdfium.dll
+data/
+runtime/qpdf/
+    runtime-manifest.txt
+    README.md
+    bin/
+        qpdf.exe
+        qpdf30.dll
+        required MSVC runtime DLLs
+    licenses/
+        LICENSE.txt
+        NOTICE.md
+    provenance/
+        qpdf-12.4.1.sha256
+        qpdf-12.4.1.sha256.sigstore
+```
+
+There is deliberately no system `PATH` fallback. `QpdfCliEngine` is a desktop
+implementation, not the application contract. A future platform where process
+spawning is unsuitable may supply another `StructuralPdfEngine` implementation,
+possibly backed by libqpdf FFI, without changing application workflows. No such
+platform or FFI implementation is currently supported or included.
+
+The current runtime is the official qpdf 12.4.1 Windows x86_64 MSVC archive,
+`qpdf-12.4.1-msvc64.zip`, whose SHA-256 is
+`3cd016cd433ef7232e42f4c13348a49cc14907a3c7278ef4f99120593126f7a6`.
+`third_party/qpdf/runtime-manifest.txt` is the canonical machine-readable source
+for its version, upstream artifact, checksums, executable, required runtime
+files, license material, and provenance files. The adjacent README records the
+upstream source and verification history. Windows CMake parses the manifest,
+hashes every listed vendored file during configuration, fails on missing or
+changed assets, and installs the self-contained layout automatically. The exact
+upstream checksum manifest and Sigstore bundle are packaged for audit; no runtime
+download or expensive launch-time hashing is performed.
+
+Future Protect/Unlock work must keep passwords inside the application and qpdf
+infrastructure boundary. qpdf 12.4.1 supports `--password-file=-`, allowing the
+runner to pipe a password through the child's stdin rather than placing it in a
+shell string, process command line, log, or diagnostic. A tightly permissioned,
+short-lived password file is a fallback only if an operation cannot use stdin.
+The qpdf-specific runner already has a private stdin seam, but password behavior
+and UI are intentionally not implemented in Phase 1B.1.
+
+The rewrite spike never targets the source. Core creates a private destination-
+directory working path, closes its initial handle so the external process can
+write on Windows, asks the engine for a content-preserving rewrite, checks a
+non-empty regular file, reopens and renders it with PDFium, verifies page-count
+parity, syncs it, and atomically publishes without clobbering. Dropping the
+pending output cleans up unsuccessful working files.
 
 ## Privacy and file safety
 

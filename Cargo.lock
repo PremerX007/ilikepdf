@@ -574,6 +574,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "ilikepdf_qpdf"
+version = "0.1.0"
+dependencies = [
+ "ilikepdf_core",
+ "ilikepdf_pdf",
+ "tempfile",
+]
+
+[[package]]
 name = "image"
 version = "0.25.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"

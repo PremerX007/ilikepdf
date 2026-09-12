@@ -1,0 +1,16 @@
+[package]
+name = "ilikepdf_qpdf"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+ilikepdf_core = { path = "../ilikepdf_core" }
+
+[dev-dependencies]
+ilikepdf_pdf = { path = "../ilikepdf_pdf" }
+tempfile.workspace = true

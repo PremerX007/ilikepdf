@@ -3,6 +3,7 @@ members = [
     "crates/ilikepdf_bridge",
     "crates/ilikepdf_core",
     "crates/ilikepdf_pdf",
+    "crates/ilikepdf_qpdf",
 ]
 resolver = "3"
 

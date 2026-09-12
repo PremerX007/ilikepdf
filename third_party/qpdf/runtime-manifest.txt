@@ -1,0 +1,27 @@
+# Canonical qpdf runtime and provenance metadata for the current Windows build.
+manifest_format=1
+engine=qpdf
+version=12.4.1
+target=windows
+architecture=x86_64
+distribution=msvc64
+artifact_name=qpdf-12.4.1-msvc64.zip
+artifact_url=https://github.com/qpdf/qpdf/releases/download/v12.4.1/qpdf-12.4.1-msvc64.zip
+artifact_sha256=3cd016cd433ef7232e42f4c13348a49cc14907a3c7278ef4f99120593126f7a6
+checksum_manifest_url=https://github.com/qpdf/qpdf/releases/download/v12.4.1/qpdf-12.4.1.sha256
+sigstore_bundle_url=https://github.com/qpdf/qpdf/releases/download/v12.4.1/qpdf-12.4.1.sha256.sigstore
+executable=bin/qpdf.exe
+runtime_file=bin/qpdf.exe|57c003e868fb66cd343fd5afb91be8c2277f56434eea8635762499731bf9f60d
+runtime_file=bin/qpdf30.dll|36fe5b2023f244e5785d96b8372dba26b75ea51b63adf4d4f1e66ad0aa1c8a61
+runtime_file=bin/concrt140.dll|54716f0738af891f283d213b5c8d11b25896bb8ee3097d301eae718560cf974e
+runtime_file=bin/msvcp140.dll|7c26614e1d733892c2deac7e245ce115504b1d80592dd0a01b08e3e5a55f89ca
+runtime_file=bin/msvcp140_1.dll|206c931bf90fdad8816de3b5e2ef80b2bcaa9406c89ecc05fe6fddffe251e982
+runtime_file=bin/msvcp140_2.dll|d50d7883f20d1dc6191768d3746f52dd9cac89c346ffaed5be1f110c2f34a838
+runtime_file=bin/msvcp140_atomic_wait.dll|3d0cbfaa1bf3eecf5a3f4491d2960ee803cb994f30292c6adc4a07c498f60e2b
+runtime_file=bin/msvcp140_codecvt_ids.dll|8a65c7596ef2e6938731f5a1058e7e40145b6d97967cc649231a076b9a608d78
+runtime_file=bin/vcruntime140.dll|d1f4225df2cd877dbf130d5668a021dce3f94118455ff5ec952061c30afc9ce7
+runtime_file=bin/vcruntime140_1.dll|a7146c08f89fe5b04541ab507cdb59ff7b44534d4ba3c668a426c6450a03434e
+package_file=licenses/LICENSE.txt|cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30
+package_file=licenses/NOTICE.md|b207f65a9e5491195ded63b2941199b19a4d30148871f2742c88eae7bfc513a6
+provenance_file=provenance/qpdf-12.4.1.sha256|9f453484d63e261446f8f45802a41ea2a4914edb361f65c38e55026bf1a57ec8
+provenance_file=provenance/qpdf-12.4.1.sha256.sigstore|1b26275929a8f92977af639ab645175ffd89512572f524adec686f8a5a81b8bb

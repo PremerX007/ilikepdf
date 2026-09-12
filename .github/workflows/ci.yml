@@ -42,11 +42,30 @@ jobs:
       - run: flutter analyze
       - run: flutter test
       - run: flutter build windows --release
-      - name: Verify bundled PDFium runtime
+      - name: Verify bundled native runtimes
         shell: pwsh
         run: |
-          if (-not (Test-Path "build/windows/x64/runner/Release/pdfium.dll")) {
-            throw "Release bundle is missing pdfium.dll"
+          $releaseDirectory = Resolve-Path "build/windows/x64/runner/Release"
+          $requiredFiles = @(
+            "ilikepdf.exe",
+            "pdfium.dll",
+            "runtime/qpdf/runtime-manifest.txt",
+            "runtime/qpdf/bin/qpdf.exe",
+            "runtime/qpdf/bin/qpdf30.dll",
+            "runtime/qpdf/licenses/LICENSE.txt",
+            "runtime/qpdf/licenses/NOTICE.md",
+            "runtime/qpdf/provenance/qpdf-12.4.1.sha256",
+            "runtime/qpdf/provenance/qpdf-12.4.1.sha256.sigstore"
+          )
+          foreach ($relativePath in $requiredFiles) {
+            if (-not (Test-Path (Join-Path $releaseDirectory $relativePath))) {
+              throw "Release bundle is missing $relativePath"
+            }
           }
+          $env:ILIKEPDF_RELEASE_EXECUTABLE = Join-Path $releaseDirectory "ilikepdf.exe"
+          cargo test --manifest-path ../../Cargo.toml -p ilikepdf_qpdf `
+            --test release_runtime release_bundle_resolves_both_native_runtimes `
+            -- --ignored --exact
       - run: flutter test integration_test/app_info_test.dart -d windows
       - run: flutter test integration_test/pdf_preview_test.dart -d windows
+      - run: flutter test integration_test/image_to_pdf_test.dart -d windows
