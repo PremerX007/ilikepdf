@@ -1,11 +1,12 @@
+use std::collections::HashSet;
 use std::ffi::{OsStr, OsString};
 use std::fs;
 use std::io::{Seek, Write};
 use std::path::{Path, PathBuf};
 
-use ilikepdf_pdf::{PdfDocumentInfo, PdfDpiRenderRequest, RenderedPage};
+use ilikepdf_pdf::{PdfDocumentInfo, PdfDpiRenderRequest, PdfImageFormat, RenderedPage};
 
-use super::png_output::{PendingPngOutput, validate_output_directory};
+use super::image_output::{PendingImageOutput, validate_output_directory};
 use crate::{ApplicationError, ApplicationErrorCode, ApplicationResult};
 
 const STANDARD_DPI: u16 = 150;
@@ -15,6 +16,28 @@ const HIGH_QUALITY_DPI: u16 = 300;
 pub enum PdfExportQuality {
     Standard,
     HighQuality,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PdfExportFormat {
+    Png,
+    Jpg,
+}
+
+impl PdfExportFormat {
+    pub const fn extension(self) -> &'static str {
+        match self {
+            Self::Png => "png",
+            Self::Jpg => "jpg",
+        }
+    }
+
+    const fn renderer_format(self) -> PdfImageFormat {
+        match self {
+            Self::Png => PdfImageFormat::Png,
+            Self::Jpg => PdfImageFormat::Jpg,
+        }
+    }
 }
 
 impl PdfExportQuality {
@@ -31,6 +54,7 @@ pub struct ExportPdfToImagesRequest {
     pub source_path: PathBuf,
     pub destination_directory: PathBuf,
     pub quality: PdfExportQuality,
+    pub format: PdfExportFormat,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -63,29 +87,31 @@ pub fn export_pdf_to_images(
     export_pdf_to_images_with_backend(&NativePdfBackend, request, on_progress)
 }
 
-trait PdfBackend {
+pub(crate) trait PdfBackend {
     fn inspect_document(&self, source_path: &Path) -> ApplicationResult<PdfDocumentInfo>;
 
-    fn render_page_to_png_at_dpi(
+    fn render_page_to_image_at_dpi(
         &self,
         request: PdfDpiRenderRequest,
+        format: PdfImageFormat,
         output: &mut (impl Write + Seek),
     ) -> ApplicationResult<RenderedPage>;
 }
 
-struct NativePdfBackend;
+pub(crate) struct NativePdfBackend;
 
 impl PdfBackend for NativePdfBackend {
     fn inspect_document(&self, source_path: &Path) -> ApplicationResult<PdfDocumentInfo> {
         ilikepdf_pdf::inspect_document(source_path).map_err(Into::into)
     }
 
-    fn render_page_to_png_at_dpi(
+    fn render_page_to_image_at_dpi(
         &self,
         request: PdfDpiRenderRequest,
+        format: PdfImageFormat,
         output: &mut (impl Write + Seek),
     ) -> ApplicationResult<RenderedPage> {
-        ilikepdf_pdf::render_page_to_png_at_dpi(request, output).map_err(Into::into)
+        ilikepdf_pdf::render_page_to_image_at_dpi(request, format, output).map_err(Into::into)
     }
 }
 
@@ -94,25 +120,34 @@ impl PdfBackend for ilikepdf_pdf::PdfRenderer {
         self.inspect_document(source_path).map_err(Into::into)
     }
 
-    fn render_page_to_png_at_dpi(
+    fn render_page_to_image_at_dpi(
         &self,
         request: PdfDpiRenderRequest,
+        format: PdfImageFormat,
         output: &mut (impl Write + Seek),
     ) -> ApplicationResult<RenderedPage> {
-        self.render_page_to_png_at_dpi(request, output)
+        self.render_page_to_image_at_dpi(request, format, output)
             .map_err(Into::into)
     }
 }
 
-fn export_pdf_to_images_with_backend(
+pub(crate) fn export_pdf_to_images_with_backend(
     backend: &impl PdfBackend,
     request: ExportPdfToImagesRequest,
-    mut on_progress: impl FnMut(PdfExportProgress),
+    on_progress: impl FnMut(PdfExportProgress),
 ) -> Result<PdfExportResult, PdfExportFailure> {
     let info = backend
         .inspect_document(&request.source_path)
         .map_err(PdfExportFailure::before_start)?;
-    let total_page_count = info.page_count;
+    export_inspected_pdf_to_images_with_backend(backend, request, info.page_count, on_progress)
+}
+
+pub(crate) fn export_inspected_pdf_to_images_with_backend(
+    backend: &impl PdfBackend,
+    request: ExportPdfToImagesRequest,
+    total_page_count: u32,
+    mut on_progress: impl FnMut(PdfExportProgress),
+) -> Result<PdfExportResult, PdfExportFailure> {
     validate_output_directory(&request.destination_directory)
         .map_err(|error| PdfExportFailure::with_total(total_page_count, error))?;
 
@@ -120,24 +155,9 @@ fn export_pdf_to_images_with_backend(
         &request.source_path,
         &request.destination_directory,
         total_page_count,
+        request.format,
     )
     .map_err(|error| PdfExportFailure::with_total(total_page_count, error))?;
-    if output_plan
-        .directory_to_create
-        .as_ref()
-        .is_some_and(|path| path.exists())
-        || output_plan.destinations.iter().any(|path| path.exists())
-    {
-        return Err(PdfExportFailure::with_total(
-            total_page_count,
-            output_collision(),
-        ));
-    }
-    if let Some(directory) = &output_plan.directory_to_create {
-        create_output_directory(directory)
-            .map_err(|error| PdfExportFailure::with_total(total_page_count, error))?;
-    }
-
     let destinations = output_plan.destinations;
 
     let mut output_files = Vec::with_capacity(destinations.len());
@@ -157,7 +177,12 @@ fn export_pdf_to_images_with_backend(
 
     for (page_index, destination) in destinations.into_iter().enumerate() {
         let current_page = u32::try_from(page_index + 1).expect("page count is represented by u32");
-        let mut output = PendingPngOutput::for_destination(&destination).map_err(|error| {
+        let mut output = if output_plan.number_single_file {
+            PendingImageOutput::for_numbered_destination(&destination, request.format.extension())
+        } else {
+            PendingImageOutput::for_destination(&destination, request.format.extension())
+        }
+        .map_err(|error| {
             PdfExportFailure::during_export(
                 total_page_count,
                 current_page,
@@ -166,12 +191,13 @@ fn export_pdf_to_images_with_backend(
             )
         })?;
         backend
-            .render_page_to_png_at_dpi(
+            .render_page_to_image_at_dpi(
                 PdfDpiRenderRequest {
                     source_path: request.source_path.clone(),
                     page_index: current_page - 1,
                     dpi: request.quality.dpi(),
                 },
+                request.format.renderer_format(),
                 output.file.as_file_mut(),
             )
             .map_err(|error| {
@@ -245,19 +271,20 @@ impl PdfExportFailure {
 }
 
 struct PdfExportOutputPlan {
-    directory_to_create: Option<PathBuf>,
     destinations: Vec<PathBuf>,
+    number_single_file: bool,
 }
 
 fn output_plan(
     source_path: &Path,
     selected_directory: &Path,
     page_count: u32,
+    format: PdfExportFormat,
 ) -> ApplicationResult<PdfExportOutputPlan> {
     if page_count == 0 {
         return Ok(PdfExportOutputPlan {
-            directory_to_create: None,
             destinations: Vec::new(),
+            number_single_file: false,
         });
     }
 
@@ -270,34 +297,89 @@ fn output_plan(
                 "The source PDF must have a file name",
             )
         })?;
-    let (output_directory, directory_to_create) = if page_count == 1 {
-        (selected_directory.to_path_buf(), None)
+    let (output_directory, number_single_file) = if page_count == 1 {
+        (selected_directory.to_path_buf(), true)
     } else {
-        let output_directory = selected_directory.join(source_stem);
-        (output_directory.clone(), Some(output_directory))
+        (
+            create_numbered_output_directory(selected_directory, source_stem)?,
+            false,
+        )
     };
     let padding = page_count.to_string().len().max(4);
     let destinations = (1..=page_count)
         .map(|page_number| {
-            output_directory.join(output_file_name(source_stem, page_number, padding))
+            output_directory.join(output_file_name(
+                source_stem,
+                page_number,
+                padding,
+                format.extension(),
+            ))
         })
         .collect();
 
     Ok(PdfExportOutputPlan {
-        directory_to_create,
         destinations,
+        number_single_file,
     })
 }
 
-fn output_file_name(source_stem: &OsStr, page_number: u32, padding: usize) -> OsString {
+fn output_file_name(
+    source_stem: &OsStr,
+    page_number: u32,
+    padding: usize,
+    extension: &str,
+) -> OsString {
     let mut name = source_stem.to_os_string();
-    name.push(format!("-page-{page_number:0padding$}.png"));
+    name.push(format!("-page-{page_number:0padding$}.{extension}"));
     name
 }
 
-fn create_output_directory(directory: &Path) -> ApplicationResult<()> {
-    fs::create_dir(directory).map_err(|error| match error.kind() {
-        std::io::ErrorKind::AlreadyExists => output_collision(),
+fn create_numbered_output_directory(base: &Path, stem: &OsStr) -> ApplicationResult<PathBuf> {
+    let mut occupied_names = occupied_names(base)?;
+    for number in 0..=u32::MAX {
+        let folder_name = numbered_name(stem, number);
+        if !occupied_names.insert(collision_key(&folder_name)) {
+            continue;
+        }
+        let candidate = base.join(folder_name);
+        match fs::create_dir(&candidate) {
+            Ok(()) => return Ok(candidate),
+            Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => continue,
+            Err(error) => return Err(map_directory_error(error)),
+        }
+    }
+
+    Err(ApplicationError::new(
+        ApplicationErrorCode::OutputWriteFailed,
+        "A safe output folder name could not be allocated",
+    ))
+}
+
+fn occupied_names(directory: &Path) -> ApplicationResult<HashSet<String>> {
+    fs::read_dir(directory)
+        .map_err(map_directory_error)?
+        .map(|entry| {
+            entry
+                .map(|entry| collision_key(&entry.file_name()))
+                .map_err(map_directory_error)
+        })
+        .collect()
+}
+
+fn numbered_name(stem: &OsStr, number: u32) -> OsString {
+    let mut name = stem.to_os_string();
+    if number > 0 {
+        name.push(format!(" ({number})"));
+    }
+    name
+}
+
+fn collision_key(name: &OsStr) -> String {
+    name.to_string_lossy().to_lowercase()
+}
+
+fn map_directory_error(error: std::io::Error) -> ApplicationError {
+    match error.kind() {
         std::io::ErrorKind::PermissionDenied => ApplicationError::new(
             ApplicationErrorCode::PermissionDenied,
             "Permission was denied while creating the output folder",
@@ -306,19 +388,14 @@ fn create_output_directory(directory: &Path) -> ApplicationResult<()> {
             ApplicationErrorCode::OutputWriteFailed,
             "The output folder could not be created",
         ),
-    })
-}
-
-fn output_collision() -> ApplicationError {
-    ApplicationError::new(
-        ApplicationErrorCode::OutputAlreadyExists,
-        "The required output file or folder already exists",
-    )
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use std::fs;
+    use std::sync::{Arc, Barrier};
+    use std::thread;
 
     use ilikepdf_pdf::PdfRenderer;
 
@@ -361,6 +438,7 @@ mod tests {
                 source_path: source.clone(),
                 destination_directory: destination.clone(),
                 quality: PdfExportQuality::Standard,
+                format: PdfExportFormat::Png,
             },
             |update| progress.push(update),
         )
@@ -410,6 +488,7 @@ mod tests {
                 source_path: source.clone(),
                 destination_directory: destination.clone(),
                 quality: PdfExportQuality::Standard,
+                format: PdfExportFormat::Png,
             },
             |_| {},
         )
@@ -428,6 +507,34 @@ mod tests {
     }
 
     #[test]
+    fn one_page_jpg_export_uses_jpg_naming_and_never_clobbers() {
+        let (_directory, source, destination) = working_copy("one_page.pdf", "cover.pdf");
+        let request = || ExportPdfToImagesRequest {
+            source_path: source.clone(),
+            destination_directory: destination.clone(),
+            quality: PdfExportQuality::Standard,
+            format: PdfExportFormat::Jpg,
+        };
+
+        let first = export_pdf_to_images_with_backend(renderer(), request(), |_| {})
+            .expect("first JPG should export");
+        let first_bytes = fs::read(&first.output_files[0]).expect("first JPG should be readable");
+        let second = export_pdf_to_images_with_backend(renderer(), request(), |_| {})
+            .expect("colliding JPG should be numbered");
+
+        assert_eq!(
+            first.output_files,
+            [destination.join("cover-page-0001.jpg")]
+        );
+        assert_eq!(
+            second.output_files,
+            [destination.join("cover-page-0001 (1).jpg")]
+        );
+        assert_eq!(&first_bytes[..3], b"\xff\xd8\xff");
+        assert_eq!(fs::read(&first.output_files[0]).unwrap(), first_bytes);
+    }
+
+    #[test]
     fn unicode_source_stem_is_preserved_in_the_output_name() {
         let (_directory, source, destination) = working_copy("one_page.pdf", "ใบแจ้งหนี้.pdf");
 
@@ -437,6 +544,7 @@ mod tests {
                 source_path: source,
                 destination_directory: destination.clone(),
                 quality: PdfExportQuality::Standard,
+                format: PdfExportFormat::Png,
             },
             |_| {},
         )
@@ -461,6 +569,7 @@ mod tests {
                 source_path: source.clone(),
                 destination_directory: standard_directory.path().to_path_buf(),
                 quality: PdfExportQuality::Standard,
+                format: PdfExportFormat::Png,
             },
             |_| {},
         )
@@ -471,6 +580,7 @@ mod tests {
                 source_path: source,
                 destination_directory: high_directory.path().to_path_buf(),
                 quality: PdfExportQuality::HighQuality,
+                format: PdfExportFormat::Png,
             },
             |_| {},
         )
@@ -486,27 +596,32 @@ mod tests {
     }
 
     #[test]
-    fn existing_multi_page_output_directory_is_a_collision() {
+    fn existing_multi_page_output_directory_allocates_a_numbered_folder() {
         let (_directory, source, destination) = working_copy("two_page.pdf", "invoice.pdf");
-        let existing_directory = destination.join("invoice");
+        let existing_directory = destination.join("INVOICE");
         fs::create_dir(&existing_directory).expect("collision directory should be created");
         let existing = existing_directory.join("keep.txt");
         fs::write(&existing, b"existing").expect("collision content should be created");
 
-        let failure = export_pdf_to_images_with_backend(
+        let result = export_pdf_to_images_with_backend(
             renderer(),
             ExportPdfToImagesRequest {
                 source_path: source,
-                destination_directory: destination,
+                destination_directory: destination.clone(),
                 quality: PdfExportQuality::Standard,
+                format: PdfExportFormat::Png,
             },
             |_| {},
         )
-        .expect_err("a collision should fail before rendering");
+        .expect("a collision should allocate the next folder name");
 
         assert_eq!(
-            failure.error.code,
-            ApplicationErrorCode::OutputAlreadyExists
+            result.output_files[0].parent(),
+            Some(destination.join("invoice (1)").as_path())
+        );
+        assert_eq!(
+            result.output_files[0].file_name(),
+            Some(OsStr::new("invoice-page-0001.png"))
         );
         assert_eq!(
             fs::read(existing).expect("collision should remain"),
@@ -521,25 +636,26 @@ mod tests {
     }
 
     #[test]
-    fn existing_single_page_output_is_not_overwritten() {
+    fn existing_single_page_output_allocates_a_numbered_file() {
         let (_directory, source, destination) = working_copy("one_page.pdf", "cover.pdf");
         let existing = destination.join("cover-page-0001.png");
         fs::write(&existing, b"existing").expect("collision should be created");
 
-        let failure = export_pdf_to_images_with_backend(
+        let result = export_pdf_to_images_with_backend(
             renderer(),
             ExportPdfToImagesRequest {
                 source_path: source,
-                destination_directory: destination,
+                destination_directory: destination.clone(),
                 quality: PdfExportQuality::Standard,
+                format: PdfExportFormat::Png,
             },
             |_| {},
         )
-        .expect_err("an existing output should fail before rendering");
+        .expect("an existing output should allocate the next file name");
 
         assert_eq!(
-            failure.error.code,
-            ApplicationErrorCode::OutputAlreadyExists
+            result.output_files,
+            [destination.join("cover-page-0001 (1).png")]
         );
         assert_eq!(
             fs::read(existing).expect("collision should remain"),
@@ -560,6 +676,7 @@ mod tests {
                 source_path: fixture("two_page.pdf"),
                 destination_directory: destination.path().to_path_buf(),
                 quality: PdfExportQuality::Standard,
+                format: PdfExportFormat::Png,
             },
             |_| {},
         )
@@ -589,6 +706,7 @@ mod tests {
                 source_path: fixture("malformed.pdf"),
                 destination_directory: destination.path().to_path_buf(),
                 quality: PdfExportQuality::Standard,
+                format: PdfExportFormat::Png,
             },
             |_| {},
         )
@@ -608,6 +726,7 @@ mod tests {
                 source_path: fixture("two_page.pdf"),
                 destination_directory: missing,
                 quality: PdfExportQuality::Standard,
+                format: PdfExportFormat::Png,
             },
             |_| {},
         )
@@ -621,26 +740,65 @@ mod tests {
 
     #[test]
     fn filename_padding_has_a_four_digit_minimum() {
-        let plan = output_plan(Path::new("invoice.pdf"), Path::new("output"), 1_000)
-            .expect("output plan should be valid");
+        let destination = tempfile::tempdir().expect("destination should be created");
+        let plan = output_plan(
+            Path::new("invoice.pdf"),
+            destination.path(),
+            1_000,
+            PdfExportFormat::Png,
+        )
+        .expect("output plan should be valid");
 
         assert_eq!(
             plan.destinations[0],
-            Path::new("output")
+            destination
+                .path()
                 .join("invoice")
                 .join("invoice-page-0001.png")
         );
         assert_eq!(
             plan.destinations[9],
-            Path::new("output")
+            destination
+                .path()
                 .join("invoice")
                 .join("invoice-page-0010.png")
         );
         assert_eq!(
             plan.destinations[999],
-            Path::new("output")
+            destination
+                .path()
                 .join("invoice")
                 .join("invoice-page-1000.png")
+        );
+    }
+
+    #[test]
+    fn concurrent_folder_allocation_never_reuses_a_name() {
+        let destination = tempfile::tempdir().expect("destination should be created");
+        let barrier = Arc::new(Barrier::new(2));
+        let handles = (0..2)
+            .map(|_| {
+                let destination = destination.path().to_path_buf();
+                let barrier = Arc::clone(&barrier);
+                thread::spawn(move || {
+                    barrier.wait();
+                    create_numbered_output_directory(&destination, OsStr::new("invoice"))
+                        .expect("folder allocation should retry safely")
+                })
+            })
+            .collect::<Vec<_>>();
+        let mut allocated = handles
+            .into_iter()
+            .map(|handle| handle.join().expect("allocator should finish"))
+            .collect::<Vec<_>>();
+        allocated.sort();
+
+        assert_eq!(
+            allocated,
+            [
+                destination.path().join("invoice"),
+                destination.path().join("invoice (1)"),
+            ]
         );
     }
 
@@ -663,9 +821,10 @@ mod tests {
                 .map_err(Into::into)
         }
 
-        fn render_page_to_png_at_dpi(
+        fn render_page_to_image_at_dpi(
             &self,
             request: PdfDpiRenderRequest,
+            format: PdfImageFormat,
             output: &mut (impl Write + Seek),
         ) -> ApplicationResult<RenderedPage> {
             if request.page_index == 1 {
@@ -675,7 +834,7 @@ mod tests {
                 ));
             }
             self.renderer
-                .render_page_to_png_at_dpi(request, output)
+                .render_page_to_image_at_dpi(request, format, output)
                 .map_err(Into::into)
         }
     }

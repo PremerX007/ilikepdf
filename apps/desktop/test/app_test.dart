@@ -17,6 +17,10 @@ class FakePdfToImageWorkflow implements PdfToImageWorkflow {
   final PdfExportProblem? failure;
   final bool previewFails;
   PdfImageQuality? exportedQuality;
+  PdfImageFormat? exportedFormat;
+  PdfDestinationMode? exportedDestinationMode;
+  String? exportedCustomDestination;
+  List<String> exportedSourcePaths = const [];
   int previewCalls = 0;
   SelectedPdf selectedPdf = const SelectedPdf(
     displayName: 'fixture.pdf',
@@ -31,46 +35,84 @@ class FakePdfToImageWorkflow implements PdfToImageWorkflow {
   Future<String?> chooseDestinationDirectory() async => r'C:\exports';
 
   @override
-  Stream<PdfImageExportUpdate> exportAllPages({
-    required String sourcePath,
-    required String destinationDirectory,
+  Stream<PdfBatchExportUpdate> exportBatch({
+    required List<String> sourcePaths,
+    required PdfDestinationMode destinationMode,
+    required String? customDestinationDirectory,
     required PdfImageQuality quality,
+    required PdfImageFormat format,
   }) async* {
     exportedQuality = quality;
+    exportedFormat = format;
+    exportedDestinationMode = destinationMode;
+    exportedCustomDestination = customDestinationDirectory;
+    exportedSourcePaths = List.unmodifiable(sourcePaths);
     if (failure case final error?) {
-      yield PdfImageExportUpdate(
-        status: PdfImageExportStatus.failed,
+      yield PdfBatchExportUpdate(
+        status: PdfBatchExportStatus.failed,
+        totalDocumentCount: sourcePaths.length,
+        completedDocumentCount: 0,
+        succeededDocumentCount: 0,
+        failedDocumentCount: 0,
         totalPageCount: 2,
         completedPageCount: 0,
+        currentDocumentIndex: 1,
+        currentDocumentFilename: selectedPdf.displayName,
         currentPage: null,
-        outputFiles: const [],
+        documents: const [],
         error: error,
       );
       return;
     }
-    yield const PdfImageExportUpdate(
-      status: PdfImageExportStatus.running,
+    yield PdfBatchExportUpdate(
+      status: PdfBatchExportStatus.running,
+      totalDocumentCount: sourcePaths.length,
+      completedDocumentCount: 0,
+      succeededDocumentCount: 0,
+      failedDocumentCount: 0,
       totalPageCount: 2,
       completedPageCount: 1,
+      currentDocumentIndex: 1,
+      currentDocumentFilename: selectedPdf.displayName,
       currentPage: 1,
-      outputFiles: [],
+      documents: const [],
       error: null,
     );
-    yield const PdfImageExportUpdate(
-      status: PdfImageExportStatus.complete,
+    yield PdfBatchExportUpdate(
+      status: PdfBatchExportStatus.complete,
+      totalDocumentCount: sourcePaths.length,
+      completedDocumentCount: sourcePaths.length,
+      succeededDocumentCount: sourcePaths.length,
+      failedDocumentCount: 0,
       totalPageCount: 2,
       completedPageCount: 2,
+      currentDocumentIndex: null,
+      currentDocumentFilename: null,
       currentPage: null,
-      outputFiles: [
-        r'C:\exports\fixture\fixture-page-0001.png',
-        r'C:\exports\fixture\fixture-page-0002.png',
+      documents: [
+        PdfBatchDocumentOutcome(
+          sourcePath: r'C:\fixtures\fixture.pdf',
+          displayName: 'fixture.pdf',
+          totalPageCount: 2,
+          completedPageCount: 2,
+          outputFiles: [
+            r'C:\exports\fixture\fixture-page-0001.png',
+            r'C:\exports\fixture\fixture-page-0002.png',
+          ],
+          error: null,
+        ),
       ],
       error: null,
     );
   }
 
   @override
-  Future<SelectedPdf?> selectAndInspect() async => selectedPdf;
+  Future<List<SelectedPdf>> selectPdfs() async => [selectedPdf];
+
+  @override
+  Future<List<SelectedPdf>> preparePdfPaths(List<String> sourcePaths) async => [
+    selectedPdf,
+  ];
 
   @override
   Future<RenderedPdfPage> renderFirstPage(String sourcePath) async {
@@ -231,18 +273,21 @@ void main() {
     );
     await _openPdfToImages(tester);
 
-    await tester.tap(find.text('Select PDF'));
+    await tester.tap(find.text('Select PDFs'));
     await tester.pumpAndSettle();
 
     expect(find.text('fixture.pdf'), findsOneWidget);
-    expect(find.text('2 pages'), findsOneWidget);
-    expect(find.text('First page: 300 × 200 points'), findsOneWidget);
+    expect(find.text('PDF 1 · 2 pages'), findsOneWidget);
     expect(workflow.previewCalls, 1);
-    expect(find.byKey(const ValueKey('pdf-preview-thumbnail')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey(r'selected-pdf-C:\fixtures\fixture.pdf')),
+      findsOneWidget,
+    );
     expect(find.byKey(const ValueKey('pdf-preview-image')), findsOneWidget);
     expect(find.text('Standard'), findsOneWidget);
     expect(find.text('High'), findsOneWidget);
-    expect(find.textContaining('DPI'), findsNothing);
+    expect(find.text('DPI : 150'), findsOneWidget);
+    expect(find.text('DPI : 300'), findsOneWidget);
     expect(find.text('Suitable for normal viewing and sharing'), findsNothing);
     expect(
       find.text('Suitable for printing and detailed output'),
@@ -256,7 +301,7 @@ void main() {
   });
 
   testWidgets(
-    'defaults destination, allows override, and resets for new source',
+    'defaults next to sources and preserves a custom folder when adding PDFs',
     (WidgetTester tester) async {
       final workflow = FakePdfToImageWorkflow(previewPath: previewPath);
       await tester.pumpWidget(
@@ -269,10 +314,14 @@ void main() {
       );
       await _openPdfToImages(tester);
 
-      await tester.tap(find.text('Select PDF'));
+      await tester.tap(find.text('Select PDFs'));
       await tester.pumpAndSettle();
-      expect(find.text(r'C:\fixtures'), findsOneWidget);
+      expect(find.text('Next to source files'), findsOneWidget);
+      expect(find.text(r'C:\fixtures'), findsNothing);
 
+      await tester.ensureVisible(find.text('Custom folder'));
+      await tester.tap(find.text('Custom folder'));
+      await tester.pumpAndSettle();
       await tester.ensureVisible(find.text('Choose folder'));
       await tester.tap(find.text('Choose folder'));
       await tester.pumpAndSettle();
@@ -286,12 +335,12 @@ void main() {
         firstPageWidthPoints: 300,
         firstPageHeightPoints: 200,
       );
-      await tester.ensureVisible(find.text('Select PDF'));
-      await tester.tap(find.text('Select PDF'));
+      await tester.ensureVisible(find.text('Add PDFs'));
+      await tester.tap(find.text('Add PDFs'));
       await tester.pumpAndSettle();
 
-      expect(find.text(r'D:\incoming'), findsOneWidget);
-      expect(find.text(r'C:\exports'), findsNothing);
+      expect(find.text(r'C:\exports'), findsOneWidget);
+      expect(find.text('2 selected PDFs'), findsOneWidget);
       expect(workflow.previewCalls, 2);
     },
   );
@@ -310,7 +359,7 @@ void main() {
     );
     await _openPdfToImages(tester);
 
-    await tester.tap(find.text('Select PDF'));
+    await tester.tap(find.text('Select PDFs'));
     await tester.pumpAndSettle();
 
     await tester.ensureVisible(find.text('High'));
@@ -320,7 +369,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(workflow.exportedQuality, PdfImageQuality.highQuality);
-    expect(find.text('Export complete: 2 PNG images created.'), findsOneWidget);
+    expect(workflow.exportedFormat, PdfImageFormat.png);
+    expect(find.text('Conversion complete'), findsOneWidget);
+    expect(find.text('1 PDF completed · 0 PDFs failed'), findsOneWidget);
   });
 
   testWidgets('shows a structured export failure', (WidgetTester tester) async {
@@ -341,16 +392,15 @@ void main() {
     );
     await _openPdfToImages(tester);
 
-    await tester.tap(find.text('Select PDF'));
+    await tester.tap(find.text('Select PDFs'));
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('Convert to images'));
     await tester.tap(find.text('Convert to images'));
     await tester.pumpAndSettle();
 
+    expect(find.text('Batch failed'), findsOneWidget);
     expect(
-      find.text(
-        'Export failed. The required output file or folder already exists No images were created.',
-      ),
+      find.text('The required output file or folder already exists'),
       findsOneWidget,
     );
   });
@@ -372,7 +422,7 @@ void main() {
       );
       await _openPdfToImages(tester);
 
-      await tester.tap(find.text('Select PDF'));
+      await tester.tap(find.text('Select PDFs'));
       await tester.pumpAndSettle();
 
       expect(find.byKey(const ValueKey('pdf-preview-error')), findsOneWidget);
@@ -381,10 +431,7 @@ void main() {
       await tester.tap(find.text('Convert to images'));
       await tester.pumpAndSettle();
 
-      expect(
-        find.text('Export complete: 2 PNG images created.'),
-        findsOneWidget,
-      );
+      expect(find.text('Conversion complete'), findsOneWidget);
     },
   );
 }

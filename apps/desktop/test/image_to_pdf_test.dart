@@ -121,18 +121,24 @@ class StubPdfToImageWorkflow implements PdfToImageWorkflow {
   Future<String?> chooseDestinationDirectory() async => null;
 
   @override
-  Stream<PdfImageExportUpdate> exportAllPages({
-    required String sourcePath,
-    required String destinationDirectory,
+  Stream<PdfBatchExportUpdate> exportBatch({
+    required List<String> sourcePaths,
+    required PdfDestinationMode destinationMode,
+    required String? customDestinationDirectory,
     required PdfImageQuality quality,
+    required PdfImageFormat format,
   }) => const Stream.empty();
+
+  @override
+  Future<List<SelectedPdf>> preparePdfPaths(List<String> sourcePaths) async =>
+      const [];
 
   @override
   Future<RenderedPdfPage> renderFirstPage(String sourcePath) =>
       throw UnimplementedError();
 
   @override
-  Future<SelectedPdf?> selectAndInspect() async => null;
+  Future<List<SelectedPdf>> selectPdfs() async => const [];
 }
 
 const first = SelectedImage(

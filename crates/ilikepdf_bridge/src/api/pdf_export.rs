@@ -10,11 +10,18 @@ pub enum PdfExportQuality {
     HighQuality,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PdfExportFormat {
+    Png,
+    Jpg,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ExportPdfToImagesRequest {
     pub source_path: String,
     pub destination_directory: String,
     pub quality: PdfExportQuality,
+    pub format: PdfExportFormat,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -34,6 +41,55 @@ pub struct PdfExportUpdate {
     pub error: Option<ApplicationError>,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PdfBatchDestinationMode {
+    NextToSourceFiles,
+    CustomFolder,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ExportPdfBatchRequest {
+    pub source_paths: Vec<String>,
+    pub destination_mode: PdfBatchDestinationMode,
+    pub custom_destination_directory: Option<String>,
+    pub quality: PdfExportQuality,
+    pub format: PdfExportFormat,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PdfBatchExportStatus {
+    Running,
+    Complete,
+    CompleteWithErrors,
+    Failed,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PdfBatchDocumentResult {
+    pub source_path: String,
+    pub display_name: String,
+    pub total_page_count: u32,
+    pub completed_page_count: u32,
+    pub output_files: Vec<String>,
+    pub error: Option<ApplicationError>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PdfBatchExportUpdate {
+    pub status: PdfBatchExportStatus,
+    pub total_document_count: u32,
+    pub completed_document_count: u32,
+    pub succeeded_document_count: u32,
+    pub failed_document_count: u32,
+    pub current_document_index: Option<u32>,
+    pub current_document_filename: Option<String>,
+    pub total_page_count: u32,
+    pub completed_page_count: u32,
+    pub current_page: Option<u32>,
+    pub documents: Vec<PdfBatchDocumentResult>,
+    pub error: Option<ApplicationError>,
+}
+
 /// Exports every page sequentially on flutter_rust_bridge's worker pool and streams progress.
 pub fn export_pdf_to_images(
     request: ExportPdfToImagesRequest,
@@ -48,6 +104,10 @@ pub fn export_pdf_to_images(
             quality: match request.quality {
                 PdfExportQuality::Standard => ilikepdf_core::PdfExportQuality::Standard,
                 PdfExportQuality::HighQuality => ilikepdf_core::PdfExportQuality::HighQuality,
+            },
+            format: match request.format {
+                PdfExportFormat::Png => ilikepdf_core::PdfExportFormat::Png,
+                PdfExportFormat::Jpg => ilikepdf_core::PdfExportFormat::Jpg,
             },
         },
         |progress| {
@@ -83,9 +143,126 @@ pub fn export_pdf_to_images(
     let _ = progress_sink.add(update);
 }
 
+/// Exports PDFs sequentially and isolates failures to one document where possible.
+pub fn export_pdf_batch_to_images(
+    request: ExportPdfBatchRequest,
+    progress_sink: StreamSink<PdfBatchExportUpdate>,
+) {
+    crate::logging::record(crate::logging::Event::PdfImageExportRequested);
+
+    let result = ilikepdf_core::export_pdf_batch_to_images(
+        ilikepdf_core::ExportPdfBatchRequest {
+            source_paths: request
+                .source_paths
+                .into_iter()
+                .map(PathBuf::from)
+                .collect(),
+            destination_mode: match request.destination_mode {
+                PdfBatchDestinationMode::NextToSourceFiles => {
+                    ilikepdf_core::PdfBatchDestinationMode::NextToSourceFiles
+                }
+                PdfBatchDestinationMode::CustomFolder => {
+                    ilikepdf_core::PdfBatchDestinationMode::CustomFolder
+                }
+            },
+            custom_destination_directory: request.custom_destination_directory.map(PathBuf::from),
+            quality: match request.quality {
+                PdfExportQuality::Standard => ilikepdf_core::PdfExportQuality::Standard,
+                PdfExportQuality::HighQuality => ilikepdf_core::PdfExportQuality::HighQuality,
+            },
+            format: match request.format {
+                PdfExportFormat::Png => ilikepdf_core::PdfExportFormat::Png,
+                PdfExportFormat::Jpg => ilikepdf_core::PdfExportFormat::Jpg,
+            },
+        },
+        |progress| {
+            let _ = progress_sink.add(PdfBatchExportUpdate {
+                status: PdfBatchExportStatus::Running,
+                total_document_count: progress.total_document_count,
+                completed_document_count: progress.completed_document_count,
+                succeeded_document_count: 0,
+                failed_document_count: 0,
+                current_document_index: progress.current_document_index,
+                current_document_filename: progress.current_document_filename,
+                total_page_count: progress.total_page_count,
+                completed_page_count: progress.completed_page_count,
+                current_page: progress.current_page,
+                documents: Vec::new(),
+                error: None,
+            });
+        },
+    );
+
+    let update = match result {
+        Ok(result) => PdfBatchExportUpdate {
+            status: if result.failed_document_count == 0 {
+                PdfBatchExportStatus::Complete
+            } else {
+                PdfBatchExportStatus::CompleteWithErrors
+            },
+            total_document_count: result.total_document_count,
+            completed_document_count: result.total_document_count,
+            succeeded_document_count: result.succeeded_document_count,
+            failed_document_count: result.failed_document_count,
+            current_document_index: None,
+            current_document_filename: None,
+            total_page_count: result.total_page_count,
+            completed_page_count: result.completed_page_count,
+            current_page: None,
+            documents: map_batch_documents(result.documents),
+            error: None,
+        },
+        Err(failure) => PdfBatchExportUpdate {
+            status: PdfBatchExportStatus::Failed,
+            total_document_count: failure.total_document_count,
+            completed_document_count: failure.completed_document_count,
+            succeeded_document_count: u32::try_from(
+                failure
+                    .documents
+                    .iter()
+                    .filter(|document| document.error.is_none())
+                    .count(),
+            )
+            .expect("document count was represented by u32"),
+            failed_document_count: u32::try_from(
+                failure
+                    .documents
+                    .iter()
+                    .filter(|document| document.error.is_some())
+                    .count(),
+            )
+            .expect("document count was represented by u32"),
+            current_document_index: failure.current_document_index,
+            current_document_filename: failure.current_document_filename,
+            total_page_count: failure.total_page_count,
+            completed_page_count: failure.completed_page_count,
+            current_page: None,
+            documents: map_batch_documents(failure.documents),
+            error: Some(failure.error.into()),
+        },
+    };
+    let _ = progress_sink.add(update);
+}
+
 fn paths_to_strings(paths: Vec<PathBuf>) -> Vec<String> {
     paths
         .into_iter()
         .map(|path| path.to_string_lossy().into_owned())
+        .collect()
+}
+
+fn map_batch_documents(
+    documents: Vec<ilikepdf_core::PdfBatchDocumentResult>,
+) -> Vec<PdfBatchDocumentResult> {
+    documents
+        .into_iter()
+        .map(|document| PdfBatchDocumentResult {
+            source_path: document.source_path.to_string_lossy().into_owned(),
+            display_name: document.display_name,
+            total_page_count: document.total_page_count,
+            completed_page_count: document.completed_page_count,
+            output_files: paths_to_strings(document.output_files),
+            error: document.error.map(Into::into),
+        })
         .collect()
 }

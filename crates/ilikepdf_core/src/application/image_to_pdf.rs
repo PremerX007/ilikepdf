@@ -7,8 +7,8 @@ use ilikepdf_pdf::{
     ImagePdfRequest as NativeRequest,
 };
 
+use super::image_output::validate_output_directory;
 use super::pdf_output::PendingPdfOutput;
-use super::png_output::validate_output_directory;
 use crate::{ApplicationError, ApplicationErrorCode, ApplicationResult};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

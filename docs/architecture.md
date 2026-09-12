@@ -33,9 +33,10 @@ The PDF paths are intentionally separated by purpose:
 Flutter picker/widget -> typed bridge DTO -> core preview workflow
   -> temporary PNG -> ilikepdf_pdf -> PDFium 7881 -> atomic publish -> Flutter image
 
-Flutter export panel -> typed progress stream -> core PDF-to-image export job
-  -> one page at a time at 150/300 DPI -> temporary PNG -> PDFium 7881
-  -> atomic non-clobber publish -> progress/completion/structured failure
+Flutter PDF batch workspace -> typed batch progress stream -> core orchestrator
+  -> documents in card order -> one page at a time at 150/300 DPI
+  -> PNG or JPG encoding -> atomic non-clobber publish
+  -> per-document result -> mixed-success batch summary
 
 Flutter image arranger -> typed progress stream -> core Image-to-PDF job
   -> one decoded/oriented image at a time -> engine-neutral page layout
@@ -48,13 +49,38 @@ pixel dimensions from its rotated PDF point dimensions and selected DPI. Export 
 sequential so rendered page memory and native resources are released before the
 next page begins; completed output paths remain available if a later page fails.
 
-PDF-to-image output follows a stable, page-count-based convention. A one-page
-document writes `<source-stem>-page-0001.png` directly into the selected
-destination. A multi-page document creates `<destination>/<source-stem>/` and
-writes `<source-stem>-page-0001.png`, `<source-stem>-page-0002.png`, and so on
-inside it. Page numbers use at least four digits, Unicode source stems are
-preserved, and an existing required output file or document folder is treated as
-a collision rather than overwritten or reused.
+PDF-to-image accepts one or more PDFs through a shared picker/drop ingestion path.
+The card order is the sequential processing order; reordering cards never changes
+page order inside a document. Each card uses the preview pipeline only for a
+compact page-1 thumbnail, while production export continues to render each page
+independently at Standard 150 DPI or High 300 DPI. Export format is an independent
+typed choice: PNG is the default lossless output, while JPG uses fixed quality 90.
+Preview rendering remains PNG-only and never determines the export format.
+
+The default `Next to source files` destination resolves a separate base directory
+from each source PDF. `Custom folder` uses one selected base directory for every
+document and survives add, remove, and reorder interactions. Output structure is
+based only on each document's page count: a one-page document writes
+`<source-stem>-page-0001.<format>` directly into its base directory; a multi-page
+document creates `<base>/<source-stem>/` and writes the original-stem page names
+inside it. The selected extension is `.png` or `.jpg`; page numbers use at least
+four digits and valid Unicode stems are preserved.
+
+Existing outputs are never replaced. A one-page filename collision uses the
+lowest available suffix such as `cover-page-0001 (1).png` or
+`cover-page-0001 (1).jpg`; a multi-page folder
+collision similarly uses `invoice (1)` while its internal filenames remain
+`invoice-page-0001.<format>`, `invoice-page-0002.<format>`, and so on. Allocation compares
+names case-insensitively for Windows and publishes with atomic no-clobber
+operations, retrying when another writer wins a race.
+
+Batch planning inspects documents to obtain the overall page total, then exports
+sequentially so memory remains bounded to a page render and one document's native
+state. A document-specific open, render, encode, or publication failure records
+that document's structured result and processing continues with the next card.
+Global preconditions, including an unavailable PDFium runtime or invalid shared
+custom destination, stop the batch. Final results retain ordered per-document
+successes, failures, published outputs, and partial page counts.
 
 Opening and rendering are worker-pool calls from Dart. A later job boundary can
 move the native adapter into a worker process without changing presentation
@@ -146,3 +172,10 @@ paths pass through the same `ImageToPdfWorkflow.prepareImagePaths()` ingestion
 method before entering the same core conversion path. Native Windows Explorer
 drop events are supplied by the pinned `desktop_drop 0.8.4` package because
 `file_selector` provides native pickers but not a desktop drop target.
+
+PDF-to-Images uses the same drop target, card, reorder grid, destination picker,
+and anchored settings/action structure. Picker and Windows Explorer drop paths
+both pass through `PdfToImageWorkflow.preparePdfPaths()`. The populated workspace
+supports adding and removing PDFs without resetting a custom destination, and
+the result region summarizes completed and failed documents without colliding
+with the primary action.

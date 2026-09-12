@@ -5,12 +5,14 @@ class DestinationPicker extends StatelessWidget {
     required this.path,
     required this.placeholder,
     required this.onChoose,
+    this.showHeading = true,
     super.key,
   });
 
   final String? path;
   final String placeholder;
   final VoidCallback? onChoose;
+  final bool showHeading;
 
   @override
   Widget build(BuildContext context) {
@@ -19,8 +21,10 @@ class DestinationPicker extends StatelessWidget {
       key: const ValueKey('destination-section'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text('Destination', style: Theme.of(context).textTheme.titleSmall),
-        const SizedBox(height: 8),
+        if (showHeading) ...[
+          Text('Destination', style: Theme.of(context).textTheme.titleSmall),
+          const SizedBox(height: 8),
+        ],
         Tooltip(
           message: visiblePath,
           child: Text(

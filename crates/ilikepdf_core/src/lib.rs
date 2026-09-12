@@ -8,9 +8,13 @@ pub use application::image_to_pdf::{
     CreateImagePdfRequest, ImagePdfFailure, ImagePdfMargin, ImagePdfOrientation, ImagePdfPageSize,
     ImagePdfProgress, ImagePdfResult, create_pdfs_from_images,
 };
+pub use application::pdf_batch_export::{
+    ExportPdfBatchRequest, PdfBatchDestinationMode, PdfBatchDocumentResult, PdfBatchFailure,
+    PdfBatchProgress, PdfBatchResult, export_pdf_batch_to_images,
+};
 pub use application::pdf_export::{
-    ExportPdfToImagesRequest, PdfExportFailure, PdfExportProgress, PdfExportQuality,
-    PdfExportResult, export_pdf_to_images,
+    ExportPdfToImagesRequest, PdfExportFailure, PdfExportFormat, PdfExportProgress,
+    PdfExportQuality, PdfExportResult, export_pdf_to_images,
 };
 pub use application::pdf_preview::{
     PdfDocumentInfo, PdfPageSize, RenderPdfPageRequest, RenderPdfPageResult, inspect_pdf_document,

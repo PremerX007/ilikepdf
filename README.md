@@ -4,10 +4,12 @@ ilikepdf is an open-source, privacy-first Windows PDF toolkit. Flutter provides
 the desktop presentation layer while Rust owns application logic and native PDF
 integration. Documents and images are processed locally and are never uploaded.
 
-Current production workflows include PDF-to-PNG export and Image-to-PDF creation.
-Image-to-PDF accepts JPG/JPEG, PNG, and WebP images, supports ordered merged or
-separate output, accepts native Windows Explorer drag-and-drop, and allocates a
-numbered filename instead of overwriting an existing PDF. The desktop home and
+Current production workflows include batch PDF-to-PNG/JPG export and Image-to-PDF
+creation. PDF-to-Images accepts ordered multi-file picker/drop input, exports
+sequentially as PNG or JPG at 150 or 300 DPI, supports per-source or shared custom destinations,
+continues after document-specific failures, and numbers output files or folders
+instead of overwriting existing data. Image-to-PDF accepts JPG/JPEG, PNG, and
+WebP images and supports ordered merged or separate output. The desktop home and
 two-column tool workspace form the reusable visual shell for future local PDF
 tools.
 

@@ -8,28 +8,75 @@ import 'application.dart';
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `paths_to_strings`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `clone`, `clone`, `clone`, `clone`, `eq`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`
+// These functions are ignored because they are not marked as `pub`: `map_batch_documents`, `paths_to_strings`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`
 
 /// Exports every page sequentially on flutter_rust_bridge's worker pool and streams progress.
 Stream<PdfExportUpdate> exportPdfToImages({
   required ExportPdfToImagesRequest request,
 }) => RustLib.instance.api.crateApiPdfExportExportPdfToImages(request: request);
 
+/// Exports PDFs sequentially and isolates failures to one document where possible.
+Stream<PdfBatchExportUpdate> exportPdfBatchToImages({
+  required ExportPdfBatchRequest request,
+}) => RustLib.instance.api.crateApiPdfExportExportPdfBatchToImages(
+  request: request,
+);
+
+class ExportPdfBatchRequest {
+  final List<String> sourcePaths;
+  final PdfBatchDestinationMode destinationMode;
+  final String? customDestinationDirectory;
+  final PdfExportQuality quality;
+  final PdfExportFormat format;
+
+  const ExportPdfBatchRequest({
+    required this.sourcePaths,
+    required this.destinationMode,
+    this.customDestinationDirectory,
+    required this.quality,
+    required this.format,
+  });
+
+  @override
+  int get hashCode =>
+      sourcePaths.hashCode ^
+      destinationMode.hashCode ^
+      customDestinationDirectory.hashCode ^
+      quality.hashCode ^
+      format.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ExportPdfBatchRequest &&
+          runtimeType == other.runtimeType &&
+          sourcePaths == other.sourcePaths &&
+          destinationMode == other.destinationMode &&
+          customDestinationDirectory == other.customDestinationDirectory &&
+          quality == other.quality &&
+          format == other.format;
+}
+
 class ExportPdfToImagesRequest {
   final String sourcePath;
   final String destinationDirectory;
   final PdfExportQuality quality;
+  final PdfExportFormat format;
 
   const ExportPdfToImagesRequest({
     required this.sourcePath,
     required this.destinationDirectory,
     required this.quality,
+    required this.format,
   });
 
   @override
   int get hashCode =>
-      sourcePath.hashCode ^ destinationDirectory.hashCode ^ quality.hashCode;
+      sourcePath.hashCode ^
+      destinationDirectory.hashCode ^
+      quality.hashCode ^
+      format.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -38,8 +85,117 @@ class ExportPdfToImagesRequest {
           runtimeType == other.runtimeType &&
           sourcePath == other.sourcePath &&
           destinationDirectory == other.destinationDirectory &&
-          quality == other.quality;
+          quality == other.quality &&
+          format == other.format;
 }
+
+enum PdfBatchDestinationMode { nextToSourceFiles, customFolder }
+
+class PdfBatchDocumentResult {
+  final String sourcePath;
+  final String displayName;
+  final int totalPageCount;
+  final int completedPageCount;
+  final List<String> outputFiles;
+  final ApplicationError? error;
+
+  const PdfBatchDocumentResult({
+    required this.sourcePath,
+    required this.displayName,
+    required this.totalPageCount,
+    required this.completedPageCount,
+    required this.outputFiles,
+    this.error,
+  });
+
+  @override
+  int get hashCode =>
+      sourcePath.hashCode ^
+      displayName.hashCode ^
+      totalPageCount.hashCode ^
+      completedPageCount.hashCode ^
+      outputFiles.hashCode ^
+      error.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is PdfBatchDocumentResult &&
+          runtimeType == other.runtimeType &&
+          sourcePath == other.sourcePath &&
+          displayName == other.displayName &&
+          totalPageCount == other.totalPageCount &&
+          completedPageCount == other.completedPageCount &&
+          outputFiles == other.outputFiles &&
+          error == other.error;
+}
+
+enum PdfBatchExportStatus { running, complete, completeWithErrors, failed }
+
+class PdfBatchExportUpdate {
+  final PdfBatchExportStatus status;
+  final int totalDocumentCount;
+  final int completedDocumentCount;
+  final int succeededDocumentCount;
+  final int failedDocumentCount;
+  final int? currentDocumentIndex;
+  final String? currentDocumentFilename;
+  final int totalPageCount;
+  final int completedPageCount;
+  final int? currentPage;
+  final List<PdfBatchDocumentResult> documents;
+  final ApplicationError? error;
+
+  const PdfBatchExportUpdate({
+    required this.status,
+    required this.totalDocumentCount,
+    required this.completedDocumentCount,
+    required this.succeededDocumentCount,
+    required this.failedDocumentCount,
+    this.currentDocumentIndex,
+    this.currentDocumentFilename,
+    required this.totalPageCount,
+    required this.completedPageCount,
+    this.currentPage,
+    required this.documents,
+    this.error,
+  });
+
+  @override
+  int get hashCode =>
+      status.hashCode ^
+      totalDocumentCount.hashCode ^
+      completedDocumentCount.hashCode ^
+      succeededDocumentCount.hashCode ^
+      failedDocumentCount.hashCode ^
+      currentDocumentIndex.hashCode ^
+      currentDocumentFilename.hashCode ^
+      totalPageCount.hashCode ^
+      completedPageCount.hashCode ^
+      currentPage.hashCode ^
+      documents.hashCode ^
+      error.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is PdfBatchExportUpdate &&
+          runtimeType == other.runtimeType &&
+          status == other.status &&
+          totalDocumentCount == other.totalDocumentCount &&
+          completedDocumentCount == other.completedDocumentCount &&
+          succeededDocumentCount == other.succeededDocumentCount &&
+          failedDocumentCount == other.failedDocumentCount &&
+          currentDocumentIndex == other.currentDocumentIndex &&
+          currentDocumentFilename == other.currentDocumentFilename &&
+          totalPageCount == other.totalPageCount &&
+          completedPageCount == other.completedPageCount &&
+          currentPage == other.currentPage &&
+          documents == other.documents &&
+          error == other.error;
+}
+
+enum PdfExportFormat { png, jpg }
 
 enum PdfExportQuality { standard, highQuality }
 

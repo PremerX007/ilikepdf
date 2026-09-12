@@ -39,7 +39,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.13.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -1228066786;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 1053760489;
 
 // Section: executor
 
@@ -80,6 +80,49 @@ fn wire__crate__api__image_to_pdf__create_pdfs_from_images_impl(
                 transform_result_sse::<_, ()>((move || {
                     let output_ok = Ok::<_, ()>({
                         crate::api::image_to_pdf::create_pdfs_from_images(
+                            api_request,
+                            api_progress_sink,
+                        );
+                    })?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__crate__api__pdf_export__export_pdf_batch_to_images_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "export_pdf_batch_to_images",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_request =
+                <crate::api::pdf_export::ExportPdfBatchRequest>::sse_decode(&mut deserializer);
+            let api_progress_sink = <StreamSink<
+                crate::api::pdf_export::PdfBatchExportUpdate,
+                flutter_rust_bridge::for_generated::SseCodec,
+            >>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, ()>((move || {
+                    let output_ok = Ok::<_, ()>({
+                        crate::api::pdf_export::export_pdf_batch_to_images(
                             api_request,
                             api_progress_sink,
                         );
@@ -295,6 +338,19 @@ impl SseDecode
 
 impl SseDecode
     for StreamSink<
+        crate::api::pdf_export::PdfBatchExportUpdate,
+        flutter_rust_bridge::for_generated::SseCodec,
+    >
+{
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <String>::sse_decode(deserializer);
+        return StreamSink::deserialize(inner);
+    }
+}
+
+impl SseDecode
+    for StreamSink<
         crate::api::pdf_export::PdfExportUpdate,
         flutter_rust_bridge::for_generated::SseCodec,
     >
@@ -404,16 +460,37 @@ impl SseDecode for crate::api::image_to_pdf::CreateImagePdfRequest {
     }
 }
 
+impl SseDecode for crate::api::pdf_export::ExportPdfBatchRequest {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_sourcePaths = <Vec<String>>::sse_decode(deserializer);
+        let mut var_destinationMode =
+            <crate::api::pdf_export::PdfBatchDestinationMode>::sse_decode(deserializer);
+        let mut var_customDestinationDirectory = <Option<String>>::sse_decode(deserializer);
+        let mut var_quality = <crate::api::pdf_export::PdfExportQuality>::sse_decode(deserializer);
+        let mut var_format = <crate::api::pdf_export::PdfExportFormat>::sse_decode(deserializer);
+        return crate::api::pdf_export::ExportPdfBatchRequest {
+            source_paths: var_sourcePaths,
+            destination_mode: var_destinationMode,
+            custom_destination_directory: var_customDestinationDirectory,
+            quality: var_quality,
+            format: var_format,
+        };
+    }
+}
+
 impl SseDecode for crate::api::pdf_export::ExportPdfToImagesRequest {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut var_sourcePath = <String>::sse_decode(deserializer);
         let mut var_destinationDirectory = <String>::sse_decode(deserializer);
         let mut var_quality = <crate::api::pdf_export::PdfExportQuality>::sse_decode(deserializer);
+        let mut var_format = <crate::api::pdf_export::PdfExportFormat>::sse_decode(deserializer);
         return crate::api::pdf_export::ExportPdfToImagesRequest {
             source_path: var_sourcePath,
             destination_directory: var_destinationDirectory,
             quality: var_quality,
+            format: var_format,
         };
     }
 }
@@ -516,6 +593,18 @@ impl SseDecode for Vec<String> {
     }
 }
 
+impl SseDecode for Vec<crate::api::pdf_export::PdfBatchDocumentResult> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ {
+            ans_.push(<crate::api::pdf_export::PdfBatchDocumentResult>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
 impl SseDecode for Vec<u8> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -576,6 +665,88 @@ impl SseDecode for Option<u32> {
     }
 }
 
+impl SseDecode for crate::api::pdf_export::PdfBatchDestinationMode {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::pdf_export::PdfBatchDestinationMode::NextToSourceFiles,
+            1 => crate::api::pdf_export::PdfBatchDestinationMode::CustomFolder,
+            _ => unreachable!("Invalid variant for PdfBatchDestinationMode: {}", inner),
+        };
+    }
+}
+
+impl SseDecode for crate::api::pdf_export::PdfBatchDocumentResult {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_sourcePath = <String>::sse_decode(deserializer);
+        let mut var_displayName = <String>::sse_decode(deserializer);
+        let mut var_totalPageCount = <u32>::sse_decode(deserializer);
+        let mut var_completedPageCount = <u32>::sse_decode(deserializer);
+        let mut var_outputFiles = <Vec<String>>::sse_decode(deserializer);
+        let mut var_error =
+            <Option<crate::api::application::ApplicationError>>::sse_decode(deserializer);
+        return crate::api::pdf_export::PdfBatchDocumentResult {
+            source_path: var_sourcePath,
+            display_name: var_displayName,
+            total_page_count: var_totalPageCount,
+            completed_page_count: var_completedPageCount,
+            output_files: var_outputFiles,
+            error: var_error,
+        };
+    }
+}
+
+impl SseDecode for crate::api::pdf_export::PdfBatchExportStatus {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::pdf_export::PdfBatchExportStatus::Running,
+            1 => crate::api::pdf_export::PdfBatchExportStatus::Complete,
+            2 => crate::api::pdf_export::PdfBatchExportStatus::CompleteWithErrors,
+            3 => crate::api::pdf_export::PdfBatchExportStatus::Failed,
+            _ => unreachable!("Invalid variant for PdfBatchExportStatus: {}", inner),
+        };
+    }
+}
+
+impl SseDecode for crate::api::pdf_export::PdfBatchExportUpdate {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_status =
+            <crate::api::pdf_export::PdfBatchExportStatus>::sse_decode(deserializer);
+        let mut var_totalDocumentCount = <u32>::sse_decode(deserializer);
+        let mut var_completedDocumentCount = <u32>::sse_decode(deserializer);
+        let mut var_succeededDocumentCount = <u32>::sse_decode(deserializer);
+        let mut var_failedDocumentCount = <u32>::sse_decode(deserializer);
+        let mut var_currentDocumentIndex = <Option<u32>>::sse_decode(deserializer);
+        let mut var_currentDocumentFilename = <Option<String>>::sse_decode(deserializer);
+        let mut var_totalPageCount = <u32>::sse_decode(deserializer);
+        let mut var_completedPageCount = <u32>::sse_decode(deserializer);
+        let mut var_currentPage = <Option<u32>>::sse_decode(deserializer);
+        let mut var_documents =
+            <Vec<crate::api::pdf_export::PdfBatchDocumentResult>>::sse_decode(deserializer);
+        let mut var_error =
+            <Option<crate::api::application::ApplicationError>>::sse_decode(deserializer);
+        return crate::api::pdf_export::PdfBatchExportUpdate {
+            status: var_status,
+            total_document_count: var_totalDocumentCount,
+            completed_document_count: var_completedDocumentCount,
+            succeeded_document_count: var_succeededDocumentCount,
+            failed_document_count: var_failedDocumentCount,
+            current_document_index: var_currentDocumentIndex,
+            current_document_filename: var_currentDocumentFilename,
+            total_page_count: var_totalPageCount,
+            completed_page_count: var_completedPageCount,
+            current_page: var_currentPage,
+            documents: var_documents,
+            error: var_error,
+        };
+    }
+}
+
 impl SseDecode for crate::api::pdf_preview::PdfDocumentInfo {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -585,6 +756,18 @@ impl SseDecode for crate::api::pdf_preview::PdfDocumentInfo {
         return crate::api::pdf_preview::PdfDocumentInfo {
             page_count: var_pageCount,
             first_page_size: var_firstPageSize,
+        };
+    }
+}
+
+impl SseDecode for crate::api::pdf_export::PdfExportFormat {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::pdf_export::PdfExportFormat::Png,
+            1 => crate::api::pdf_export::PdfExportFormat::Jpg,
+            _ => unreachable!("Invalid variant for PdfExportFormat: {}", inner),
         };
     }
 }
@@ -711,23 +894,29 @@ fn pde_ffi_dispatcher_primary_impl(
             rust_vec_len,
             data_len,
         ),
-        2 => wire__crate__api__pdf_export__export_pdf_to_images_impl(
+        2 => wire__crate__api__pdf_export__export_pdf_batch_to_images_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        3 => wire__crate__api__application__get_application_info_impl(
+        3 => wire__crate__api__pdf_export__export_pdf_to_images_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        4 => wire__crate__api__lifecycle__initialize_impl(port, ptr, rust_vec_len, data_len),
-        5 => {
+        4 => wire__crate__api__application__get_application_info_impl(
+            port,
+            ptr,
+            rust_vec_len,
+            data_len,
+        ),
+        5 => wire__crate__api__lifecycle__initialize_impl(port, ptr, rust_vec_len, data_len),
+        6 => {
             wire__crate__api__pdf_preview__open_pdf_document_impl(port, ptr, rust_vec_len, data_len)
         }
-        6 => wire__crate__api__pdf_preview__render_pdf_page_impl(port, ptr, rust_vec_len, data_len),
+        7 => wire__crate__api__pdf_preview__render_pdf_page_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -858,12 +1047,39 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::image_to_pdf::CreateImagePdfR
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::pdf_export::ExportPdfBatchRequest {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.source_paths.into_into_dart().into_dart(),
+            self.destination_mode.into_into_dart().into_dart(),
+            self.custom_destination_directory
+                .into_into_dart()
+                .into_dart(),
+            self.quality.into_into_dart().into_dart(),
+            self.format.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::pdf_export::ExportPdfBatchRequest
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::pdf_export::ExportPdfBatchRequest>
+    for crate::api::pdf_export::ExportPdfBatchRequest
+{
+    fn into_into_dart(self) -> crate::api::pdf_export::ExportPdfBatchRequest {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
 impl flutter_rust_bridge::IntoDart for crate::api::pdf_export::ExportPdfToImagesRequest {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
             self.source_path.into_into_dart().into_dart(),
             self.destination_directory.into_into_dart().into_dart(),
             self.quality.into_into_dart().into_dart(),
+            self.format.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
@@ -992,6 +1208,106 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::image_to_pdf::ImagePdfUpdate>
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::pdf_export::PdfBatchDestinationMode {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self {
+            Self::NextToSourceFiles => 0.into_dart(),
+            Self::CustomFolder => 1.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::pdf_export::PdfBatchDestinationMode
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::pdf_export::PdfBatchDestinationMode>
+    for crate::api::pdf_export::PdfBatchDestinationMode
+{
+    fn into_into_dart(self) -> crate::api::pdf_export::PdfBatchDestinationMode {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::pdf_export::PdfBatchDocumentResult {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.source_path.into_into_dart().into_dart(),
+            self.display_name.into_into_dart().into_dart(),
+            self.total_page_count.into_into_dart().into_dart(),
+            self.completed_page_count.into_into_dart().into_dart(),
+            self.output_files.into_into_dart().into_dart(),
+            self.error.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::pdf_export::PdfBatchDocumentResult
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::pdf_export::PdfBatchDocumentResult>
+    for crate::api::pdf_export::PdfBatchDocumentResult
+{
+    fn into_into_dart(self) -> crate::api::pdf_export::PdfBatchDocumentResult {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::pdf_export::PdfBatchExportStatus {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self {
+            Self::Running => 0.into_dart(),
+            Self::Complete => 1.into_dart(),
+            Self::CompleteWithErrors => 2.into_dart(),
+            Self::Failed => 3.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::pdf_export::PdfBatchExportStatus
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::pdf_export::PdfBatchExportStatus>
+    for crate::api::pdf_export::PdfBatchExportStatus
+{
+    fn into_into_dart(self) -> crate::api::pdf_export::PdfBatchExportStatus {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::pdf_export::PdfBatchExportUpdate {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.status.into_into_dart().into_dart(),
+            self.total_document_count.into_into_dart().into_dart(),
+            self.completed_document_count.into_into_dart().into_dart(),
+            self.succeeded_document_count.into_into_dart().into_dart(),
+            self.failed_document_count.into_into_dart().into_dart(),
+            self.current_document_index.into_into_dart().into_dart(),
+            self.current_document_filename.into_into_dart().into_dart(),
+            self.total_page_count.into_into_dart().into_dart(),
+            self.completed_page_count.into_into_dart().into_dart(),
+            self.current_page.into_into_dart().into_dart(),
+            self.documents.into_into_dart().into_dart(),
+            self.error.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::pdf_export::PdfBatchExportUpdate
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::pdf_export::PdfBatchExportUpdate>
+    for crate::api::pdf_export::PdfBatchExportUpdate
+{
+    fn into_into_dart(self) -> crate::api::pdf_export::PdfBatchExportUpdate {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
 impl flutter_rust_bridge::IntoDart for crate::api::pdf_preview::PdfDocumentInfo {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
@@ -1009,6 +1325,27 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::pdf_preview::PdfDocumentInfo>
     for crate::api::pdf_preview::PdfDocumentInfo
 {
     fn into_into_dart(self) -> crate::api::pdf_preview::PdfDocumentInfo {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::pdf_export::PdfExportFormat {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self {
+            Self::Png => 0.into_dart(),
+            Self::Jpg => 1.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::pdf_export::PdfExportFormat
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::pdf_export::PdfExportFormat>
+    for crate::api::pdf_export::PdfExportFormat
+{
+    fn into_into_dart(self) -> crate::api::pdf_export::PdfExportFormat {
         self
     }
 }
@@ -1168,6 +1505,18 @@ impl SseEncode
 
 impl SseEncode
     for StreamSink<
+        crate::api::pdf_export::PdfBatchExportUpdate,
+        flutter_rust_bridge::for_generated::SseCodec,
+    >
+{
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        unimplemented!("")
+    }
+}
+
+impl SseEncode
+    for StreamSink<
         crate::api::pdf_export::PdfExportUpdate,
         flutter_rust_bridge::for_generated::SseCodec,
     >
@@ -1259,12 +1608,27 @@ impl SseEncode for crate::api::image_to_pdf::CreateImagePdfRequest {
     }
 }
 
+impl SseEncode for crate::api::pdf_export::ExportPdfBatchRequest {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <Vec<String>>::sse_encode(self.source_paths, serializer);
+        <crate::api::pdf_export::PdfBatchDestinationMode>::sse_encode(
+            self.destination_mode,
+            serializer,
+        );
+        <Option<String>>::sse_encode(self.custom_destination_directory, serializer);
+        <crate::api::pdf_export::PdfExportQuality>::sse_encode(self.quality, serializer);
+        <crate::api::pdf_export::PdfExportFormat>::sse_encode(self.format, serializer);
+    }
+}
+
 impl SseEncode for crate::api::pdf_export::ExportPdfToImagesRequest {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <String>::sse_encode(self.source_path, serializer);
         <String>::sse_encode(self.destination_directory, serializer);
         <crate::api::pdf_export::PdfExportQuality>::sse_encode(self.quality, serializer);
+        <crate::api::pdf_export::PdfExportFormat>::sse_encode(self.format, serializer);
     }
 }
 
@@ -1371,6 +1735,16 @@ impl SseEncode for Vec<String> {
     }
 }
 
+impl SseEncode for Vec<crate::api::pdf_export::PdfBatchDocumentResult> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::api::pdf_export::PdfBatchDocumentResult>::sse_encode(item, serializer);
+        }
+    }
+}
+
 impl SseEncode for Vec<u8> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -1421,12 +1795,95 @@ impl SseEncode for Option<u32> {
     }
 }
 
+impl SseEncode for crate::api::pdf_export::PdfBatchDestinationMode {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                crate::api::pdf_export::PdfBatchDestinationMode::NextToSourceFiles => 0,
+                crate::api::pdf_export::PdfBatchDestinationMode::CustomFolder => 1,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
+    }
+}
+
+impl SseEncode for crate::api::pdf_export::PdfBatchDocumentResult {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.source_path, serializer);
+        <String>::sse_encode(self.display_name, serializer);
+        <u32>::sse_encode(self.total_page_count, serializer);
+        <u32>::sse_encode(self.completed_page_count, serializer);
+        <Vec<String>>::sse_encode(self.output_files, serializer);
+        <Option<crate::api::application::ApplicationError>>::sse_encode(self.error, serializer);
+    }
+}
+
+impl SseEncode for crate::api::pdf_export::PdfBatchExportStatus {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                crate::api::pdf_export::PdfBatchExportStatus::Running => 0,
+                crate::api::pdf_export::PdfBatchExportStatus::Complete => 1,
+                crate::api::pdf_export::PdfBatchExportStatus::CompleteWithErrors => 2,
+                crate::api::pdf_export::PdfBatchExportStatus::Failed => 3,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
+    }
+}
+
+impl SseEncode for crate::api::pdf_export::PdfBatchExportUpdate {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <crate::api::pdf_export::PdfBatchExportStatus>::sse_encode(self.status, serializer);
+        <u32>::sse_encode(self.total_document_count, serializer);
+        <u32>::sse_encode(self.completed_document_count, serializer);
+        <u32>::sse_encode(self.succeeded_document_count, serializer);
+        <u32>::sse_encode(self.failed_document_count, serializer);
+        <Option<u32>>::sse_encode(self.current_document_index, serializer);
+        <Option<String>>::sse_encode(self.current_document_filename, serializer);
+        <u32>::sse_encode(self.total_page_count, serializer);
+        <u32>::sse_encode(self.completed_page_count, serializer);
+        <Option<u32>>::sse_encode(self.current_page, serializer);
+        <Vec<crate::api::pdf_export::PdfBatchDocumentResult>>::sse_encode(
+            self.documents,
+            serializer,
+        );
+        <Option<crate::api::application::ApplicationError>>::sse_encode(self.error, serializer);
+    }
+}
+
 impl SseEncode for crate::api::pdf_preview::PdfDocumentInfo {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <u32>::sse_encode(self.page_count, serializer);
         <Option<crate::api::pdf_preview::PdfPageSize>>::sse_encode(
             self.first_page_size,
+            serializer,
+        );
+    }
+}
+
+impl SseEncode for crate::api::pdf_export::PdfExportFormat {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                crate::api::pdf_export::PdfExportFormat::Png => 0,
+                crate::api::pdf_export::PdfExportFormat::Jpg => 1,
+                _ => {
+                    unimplemented!("");
+                }
+            },
             serializer,
         );
     }

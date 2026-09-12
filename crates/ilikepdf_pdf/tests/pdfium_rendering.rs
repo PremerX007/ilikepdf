@@ -3,7 +3,9 @@ use std::io::Cursor;
 use std::path::{Path, PathBuf};
 use std::sync::OnceLock;
 
-use ilikepdf_pdf::{PdfDpiRenderRequest, PdfErrorKind, PdfRenderRequest, PdfRenderer};
+use ilikepdf_pdf::{
+    PdfDpiRenderRequest, PdfErrorKind, PdfImageFormat, PdfRenderRequest, PdfRenderer,
+};
 use image::GenericImageView;
 
 fn fixture(name: &str) -> PathBuf {
@@ -89,6 +91,39 @@ fn renders_300_dpi_larger_than_150_dpi_with_the_same_aspect_ratio() {
     assert!(high_quality.1 > standard.1);
     assert!((standard.0 as f64 / standard.1 as f64 - 1.5).abs() < 0.01);
     assert!((high_quality.0 as f64 / high_quality.1 as f64 - 1.5).abs() < 0.01);
+}
+
+#[test]
+fn renders_a_page_to_a_valid_jpg_at_the_requested_dpi() {
+    let source = fixture("two_page.pdf");
+    let before = fs::read(&source).expect("fixture should be readable");
+    let mut output = Cursor::new(Vec::new());
+
+    let rendered = renderer()
+        .render_page_to_image_at_dpi(
+            PdfDpiRenderRequest {
+                source_path: source.clone(),
+                page_index: 0,
+                dpi: 150,
+            },
+            PdfImageFormat::Jpg,
+            &mut output,
+        )
+        .expect("page should render as JPG");
+    let bytes = output.into_inner();
+    let decoded = image::load_from_memory_with_format(&bytes, image::ImageFormat::Jpeg)
+        .expect("rendered bytes should decode as JPG");
+
+    assert_eq!(&bytes[..3], b"\xff\xd8\xff");
+    assert_eq!(decoded.dimensions(), (625, 417));
+    assert_eq!(
+        decoded.dimensions(),
+        (rendered.width_pixels, rendered.height_pixels)
+    );
+    assert_eq!(
+        fs::read(source).expect("fixture should remain readable"),
+        before
+    );
 }
 
 #[test]

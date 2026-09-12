@@ -2,12 +2,12 @@ use std::fs;
 use std::io::{Seek, Write};
 use std::path::Path;
 
-use image::ImageFormat;
+use image::{ImageFormat, codecs::jpeg::JpegEncoder};
 use pdfium_render::prelude::{PdfRenderConfig, Pdfium};
 
 use crate::{
-    PdfDocumentInfo, PdfDpiRenderRequest, PdfError, PdfErrorKind, PdfPageSize, PdfRenderRequest,
-    RenderedPage,
+    PdfDocumentInfo, PdfDpiRenderRequest, PdfError, PdfErrorKind, PdfImageFormat, PdfPageSize,
+    PdfRenderRequest, RenderedPage,
 };
 
 const PDF_POINTS_PER_INCH: f32 = 72.0;
@@ -43,6 +43,7 @@ pub(crate) fn render_page_to_png(
     render_page_with_config(
         &page,
         PdfRenderConfig::new().set_target_width(target_width),
+        PdfImageFormat::Png,
         output,
     )
 }
@@ -50,6 +51,15 @@ pub(crate) fn render_page_to_png(
 pub(crate) fn render_page_to_png_at_dpi(
     pdfium: &Pdfium,
     request: PdfDpiRenderRequest,
+    output: &mut (impl Write + Seek),
+) -> Result<RenderedPage, PdfError> {
+    render_page_to_image_at_dpi(pdfium, request, PdfImageFormat::Png, output)
+}
+
+pub(crate) fn render_page_to_image_at_dpi(
+    pdfium: &Pdfium,
+    request: PdfDpiRenderRequest,
+    format: PdfImageFormat,
     output: &mut (impl Write + Seek),
 ) -> Result<RenderedPage, PdfError> {
     validate_source(&request.source_path)?;
@@ -74,6 +84,7 @@ pub(crate) fn render_page_to_png_at_dpi(
     render_page_with_config(
         &page,
         PdfRenderConfig::new().scale_page_by_factor(scale),
+        format,
         output,
     )
 }
@@ -81,6 +92,7 @@ pub(crate) fn render_page_to_png_at_dpi(
 fn render_page_with_config(
     page: &pdfium_render::prelude::PdfPage<'_>,
     config: PdfRenderConfig,
+    format: PdfImageFormat,
     output: &mut (impl Write + Seek),
 ) -> Result<RenderedPage, PdfError> {
     let bitmap = page
@@ -94,12 +106,16 @@ fn render_page_with_config(
         .as_image()
         .map_err(|_| PdfError::new(PdfErrorKind::RenderFailed))?;
 
-    image
-        .write_to(output, ImageFormat::Png)
-        .map_err(|error| match error {
-            image::ImageError::IoError(_) => PdfError::new(PdfErrorKind::OutputWriteFailed),
-            _ => PdfError::new(PdfErrorKind::EncodeFailed),
-        })?;
+    let encoded = match format {
+        PdfImageFormat::Png => image.write_to(output, ImageFormat::Png),
+        PdfImageFormat::Jpg => {
+            JpegEncoder::new_with_quality(output, 90).encode_image(&image.to_rgb8())
+        }
+    };
+    encoded.map_err(|error| match error {
+        image::ImageError::IoError(_) => PdfError::new(PdfErrorKind::OutputWriteFailed),
+        _ => PdfError::new(PdfErrorKind::EncodeFailed),
+    })?;
 
     Ok(RenderedPage {
         width_pixels,

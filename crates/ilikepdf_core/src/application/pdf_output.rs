@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 
 use tempfile::{Builder, NamedTempFile};
 
-use super::png_output::validate_output_directory;
+use super::image_output::validate_output_directory;
 use crate::{ApplicationError, ApplicationErrorCode, ApplicationResult};
 
 pub(crate) struct PendingPdfOutput {

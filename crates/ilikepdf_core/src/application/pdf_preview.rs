@@ -2,7 +2,7 @@ use std::path::{Path, PathBuf};
 
 use ilikepdf_pdf::PdfRenderRequest;
 
-use super::png_output::PendingPngOutput;
+use super::image_output::PendingImageOutput;
 use crate::{ApplicationError, ApplicationErrorCode, ApplicationResult};
 
 const MIN_RENDER_WIDTH: u32 = 64;
@@ -55,7 +55,7 @@ pub fn render_pdf_page(request: RenderPdfPageRequest) -> ApplicationResult<Rende
         ));
     }
 
-    let mut output = PendingPngOutput::create(request.destination_path.as_deref())?;
+    let mut output = PendingImageOutput::create_png(request.destination_path.as_deref())?;
     let rendered = ilikepdf_pdf::render_page_to_png(
         PdfRenderRequest {
             source_path: request.source_path,

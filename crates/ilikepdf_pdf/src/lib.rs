@@ -42,6 +42,12 @@ pub struct PdfDpiRenderRequest {
     pub dpi: u16,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PdfImageFormat {
+    Png,
+    Jpg,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RenderedPage {
     pub width_pixels: u32,
@@ -79,6 +85,15 @@ impl PdfRenderer {
         pdfium_engine::render_page_to_png_at_dpi(&self.pdfium, request, output)
     }
 
+    pub fn render_page_to_image_at_dpi(
+        &self,
+        request: PdfDpiRenderRequest,
+        format: PdfImageFormat,
+        output: &mut (impl Write + Seek),
+    ) -> Result<RenderedPage, PdfError> {
+        pdfium_engine::render_page_to_image_at_dpi(&self.pdfium, request, format, output)
+    }
+
     pub fn create_image_pdf<W: Write + 'static>(
         &self,
         request: ImagePdfRequest,
@@ -109,6 +124,14 @@ pub fn render_page_to_png_at_dpi(
     output: &mut (impl Write + Seek),
 ) -> Result<RenderedPage, PdfError> {
     pdfium_engine::render_page_to_png_at_dpi(runtime::pdfium()?, request, output)
+}
+
+pub fn render_page_to_image_at_dpi(
+    request: PdfDpiRenderRequest,
+    format: PdfImageFormat,
+    output: &mut (impl Write + Seek),
+) -> Result<RenderedPage, PdfError> {
+    pdfium_engine::render_page_to_image_at_dpi(runtime::pdfium()?, request, format, output)
 }
 
 pub fn create_image_pdf<W: Write + 'static>(

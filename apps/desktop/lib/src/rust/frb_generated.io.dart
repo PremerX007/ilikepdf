@@ -33,6 +33,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  RustStreamSink<PdfBatchExportUpdate>
+  dco_decode_StreamSink_pdf_batch_export_update_Sse(dynamic raw);
+
+  @protected
   RustStreamSink<PdfExportUpdate> dco_decode_StreamSink_pdf_export_update_Sse(
     dynamic raw,
   );
@@ -61,6 +65,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  ExportPdfBatchRequest dco_decode_box_autoadd_export_pdf_batch_request(
+    dynamic raw,
+  );
+
+  @protected
   ExportPdfToImagesRequest dco_decode_box_autoadd_export_pdf_to_images_request(
     dynamic raw,
   );
@@ -78,6 +87,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   CreateImagePdfRequest dco_decode_create_image_pdf_request(dynamic raw);
+
+  @protected
+  ExportPdfBatchRequest dco_decode_export_pdf_batch_request(dynamic raw);
 
   @protected
   ExportPdfToImagesRequest dco_decode_export_pdf_to_images_request(dynamic raw);
@@ -107,6 +119,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<String> dco_decode_list_String(dynamic raw);
 
   @protected
+  List<PdfBatchDocumentResult> dco_decode_list_pdf_batch_document_result(
+    dynamic raw,
+  );
+
+  @protected
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw);
 
   @protected
@@ -122,7 +139,22 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   int? dco_decode_opt_box_autoadd_u_32(dynamic raw);
 
   @protected
+  PdfBatchDestinationMode dco_decode_pdf_batch_destination_mode(dynamic raw);
+
+  @protected
+  PdfBatchDocumentResult dco_decode_pdf_batch_document_result(dynamic raw);
+
+  @protected
+  PdfBatchExportStatus dco_decode_pdf_batch_export_status(dynamic raw);
+
+  @protected
+  PdfBatchExportUpdate dco_decode_pdf_batch_export_update(dynamic raw);
+
+  @protected
   PdfDocumentInfo dco_decode_pdf_document_info(dynamic raw);
+
+  @protected
+  PdfExportFormat dco_decode_pdf_export_format(dynamic raw);
 
   @protected
   PdfExportQuality dco_decode_pdf_export_quality(dynamic raw);
@@ -160,6 +192,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  RustStreamSink<PdfBatchExportUpdate>
+  sse_decode_StreamSink_pdf_batch_export_update_Sse(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   RustStreamSink<PdfExportUpdate> sse_decode_StreamSink_pdf_export_update_Sse(
     SseDeserializer deserializer,
   );
@@ -192,6 +230,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  ExportPdfBatchRequest sse_decode_box_autoadd_export_pdf_batch_request(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   ExportPdfToImagesRequest sse_decode_box_autoadd_export_pdf_to_images_request(
     SseDeserializer deserializer,
   );
@@ -211,6 +254,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   CreateImagePdfRequest sse_decode_create_image_pdf_request(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  ExportPdfBatchRequest sse_decode_export_pdf_batch_request(
     SseDeserializer deserializer,
   );
 
@@ -246,6 +294,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<String> sse_decode_list_String(SseDeserializer deserializer);
 
   @protected
+  List<PdfBatchDocumentResult> sse_decode_list_pdf_batch_document_result(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer);
 
   @protected
@@ -265,7 +318,30 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   int? sse_decode_opt_box_autoadd_u_32(SseDeserializer deserializer);
 
   @protected
+  PdfBatchDestinationMode sse_decode_pdf_batch_destination_mode(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  PdfBatchDocumentResult sse_decode_pdf_batch_document_result(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  PdfBatchExportStatus sse_decode_pdf_batch_export_status(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  PdfBatchExportUpdate sse_decode_pdf_batch_export_update(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   PdfDocumentInfo sse_decode_pdf_document_info(SseDeserializer deserializer);
+
+  @protected
+  PdfExportFormat sse_decode_pdf_export_format(SseDeserializer deserializer);
 
   @protected
   PdfExportQuality sse_decode_pdf_export_quality(SseDeserializer deserializer);
@@ -307,6 +383,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_StreamSink_image_pdf_update_Sse(
     RustStreamSink<ImagePdfUpdate> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_StreamSink_pdf_batch_export_update_Sse(
+    RustStreamSink<PdfBatchExportUpdate> self,
     SseSerializer serializer,
   );
 
@@ -353,6 +435,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_box_autoadd_export_pdf_batch_request(
+    ExportPdfBatchRequest self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_box_autoadd_export_pdf_to_images_request(
     ExportPdfToImagesRequest self,
     SseSerializer serializer,
@@ -376,6 +464,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_create_image_pdf_request(
     CreateImagePdfRequest self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_export_pdf_batch_request(
+    ExportPdfBatchRequest self,
     SseSerializer serializer,
   );
 
@@ -425,6 +519,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_list_String(List<String> self, SseSerializer serializer);
 
   @protected
+  void sse_encode_list_pdf_batch_document_result(
+    List<PdfBatchDocumentResult> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_prim_u_8_strict(
     Uint8List self,
     SseSerializer serializer,
@@ -449,8 +549,38 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_opt_box_autoadd_u_32(int? self, SseSerializer serializer);
 
   @protected
+  void sse_encode_pdf_batch_destination_mode(
+    PdfBatchDestinationMode self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_pdf_batch_document_result(
+    PdfBatchDocumentResult self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_pdf_batch_export_status(
+    PdfBatchExportStatus self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_pdf_batch_export_update(
+    PdfBatchExportUpdate self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_pdf_document_info(
     PdfDocumentInfo self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_pdf_export_format(
+    PdfExportFormat self,
     SseSerializer serializer,
   );
 
