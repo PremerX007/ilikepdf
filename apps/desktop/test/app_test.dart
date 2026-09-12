@@ -206,6 +206,127 @@ void main() {
     expect(find.text('PDF tools'), findsOneWidget);
   });
 
+  testWidgets(
+    'primary navigation keeps the shell stable and fades content only',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(
+        IlikepdfApp(
+          applicationName: 'iLikePDF',
+          coreVersion: '0.1.0',
+          localOnly: true,
+          pdfToImageWorkflow: FakePdfToImageWorkflow(previewPath: previewPath),
+        ),
+      );
+
+      final shellBefore = tester.element(
+        find.byKey(const ValueKey('application-shell')),
+      );
+      final headerBefore = tester.element(
+        find.byKey(const ValueKey('application-header')),
+      );
+      final titleBefore = tester.element(
+        find.byKey(const ValueKey('application-title')),
+      );
+      final switcher = tester.widget<AnimatedSwitcher>(
+        find.byKey(const ValueKey('primary-content-switcher')),
+      );
+      expect(switcher.duration, const Duration(milliseconds: 140));
+      expect(
+        switcher.transitionBuilder(
+          const SizedBox(),
+          const AlwaysStoppedAnimation<double>(1),
+        ),
+        isA<FadeTransition>().having(
+          (transition) => transition.child,
+          'child',
+          isNot(isA<ScaleTransition>()),
+        ),
+      );
+
+      await tester.tap(find.byKey(const ValueKey('tool-card-pdf-to-images')));
+      await tester.pump();
+
+      expect(
+        identical(
+          shellBefore,
+          tester.element(find.byKey(const ValueKey('application-shell'))),
+        ),
+        isTrue,
+      );
+      expect(
+        identical(
+          headerBefore,
+          tester.element(find.byKey(const ValueKey('application-header'))),
+        ),
+        isTrue,
+      );
+      expect(
+        identical(
+          titleBefore,
+          tester.element(find.byKey(const ValueKey('application-title'))),
+        ),
+        isTrue,
+      );
+      expect(find.byType(FadeTransition), findsWidgets);
+      expect(
+        find.byKey(const ValueKey('pdf-to-images-content')),
+        findsOneWidget,
+      );
+
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('back-home-button')));
+      await tester.pump();
+
+      expect(
+        identical(
+          shellBefore,
+          tester.element(find.byKey(const ValueKey('application-shell'))),
+        ),
+        isTrue,
+      );
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('home-content')), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'system reduced motion makes primary content switching immediate',
+    (WidgetTester tester) async {
+      tester.platformDispatcher.accessibilityFeaturesTestValue =
+          const FakeAccessibilityFeatures(disableAnimations: true);
+      addTearDown(
+        tester.platformDispatcher.clearAccessibilityFeaturesTestValue,
+      );
+      await tester.pumpWidget(
+        IlikepdfApp(
+          applicationName: 'iLikePDF',
+          coreVersion: '0.1.0',
+          localOnly: true,
+          pdfToImageWorkflow: FakePdfToImageWorkflow(previewPath: previewPath),
+        ),
+      );
+
+      final switcher = tester.widget<AnimatedSwitcher>(
+        find.byKey(const ValueKey('primary-content-switcher')),
+      );
+      expect(switcher.duration, Duration.zero);
+      expect(
+        switcher.transitionBuilder(
+          const SizedBox(),
+          const AlwaysStoppedAnimation<double>(1),
+        ),
+        isA<FadeTransition>(),
+      );
+      await tester.tap(find.byKey(const ValueKey('tool-card-images-to-pdf')));
+      await tester.pump();
+
+      expect(
+        find.byKey(const ValueKey('images-to-pdf-content')),
+        findsOneWidget,
+      );
+    },
+  );
+
   testWidgets('coming-soon cards cannot open unfinished tools', (
     WidgetTester tester,
   ) async {

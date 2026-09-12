@@ -5,32 +5,35 @@ class ApplicationShell extends StatelessWidget {
     required this.applicationName,
     required this.coreVersion,
     required this.child,
-    this.showBackButton = false,
+    this.onBack,
     super.key,
   });
 
   final String applicationName;
   final String coreVersion;
   final Widget child;
-  final bool showBackButton;
+  final VoidCallback? onBack;
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     return Scaffold(
+      key: const ValueKey('application-shell'),
       backgroundColor: colors.surfaceContainerLowest,
       appBar: AppBar(
+        key: const ValueKey('application-header'),
         toolbarHeight: 64,
         automaticallyImplyLeading: false,
-        leading: showBackButton
+        leadingWidth: 56,
+        leading: onBack != null
             ? IconButton(
                 key: const ValueKey('back-home-button'),
                 tooltip: 'Back to Home',
-                onPressed: () => Navigator.of(context).pop(),
+                onPressed: onBack,
                 icon: const Icon(Icons.arrow_back_rounded),
               )
-            : null,
-        titleSpacing: showBackButton ? 0 : 28,
+            : const SizedBox.shrink(),
+        titleSpacing: 0,
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -51,6 +54,7 @@ class ApplicationShell extends StatelessWidget {
             const SizedBox(width: 10),
             Text(
               applicationName,
+              key: const ValueKey('application-title'),
               style: const TextStyle(fontWeight: FontWeight.w700),
             ),
           ],

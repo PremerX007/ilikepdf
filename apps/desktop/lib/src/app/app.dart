@@ -7,12 +7,6 @@ import 'package:ilikepdf/src/app/pdf_to_image/pdf_to_image_panel.dart';
 import 'package:ilikepdf/src/app/pdf_to_image/pdf_to_image_workflow.dart';
 import 'package:ilikepdf/src/app/shared/application_shell.dart';
 
-abstract final class ToolRoutes {
-  static const home = '/';
-  static const pdfToImages = '/pdf-to-images';
-  static const imagesToPdf = '/images-to-pdf';
-}
-
 class IlikepdfApp extends StatelessWidget {
   const IlikepdfApp({
     required this.applicationName,
@@ -65,31 +59,90 @@ class IlikepdfApp extends StatelessWidget {
           ),
         ),
       ),
-      initialRoute: ToolRoutes.home,
-      routes: {
-        ToolRoutes.home: (context) => ApplicationShell(
-          applicationName: applicationName,
-          coreVersion: coreVersion,
-          child: ToolHome(
-            onOpenPdfToImages: () =>
-                Navigator.of(context).pushNamed(ToolRoutes.pdfToImages),
-            onOpenImagesToPdf: () =>
-                Navigator.of(context).pushNamed(ToolRoutes.imagesToPdf),
-          ),
-        ),
-        ToolRoutes.pdfToImages: (context) => ApplicationShell(
-          applicationName: applicationName,
-          coreVersion: coreVersion,
-          showBackButton: true,
-          child: PdfToImagePanel(workflow: pdfToImageWorkflow),
-        ),
-        ToolRoutes.imagesToPdf: (context) => ApplicationShell(
-          applicationName: applicationName,
-          coreVersion: coreVersion,
-          showBackButton: true,
-          child: ImageToPdfPanel(workflow: imageToPdfWorkflow),
-        ),
-      },
+      home: _ApplicationWorkspace(
+        applicationName: applicationName,
+        coreVersion: coreVersion,
+        pdfToImageWorkflow: pdfToImageWorkflow,
+        imageToPdfWorkflow: imageToPdfWorkflow,
+      ),
     );
+  }
+}
+
+enum _ActiveTool { home, pdfToImages, imagesToPdf }
+
+class _ApplicationWorkspace extends StatefulWidget {
+  const _ApplicationWorkspace({
+    required this.applicationName,
+    required this.coreVersion,
+    required this.pdfToImageWorkflow,
+    required this.imageToPdfWorkflow,
+  });
+
+  final String applicationName;
+  final String coreVersion;
+  final PdfToImageWorkflow pdfToImageWorkflow;
+  final ImageToPdfWorkflow imageToPdfWorkflow;
+
+  @override
+  State<_ApplicationWorkspace> createState() => _ApplicationWorkspaceState();
+}
+
+class _ApplicationWorkspaceState extends State<_ApplicationWorkspace> {
+  static const _transitionDuration = Duration(milliseconds: 140);
+
+  _ActiveTool _activeTool = _ActiveTool.home;
+
+  void _show(_ActiveTool tool) {
+    if (_activeTool != tool) {
+      setState(() => _activeTool = tool);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final reduceMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final duration = reduceMotion ? Duration.zero : _transitionDuration;
+
+    return ApplicationShell(
+      applicationName: widget.applicationName,
+      coreVersion: widget.coreVersion,
+      onBack: _activeTool == _ActiveTool.home
+          ? null
+          : () => _show(_ActiveTool.home),
+      child: AnimatedSwitcher(
+        key: const ValueKey('primary-content-switcher'),
+        duration: duration,
+        reverseDuration: duration,
+        switchInCurve: Curves.easeOutCubic,
+        switchOutCurve: Curves.easeInCubic,
+        transitionBuilder: (child, animation) =>
+            FadeTransition(opacity: animation, child: child),
+        layoutBuilder: (currentChild, previousChildren) => Stack(
+          fit: StackFit.expand,
+          children: [...previousChildren, ?currentChild],
+        ),
+        child: _buildActiveContent(),
+      ),
+    );
+  }
+
+  Widget _buildActiveContent() {
+    return switch (_activeTool) {
+      _ActiveTool.home => ToolHome(
+        key: const ValueKey('home-content'),
+        onOpenPdfToImages: () => _show(_ActiveTool.pdfToImages),
+        onOpenImagesToPdf: () => _show(_ActiveTool.imagesToPdf),
+      ),
+      _ActiveTool.pdfToImages => PdfToImagePanel(
+        key: const ValueKey('pdf-to-images-content'),
+        workflow: widget.pdfToImageWorkflow,
+      ),
+      _ActiveTool.imagesToPdf => ImageToPdfPanel(
+        key: const ValueKey('images-to-pdf-content'),
+        workflow: widget.imageToPdfWorkflow,
+      ),
+    };
   }
 }
