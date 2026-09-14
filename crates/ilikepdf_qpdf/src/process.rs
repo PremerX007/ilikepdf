@@ -6,6 +6,9 @@ use std::thread;
 
 const DIAGNOSTIC_LIMIT: usize = 32 * 1024;
 
+#[cfg(windows)]
+const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+
 pub(crate) trait QpdfRunner: Send + Sync {
     fn run(
         &self,
@@ -38,6 +41,10 @@ impl QpdfRunner for QpdfProcessRunner {
             } else {
                 Stdio::null()
             });
+
+        #[cfg(windows)]
+        configure_windows_process(&mut command);
+
         let mut child = command.spawn().map_err(|_| QpdfProcessError::Launch)?;
         let stdout = child.stdout.take().ok_or_else(|| {
             terminate_and_reap(&mut child);
@@ -88,6 +95,18 @@ impl QpdfRunner for QpdfProcessRunner {
             stderr,
         })
     }
+}
+
+#[cfg(windows)]
+fn configure_windows_process(command: &mut Command) {
+    use std::os::windows::process::CommandExt;
+
+    command.creation_flags(qpdf_windows_creation_flags());
+}
+
+#[cfg(windows)]
+const fn qpdf_windows_creation_flags() -> u32 {
+    CREATE_NO_WINDOW
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

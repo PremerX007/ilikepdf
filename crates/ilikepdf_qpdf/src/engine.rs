@@ -5,7 +5,8 @@ use std::sync::{Arc, OnceLock};
 
 use ilikepdf_core::{
     StructuralPdfEngine, StructuralPdfEngineFamily, StructuralPdfEngineInfo, StructuralPdfError,
-    StructuralPdfOperationResult, StructuralPdfValidation, StructuralPdfVersion,
+    StructuralPdfMergeRequest, StructuralPdfOperationResult, StructuralPdfValidation,
+    StructuralPdfVersion,
 };
 
 use crate::process::{QpdfProcessError, QpdfProcessOutput, QpdfProcessRunner, QpdfRunner};
@@ -83,6 +84,15 @@ impl StructuralPdfEngine for QpdfCliEngine {
     fn validate(&self, source_path: &Path) -> Result<StructuralPdfValidation, StructuralPdfError> {
         let source_path = validated_source(source_path)?;
         self.probe()?;
+        let password_status = self.run(vec![
+            OsString::from("--requires-password"),
+            source_path.argument.as_os_str().to_owned(),
+        ])?;
+        match password_status.exit_code {
+            Some(0) => return Err(StructuralPdfError::PasswordRequired),
+            Some(2 | 3) => {}
+            _ => return Err(StructuralPdfError::OperationFailed),
+        }
         let output = self.run(vec![
             OsString::from("--check"),
             source_path.argument.as_os_str().to_owned(),
@@ -103,12 +113,52 @@ impl StructuralPdfEngine for QpdfCliEngine {
         working_output_path: &Path,
     ) -> Result<StructuralPdfOperationResult, StructuralPdfError> {
         let source_path = validated_source(source_path)?;
-        let working_output_path = validated_working_output(&source_path, working_output_path)?;
+        let working_output_path =
+            validated_working_output(std::slice::from_ref(&source_path), working_output_path)?;
         self.probe()?;
         let output = self.run(vec![
             source_path.argument.as_os_str().to_owned(),
             working_output_path.as_os_str().to_owned(),
         ])?;
+        let has_warnings = match output.exit_code {
+            Some(0) => false,
+            Some(3) => true,
+            _ => return Err(StructuralPdfError::OperationFailed),
+        };
+        match fs::metadata(working_output_path) {
+            Ok(metadata) if metadata.is_file() && metadata.len() > 0 => {
+                Ok(StructuralPdfOperationResult { has_warnings })
+            }
+            _ => Err(StructuralPdfError::OutputWriteFailed),
+        }
+    }
+
+    fn merge(
+        &self,
+        request: &StructuralPdfMergeRequest,
+    ) -> Result<StructuralPdfOperationResult, StructuralPdfError> {
+        if request.ordered_source_paths.len() < 2 {
+            return Err(StructuralPdfError::OperationFailed);
+        }
+        let sources = request
+            .ordered_source_paths
+            .iter()
+            .map(|path| validated_source(path))
+            .collect::<Result<Vec<_>, _>>()?;
+        let working_output_path = validated_working_output(&sources, &request.working_output_path)?;
+        self.probe()?;
+
+        let mut arguments = Vec::with_capacity(sources.len() + 4);
+        arguments.push(OsString::from("--empty"));
+        arguments.push(OsString::from("--pages"));
+        arguments.extend(
+            sources
+                .iter()
+                .map(|source| source.argument.as_os_str().to_owned()),
+        );
+        arguments.push(OsString::from("--"));
+        arguments.push(working_output_path.as_os_str().to_owned());
+        let output = self.run(arguments)?;
         let has_warnings = match output.exit_code {
             Some(0) => false,
             Some(3) => true,
@@ -167,7 +217,7 @@ fn validated_source(source_path: &Path) -> Result<ValidatedSource, StructuralPdf
 }
 
 fn validated_working_output(
-    source: &ValidatedSource,
+    sources: &[ValidatedSource],
     working_output_path: &Path,
 ) -> Result<PathBuf, StructuralPdfError> {
     let parent = working_output_path
@@ -184,7 +234,10 @@ fn validated_working_output(
     } else {
         canonical_parent.join(file_name)
     };
-    if source.identity == output_identity {
+    if sources
+        .iter()
+        .any(|source| source.identity == output_identity)
+    {
         return Err(StructuralPdfError::OutputWriteFailed);
     }
     if working_output_path.exists() && !working_output_path.is_file() {

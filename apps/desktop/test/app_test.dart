@@ -173,7 +173,7 @@ void main() {
       find.byKey(const ValueKey('tool-card-images-to-pdf')),
       findsOneWidget,
     );
-    expect(find.text('Coming soon'), findsNWidgets(5));
+    expect(find.text('Coming soon'), findsNWidgets(4));
   });
 
   testWidgets('implemented cards navigate and back returns Home', (
@@ -193,6 +193,16 @@ void main() {
     expect(find.text('Images to PDF'), findsOneWidget);
     expect(
       find.byKey(const ValueKey('tool-workspace-surface')),
+      findsOneWidget,
+    );
+    await tester.tap(find.byKey(const ValueKey('back-home-button')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('tool-card-merge-pdf')));
+    await tester.pumpAndSettle();
+    expect(find.text('Merge PDF'), findsWidgets);
+    expect(
+      find.byKey(const ValueKey('empty-merge-pdf-drop-zone')),
       findsOneWidget,
     );
     await tester.tap(find.byKey(const ValueKey('back-home-button')));
@@ -339,7 +349,7 @@ void main() {
       ),
     );
 
-    await tester.tap(find.byKey(const ValueKey('tool-card-merge-pdf')));
+    await tester.tap(find.byKey(const ValueKey('tool-card-split-pdf')));
     await tester.pumpAndSettle();
 
     expect(find.text('PDF tools'), findsOneWidget);

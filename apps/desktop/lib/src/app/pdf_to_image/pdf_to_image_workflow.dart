@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:file_selector/file_selector.dart';
-import 'package:ilikepdf/src/rust/api/application.dart' as rust_application;
+import 'package:ilikepdf/src/rust/api/error.dart' as rust_application;
 import 'package:ilikepdf/src/rust/api/pdf_export.dart' as rust_export;
 import 'package:ilikepdf/src/rust/api/pdf_preview.dart' as rust_preview;
 
@@ -346,6 +346,20 @@ PdfExportProblem? _mapError(rust_application.ApplicationError? error) {
         PdfExportProblemCode.invalidRequest,
       rust_application.ApplicationErrorCode.pdfRuntimeUnavailable =>
         PdfExportProblemCode.pdfRuntimeUnavailable,
+      rust_application.ApplicationErrorCode.structuralPdfRuntimeUnavailable =>
+        PdfExportProblemCode.internal,
+      rust_application.ApplicationErrorCode.structuralPdfRuntimeIncompatible =>
+        PdfExportProblemCode.internal,
+      rust_application.ApplicationErrorCode.structuralPdfLaunchFailed =>
+        PdfExportProblemCode.internal,
+      rust_application.ApplicationErrorCode.passwordRequired =>
+        PdfExportProblemCode.internal,
+      rust_application.ApplicationErrorCode.structuralPdfOperationFailed =>
+        PdfExportProblemCode.internal,
+      rust_application
+          .ApplicationErrorCode
+          .structuralPdfOutputValidationFailed =>
+        PdfExportProblemCode.internal,
       rust_application.ApplicationErrorCode.invalidOutputDirectory =>
         PdfExportProblemCode.invalidOutputDirectory,
       rust_application.ApplicationErrorCode.permissionDenied =>

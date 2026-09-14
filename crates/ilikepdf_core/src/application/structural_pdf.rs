@@ -4,7 +4,9 @@ use std::path::{Path, PathBuf};
 
 mod workflow;
 
-pub use workflow::{probe_structural_pdf_engine, rewrite_structural_pdf, validate_structural_pdf};
+pub use workflow::{
+    merge_pdf, probe_structural_pdf_engine, rewrite_structural_pdf, validate_structural_pdf,
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[non_exhaustive]
@@ -54,6 +56,7 @@ pub enum StructuralPdfError {
     SourceNotFound,
     SourceNotFile,
     SourceUnreadable,
+    PasswordRequired,
     InvalidDocument,
     OutputWriteFailed,
     OperationFailed,
@@ -75,6 +78,19 @@ pub trait StructuralPdfEngine: Send + Sync {
         source_path: &Path,
         working_output_path: &Path,
     ) -> Result<StructuralPdfOperationResult, StructuralPdfError>;
+
+    /// Structurally copies every page from each ordered source into one private
+    /// working output. The caller owns validation and publication.
+    fn merge(
+        &self,
+        request: &StructuralPdfMergeRequest,
+    ) -> Result<StructuralPdfOperationResult, StructuralPdfError>;
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct StructuralPdfMergeRequest {
+    pub ordered_source_paths: Vec<PathBuf>,
+    pub working_output_path: PathBuf,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -88,4 +104,45 @@ pub struct StructuralPdfRewriteResult {
     pub output_path: PathBuf,
     pub page_count: u32,
     pub has_warnings: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MergePdfRequest {
+    pub source_paths: Vec<PathBuf>,
+    pub destination_directory: PathBuf,
+    pub output_name: String,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MergePdfStage {
+    Preparing,
+    Merging,
+    Validating,
+    Publishing,
+    Completed,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct MergePdfProgress {
+    pub stage: MergePdfStage,
+    pub input_count: u32,
+    pub total_page_count: u32,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MergePdfResult {
+    pub output_path: PathBuf,
+    pub input_count: u32,
+    pub page_count: u32,
+    pub warning_input_count: u32,
+    pub has_warnings: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MergePdfFailure {
+    pub error: crate::ApplicationError,
+    pub input_index: Option<u32>,
+    pub input_path: Option<PathBuf>,
+    pub input_count: u32,
+    pub expected_page_count: u32,
 }

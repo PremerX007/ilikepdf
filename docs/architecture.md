@@ -236,6 +236,40 @@ non-empty regular file, reopens and renders it with PDFium, verifies page-count
 parity, syncs it, and atomically publishes without clobbering. Dropping the
 pending output cleans up unsuccessful working files.
 
+Merge PDF builds on the same boundary. The focused core workflow requires at
+least two ordered input instances, deliberately preserves duplicate paths, and
+uses the card order as the qpdf page-composition order while retaining page
+order inside every source. Every page is copied structurally; the workflow does
+not rasterize, resize, rotate, crop, or otherwise normalize mixed page geometry.
+It preflights each instance for filesystem availability, qpdf validity and
+password requirements, and PDFium page count. Recoverable qpdf warnings may
+continue, but any fatal input failure stops the entire job without partial
+publication.
+
+The default Merge output name is `merged.pdf`. The editable field accepts only
+a filename, appends `.pdf` when omitted, and cannot contain a directory or
+Windows-reserved filename. The initial destination is captured from the first
+PDF that establishes a new session; add, remove, and reorder operations do not
+change it, and an explicitly selected destination persists until the workspace
+is fully reset. Publication uses the lowest case-insensitive available name
+(`merged.pdf`, `merged (1).pdf`, and so on) with an atomic no-clobber retry when
+another writer wins a race.
+
+qpdf first writes a private working file in the destination directory. Core then
+requires structural validation, a successful PDFium reopen, and exact equality
+between the output page count and the sum of all input-instance page counts.
+Only then is the file published. Progress is stage-based (`Preparing`,
+`Merging`, `Validating`, `Publishing`, `Completed`) because qpdf does not expose
+deterministic per-page merge progress. Password entry is intentionally absent;
+an input that requires a password is rejected with a typed instruction to
+unlock it first.
+
+Merge v1 makes no promise to intelligently combine every document-level feature
+such as outlines, metadata, named destinations, AcroForm dictionaries, embedded
+files, JavaScript, or document actions. It relies on qpdf's normal page
+composition semantics and does not flatten source pages merely to avoid those
+limitations.
+
 ## Privacy and file safety
 
 Runtime PDF functionality must work without a network connection. Never add
@@ -313,3 +347,10 @@ both pass through `PdfToImageWorkflow.preparePdfPaths()`. The populated workspac
 supports adding and removing PDFs without resetting a custom destination, and
 the result region summarizes completed and failed documents without colliding
 with the primary action.
+
+Merge PDF reuses the same workspace, drop target, card grid, page-1 PDFium
+thumbnail path, destination picker, and anchored action. Each card has its own
+presentation identity rather than using its path as identity, so the same file
+may appear more than once and each instance can be reordered or removed
+independently. A thumbnail failure remains a lightweight card state and does not
+replace execution-time structural preflight.

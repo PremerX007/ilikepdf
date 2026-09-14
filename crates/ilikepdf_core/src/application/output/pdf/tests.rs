@@ -110,3 +110,58 @@ fn pdf_output_io_failures_map_to_stable_application_errors() {
         ApplicationErrorCode::OutputWriteFailed
     );
 }
+
+#[test]
+fn merge_output_name_is_a_filename_and_pdf_extension_is_normalized() {
+    assert_eq!(normalize_pdf_filename("report").unwrap(), "report.pdf");
+    assert_eq!(normalize_pdf_filename("report.pdf").unwrap(), "report.pdf");
+
+    for invalid in [
+        "../report.pdf",
+        r"..\report.pdf",
+        r"C:\report.pdf",
+        "foo/bar.pdf",
+        "CON.pdf",
+        "report. ",
+    ] {
+        assert_eq!(
+            normalize_pdf_filename(invalid).unwrap_err().code,
+            ApplicationErrorCode::InvalidRequest
+        );
+    }
+}
+
+#[test]
+fn numbered_merge_publication_uses_the_lowest_gap_and_never_clobbers() {
+    let directory = tempfile::tempdir().expect("temporary directory should be created");
+    let base = directory.path().join("merged.pdf");
+    let second = directory.path().join("merged (2).pdf");
+    fs::write(&base, b"base").unwrap();
+    fs::write(&second, b"second").unwrap();
+    let pending = PendingNumberedPdfOutput::in_directory(directory.path(), "merged")
+        .expect("merge output should be prepared");
+    fs::write(pending.working_path(), b"merged output").unwrap();
+
+    let output = pending.publish().expect("merge output should publish");
+
+    assert_eq!(output, directory.path().join("merged (1).pdf"));
+    assert_eq!(fs::read(base).unwrap(), b"base");
+    assert_eq!(fs::read(second).unwrap(), b"second");
+    assert_eq!(fs::read(output).unwrap(), b"merged output");
+}
+
+#[test]
+fn merge_collision_matching_is_case_insensitive() {
+    let directory = tempfile::tempdir().unwrap();
+    fs::write(directory.path().join("REPORT.PDF"), b"existing").unwrap();
+    let pending = PendingNumberedPdfOutput::in_directory(directory.path(), "report.pdf").unwrap();
+    fs::write(pending.working_path(), b"new").unwrap();
+
+    let output = pending.publish().unwrap();
+
+    assert_eq!(output, directory.path().join("report (1).pdf"));
+    assert_eq!(
+        fs::read(directory.path().join("REPORT.PDF")).unwrap(),
+        b"existing"
+    );
+}

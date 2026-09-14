@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:ilikepdf/src/app/home/tool_home.dart';
 import 'package:ilikepdf/src/app/image_to_pdf/image_to_pdf_panel.dart';
 import 'package:ilikepdf/src/app/image_to_pdf/image_to_pdf_workflow.dart';
+import 'package:ilikepdf/src/app/merge_pdf/merge_pdf_panel.dart';
+import 'package:ilikepdf/src/app/merge_pdf/merge_pdf_workflow.dart';
 import 'package:ilikepdf/src/app/pdf_to_image/pdf_to_image_panel.dart';
 import 'package:ilikepdf/src/app/pdf_to_image/pdf_to_image_workflow.dart';
 import 'package:ilikepdf/src/app/shared/application_shell.dart';
@@ -14,6 +16,7 @@ class IlikepdfApp extends StatelessWidget {
     required this.localOnly,
     required this.pdfToImageWorkflow,
     this.imageToPdfWorkflow = const LocalImageToPdfWorkflow(),
+    this.mergePdfWorkflow = const LocalMergePdfWorkflow(),
     super.key,
   });
 
@@ -22,6 +25,7 @@ class IlikepdfApp extends StatelessWidget {
   final bool localOnly;
   final PdfToImageWorkflow pdfToImageWorkflow;
   final ImageToPdfWorkflow imageToPdfWorkflow;
+  final MergePdfWorkflow mergePdfWorkflow;
 
   @override
   Widget build(BuildContext context) {
@@ -64,12 +68,13 @@ class IlikepdfApp extends StatelessWidget {
         coreVersion: coreVersion,
         pdfToImageWorkflow: pdfToImageWorkflow,
         imageToPdfWorkflow: imageToPdfWorkflow,
+        mergePdfWorkflow: mergePdfWorkflow,
       ),
     );
   }
 }
 
-enum _ActiveTool { home, pdfToImages, imagesToPdf }
+enum _ActiveTool { home, pdfToImages, imagesToPdf, mergePdf }
 
 class _ApplicationWorkspace extends StatefulWidget {
   const _ApplicationWorkspace({
@@ -77,12 +82,14 @@ class _ApplicationWorkspace extends StatefulWidget {
     required this.coreVersion,
     required this.pdfToImageWorkflow,
     required this.imageToPdfWorkflow,
+    required this.mergePdfWorkflow,
   });
 
   final String applicationName;
   final String coreVersion;
   final PdfToImageWorkflow pdfToImageWorkflow;
   final ImageToPdfWorkflow imageToPdfWorkflow;
+  final MergePdfWorkflow mergePdfWorkflow;
 
   @override
   State<_ApplicationWorkspace> createState() => _ApplicationWorkspaceState();
@@ -134,6 +141,7 @@ class _ApplicationWorkspaceState extends State<_ApplicationWorkspace> {
         key: const ValueKey('home-content'),
         onOpenPdfToImages: () => _show(_ActiveTool.pdfToImages),
         onOpenImagesToPdf: () => _show(_ActiveTool.imagesToPdf),
+        onOpenMergePdf: () => _show(_ActiveTool.mergePdf),
       ),
       _ActiveTool.pdfToImages => PdfToImagePanel(
         key: const ValueKey('pdf-to-images-content'),
@@ -142,6 +150,10 @@ class _ApplicationWorkspaceState extends State<_ApplicationWorkspace> {
       _ActiveTool.imagesToPdf => ImageToPdfPanel(
         key: const ValueKey('images-to-pdf-content'),
         workflow: widget.imageToPdfWorkflow,
+      ),
+      _ActiveTool.mergePdf => MergePdfPanel(
+        key: const ValueKey('merge-pdf-content'),
+        workflow: widget.mergePdfWorkflow,
       ),
     };
   }

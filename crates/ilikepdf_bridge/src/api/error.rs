@@ -14,6 +14,12 @@ pub enum ApplicationErrorCode {
     PageOutOfBounds,
     InvalidRequest,
     PdfRuntimeUnavailable,
+    StructuralPdfRuntimeUnavailable,
+    StructuralPdfRuntimeIncompatible,
+    StructuralPdfLaunchFailed,
+    PasswordRequired,
+    StructuralPdfOperationFailed,
+    StructuralPdfOutputValidationFailed,
     InvalidOutputDirectory,
     PermissionDenied,
     OutputNotWritable,
@@ -54,6 +60,24 @@ impl From<ilikepdf_core::ApplicationError> for ApplicationError {
             }
             ilikepdf_core::ApplicationErrorCode::PdfRuntimeUnavailable => {
                 ApplicationErrorCode::PdfRuntimeUnavailable
+            }
+            ilikepdf_core::ApplicationErrorCode::StructuralPdfRuntimeUnavailable => {
+                ApplicationErrorCode::StructuralPdfRuntimeUnavailable
+            }
+            ilikepdf_core::ApplicationErrorCode::StructuralPdfRuntimeIncompatible => {
+                ApplicationErrorCode::StructuralPdfRuntimeIncompatible
+            }
+            ilikepdf_core::ApplicationErrorCode::StructuralPdfLaunchFailed => {
+                ApplicationErrorCode::StructuralPdfLaunchFailed
+            }
+            ilikepdf_core::ApplicationErrorCode::PasswordRequired => {
+                ApplicationErrorCode::PasswordRequired
+            }
+            ilikepdf_core::ApplicationErrorCode::StructuralPdfOperationFailed => {
+                ApplicationErrorCode::StructuralPdfOperationFailed
+            }
+            ilikepdf_core::ApplicationErrorCode::StructuralPdfOutputValidationFailed => {
+                ApplicationErrorCode::StructuralPdfOutputValidationFailed
             }
             ilikepdf_core::ApplicationErrorCode::InvalidOutputDirectory => {
                 ApplicationErrorCode::InvalidOutputDirectory

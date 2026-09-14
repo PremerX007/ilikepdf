@@ -7,7 +7,9 @@
 // ignore_for_file: argument_type_not_assignable
 
 import 'api/application.dart';
+import 'api/error.dart';
 import 'api/image_to_pdf.dart';
+import 'api/merge_pdf.dart';
 import 'api/pdf_export.dart';
 import 'api/pdf_preview.dart';
 
@@ -31,6 +33,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   RustStreamSink<ImagePdfUpdate> dco_decode_StreamSink_image_pdf_update_Sse(
+    dynamic raw,
+  );
+
+  @protected
+  RustStreamSink<MergePdfUpdate> dco_decode_StreamSink_merge_pdf_update_Sse(
     dynamic raw,
   );
 
@@ -75,6 +82,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ExportPdfToImagesRequest dco_decode_box_autoadd_export_pdf_to_images_request(
     dynamic raw,
   );
+
+  @protected
+  MergePdfRequest dco_decode_box_autoadd_merge_pdf_request(dynamic raw);
 
   @protected
   PdfPageSize dco_decode_box_autoadd_pdf_page_size(dynamic raw);
@@ -127,6 +137,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw);
+
+  @protected
+  MergePdfRequest dco_decode_merge_pdf_request(dynamic raw);
+
+  @protected
+  MergePdfStage dco_decode_merge_pdf_stage(dynamic raw);
+
+  @protected
+  MergePdfStatus dco_decode_merge_pdf_status(dynamic raw);
+
+  @protected
+  MergePdfUpdate dco_decode_merge_pdf_update(dynamic raw);
 
   @protected
   String? dco_decode_opt_String(dynamic raw);
@@ -194,6 +216,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  RustStreamSink<MergePdfUpdate> sse_decode_StreamSink_merge_pdf_update_Sse(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   RustStreamSink<PdfBatchExportUpdate>
   sse_decode_StreamSink_pdf_batch_export_update_Sse(
     SseDeserializer deserializer,
@@ -238,6 +265,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   ExportPdfToImagesRequest sse_decode_box_autoadd_export_pdf_to_images_request(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  MergePdfRequest sse_decode_box_autoadd_merge_pdf_request(
     SseDeserializer deserializer,
   );
 
@@ -302,6 +334,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer);
+
+  @protected
+  MergePdfRequest sse_decode_merge_pdf_request(SseDeserializer deserializer);
+
+  @protected
+  MergePdfStage sse_decode_merge_pdf_stage(SseDeserializer deserializer);
+
+  @protected
+  MergePdfStatus sse_decode_merge_pdf_status(SseDeserializer deserializer);
+
+  @protected
+  MergePdfUpdate sse_decode_merge_pdf_update(SseDeserializer deserializer);
 
   @protected
   String? sse_decode_opt_String(SseDeserializer deserializer);
@@ -389,6 +433,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_StreamSink_merge_pdf_update_Sse(
+    RustStreamSink<MergePdfUpdate> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_StreamSink_pdf_batch_export_update_Sse(
     RustStreamSink<PdfBatchExportUpdate> self,
     SseSerializer serializer,
@@ -445,6 +495,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_box_autoadd_export_pdf_to_images_request(
     ExportPdfToImagesRequest self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_merge_pdf_request(
+    MergePdfRequest self,
     SseSerializer serializer,
   );
 
@@ -529,6 +585,27 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_list_prim_u_8_strict(
     Uint8List self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_merge_pdf_request(
+    MergePdfRequest self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_merge_pdf_stage(MergePdfStage self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_merge_pdf_status(
+    MergePdfStatus self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_merge_pdf_update(
+    MergePdfUpdate self,
     SseSerializer serializer,
   );
 

@@ -3,6 +3,12 @@ use std::io::Cursor;
 
 use super::*;
 
+#[cfg(windows)]
+#[test]
+fn qpdf_children_use_the_windows_no_console_creation_flag() {
+    assert_eq!(qpdf_windows_creation_flags(), 0x0800_0000);
+}
+
 #[test]
 fn diagnostic_capture_is_bounded_while_the_stream_remainder_is_drained() {
     let input = vec![b'x'; DIAGNOSTIC_LIMIT + 8192];

@@ -11,6 +11,7 @@ crate-type = ["cdylib", "staticlib", "rlib"]
 [dependencies]
 flutter_rust_bridge = "=2.13.0"
 ilikepdf_core = { path = "../ilikepdf_core" }
+ilikepdf_qpdf = { path = "../ilikepdf_qpdf" }
 log = "0.4"
 
 [lints.rust]

@@ -4,8 +4,12 @@ ilikepdf is an open-source, privacy-first Windows PDF toolkit. Flutter provides
 the desktop presentation layer while Rust owns application logic and native PDF
 integration. Documents and images are processed locally and are never uploaded.
 
-Current production workflows include batch PDF-to-PNG/JPG export and Image-to-PDF
-creation. PDF-to-Images accepts ordered multi-file picker/drop input, exports
+Current production workflows include Merge PDF, batch PDF-to-PNG/JPG export,
+and Image-to-PDF creation. Merge PDF structurally combines every page from two
+or more ordered PDF input instances without rasterization, retains duplicate
+source instances, validates the private merged output through qpdf and PDFium,
+and safely numbers collisions instead of overwriting. PDF-to-Images accepts
+ordered multi-file picker/drop input, exports
 sequentially as PNG or JPG at 150 or 300 DPI, supports per-source or shared custom destinations,
 continues after document-specific failures, and numbers output files or folders
 instead of overwriting existing data. Image-to-PDF accepts JPG/JPEG, PNG, and
@@ -50,6 +54,7 @@ flutter build windows --release
 flutter test integration_test/app_info_test.dart -d windows
 flutter test integration_test/pdf_preview_test.dart -d windows
 flutter test integration_test/image_to_pdf_test.dart -d windows
+flutter test integration_test/merge_pdf_test.dart -d windows
 ```
 
 See [docs/architecture.md](docs/architecture.md) for boundaries and privacy

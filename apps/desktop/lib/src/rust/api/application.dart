@@ -4,60 +4,15 @@
 // ignore_for_file: invalid_use_of_internal_member, unused_import, unnecessary_import
 
 import '../frb_generated.dart';
+import 'error.dart';
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `clone`, `clone`, `clone`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `from`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `clone`, `eq`, `fmt`
 
 /// Runs on flutter_rust_bridge's worker pool so Dart's UI isolate stays responsive.
 Future<ApplicationInfo> getApplicationInfo() =>
     RustLib.instance.api.crateApiApplicationGetApplicationInfo();
-
-/// Structured errors exposed to Dart. Add error codes instead of returning raw strings.
-class ApplicationError {
-  final ApplicationErrorCode code;
-  final String message;
-
-  const ApplicationError({required this.code, required this.message});
-
-  @override
-  int get hashCode => code.hashCode ^ message.hashCode;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is ApplicationError &&
-          runtimeType == other.runtimeType &&
-          code == other.code &&
-          message == other.message;
-}
-
-enum ApplicationErrorCode {
-  sourceNotFound,
-  sourceNotFile,
-  sourceUnreadable,
-  invalidPdf,
-  pageOutOfBounds,
-  invalidRequest,
-  pdfRuntimeUnavailable,
-  invalidOutputDirectory,
-  permissionDenied,
-  outputNotWritable,
-  outputAlreadyExists,
-  outputWriteFailed,
-  renderingFailed,
-  encodingFailed,
-  unsupportedImageFormat,
-  malformedImage,
-  imageDecodeFailed,
-  imageOrientationFailed,
-  duplicateOutputName,
-  pdfDocumentCreationFailed,
-  pdfPageCreationFailed,
-  imagePlacementFailed,
-  pdfSaveFailed,
-  internal,
-}
 
 /// Application metadata exposed to Dart through a typed bridge contract.
 class ApplicationInfo {

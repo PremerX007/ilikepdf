@@ -39,6 +39,7 @@ pub(crate) enum Event {
     PdfDocumentOpenRequested,
     PdfImageExportRequested,
     ImagePdfCreationRequested,
+    MergePdfRequested,
     PdfPageRenderRequested,
 }
 
@@ -50,6 +51,7 @@ impl Event {
             Self::PdfDocumentOpenRequested => "pdf_document_open_requested",
             Self::PdfImageExportRequested => "pdf_image_export_requested",
             Self::ImagePdfCreationRequested => "image_pdf_creation_requested",
+            Self::MergePdfRequested => "merge_pdf_requested",
             Self::PdfPageRenderRequested => "pdf_page_render_requested",
         }
     }

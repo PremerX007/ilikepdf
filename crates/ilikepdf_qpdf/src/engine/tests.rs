@@ -10,6 +10,34 @@ struct FakeRunner {
     outputs: Mutex<VecDeque<Result<QpdfProcessOutput, QpdfProcessError>>>,
 }
 
+struct RecordingMergeRunner {
+    calls: Mutex<Vec<Vec<OsString>>>,
+}
+
+impl QpdfRunner for RecordingMergeRunner {
+    fn run(
+        &self,
+        _executable: &Path,
+        arguments: &[OsString],
+        _stdin_data: Option<&[u8]>,
+    ) -> Result<QpdfProcessOutput, QpdfProcessError> {
+        self.calls.lock().unwrap().push(arguments.to_vec());
+        if arguments == [OsString::from("--version")] {
+            return Ok(QpdfProcessOutput {
+                exit_code: Some(0),
+                stdout: diagnostic(b"qpdf version 12.4.1\n"),
+                stderr: diagnostic(b""),
+            });
+        }
+        fs::write(PathBuf::from(arguments.last().unwrap()), b"merged").unwrap();
+        Ok(QpdfProcessOutput {
+            exit_code: Some(0),
+            stdout: diagnostic(b""),
+            stderr: diagnostic(b""),
+        })
+    }
+}
+
 impl QpdfRunner for FakeRunner {
     fn run(
         &self,
@@ -90,6 +118,11 @@ fn simulated_nonzero_validation_maps_to_a_domain_error_without_raw_details() {
             Ok(QpdfProcessOutput {
                 exit_code: Some(2),
                 stdout: diagnostic(b""),
+                stderr: diagnostic(b""),
+            }),
+            Ok(QpdfProcessOutput {
+                exit_code: Some(2),
+                stdout: diagnostic(b""),
                 stderr: diagnostic(b"raw qpdf diagnostics must remain internal"),
             }),
         ])),
@@ -102,6 +135,156 @@ fn simulated_nonzero_validation_maps_to_a_domain_error_without_raw_details() {
     assert_eq!(
         engine.validate(&source),
         Err(StructuralPdfError::InvalidDocument)
+    );
+}
+
+#[test]
+fn password_required_is_classified_without_exposing_diagnostics() {
+    let runtime_root = fixture_runtime_root();
+    let source = runtime_root.path().join("protected.pdf");
+    fs::write(&source, b"fixture").unwrap();
+    let runner = FakeRunner {
+        outputs: Mutex::new(VecDeque::from([
+            Ok(QpdfProcessOutput {
+                exit_code: Some(0),
+                stdout: diagnostic(b"qpdf version 12.4.1\n"),
+                stderr: diagnostic(b""),
+            }),
+            Ok(QpdfProcessOutput {
+                exit_code: Some(0),
+                stdout: diagnostic(b""),
+                stderr: diagnostic(b"private password diagnostics"),
+            }),
+        ])),
+    };
+    let engine = QpdfCliEngine::with_runner(
+        QpdfRuntimeResolver::from_root(runtime_root.path()),
+        Arc::new(runner),
+    );
+
+    assert_eq!(
+        engine.validate(&source),
+        Err(StructuralPdfError::PasswordRequired)
+    );
+}
+
+#[test]
+fn recoverable_validation_exit_is_a_typed_warning() {
+    let runtime_root = fixture_runtime_root();
+    let source = runtime_root.path().join("warning.pdf");
+    fs::write(&source, b"fixture").unwrap();
+    let runner = FakeRunner {
+        outputs: Mutex::new(VecDeque::from([
+            Ok(QpdfProcessOutput {
+                exit_code: Some(0),
+                stdout: diagnostic(b"qpdf version 12.4.1\n"),
+                stderr: diagnostic(b""),
+            }),
+            Ok(QpdfProcessOutput {
+                exit_code: Some(2),
+                stdout: diagnostic(b""),
+                stderr: diagnostic(b""),
+            }),
+            Ok(QpdfProcessOutput {
+                exit_code: Some(3),
+                stdout: diagnostic(b""),
+                stderr: diagnostic(b"recoverable warning details stay private"),
+            }),
+        ])),
+    };
+    let engine = QpdfCliEngine::with_runner(
+        QpdfRuntimeResolver::from_root(runtime_root.path()),
+        Arc::new(runner),
+    );
+
+    assert_eq!(
+        engine.validate(&source),
+        Ok(StructuralPdfValidation { has_warnings: true })
+    );
+}
+
+#[test]
+fn real_password_protected_fixture_is_created_and_classified_in_test_setup() {
+    let repository_root = Path::new(env!("CARGO_MANIFEST_DIR")).join("..").join("..");
+    let runtime_root = repository_root
+        .join("third_party")
+        .join("qpdf")
+        .join("windows")
+        .join("x64");
+    let executable = runtime_root.join("bin").join("qpdf.exe");
+    let source = repository_root
+        .join("crates")
+        .join("ilikepdf_pdf")
+        .join("tests")
+        .join("fixtures")
+        .join("one_page.pdf");
+    let directory = tempfile::tempdir().unwrap();
+    let protected = directory.path().join("password protected.pdf");
+    let creation = QpdfProcessRunner
+        .run(
+            &executable,
+            &[
+                source.into_os_string(),
+                OsString::from("--encrypt"),
+                OsString::from("--user-password=merge-test-password"),
+                OsString::from("--owner-password=merge-test-owner"),
+                OsString::from("--bits=256"),
+                OsString::from("--"),
+                protected.clone().into_os_string(),
+            ],
+            None,
+        )
+        .expect("test fixture encryption should launch");
+    assert_eq!(creation.exit_code, Some(0));
+    let engine = QpdfCliEngine::from_runtime_root(runtime_root);
+
+    assert_eq!(
+        engine.validate(&protected),
+        Err(StructuralPdfError::PasswordRequired)
+    );
+}
+
+#[test]
+fn merge_maps_ordered_duplicate_sources_to_qpdf_page_composition() {
+    let runtime_root = fixture_runtime_root();
+    let first = runtime_root.path().join("first source.pdf");
+    let second = runtime_root.path().join("second.pdf");
+    let output = runtime_root.path().join("working.tmp");
+    fs::write(&first, b"first").unwrap();
+    fs::write(&second, b"second").unwrap();
+    fs::write(&output, b"").unwrap();
+    let runner = Arc::new(RecordingMergeRunner {
+        calls: Mutex::new(Vec::new()),
+    });
+    let engine = QpdfCliEngine::with_runner(
+        QpdfRuntimeResolver::from_root(runtime_root.path()),
+        runner.clone(),
+    );
+
+    engine
+        .merge(&StructuralPdfMergeRequest {
+            ordered_source_paths: vec![first.clone(), second.clone(), first.clone()],
+            working_output_path: output.clone(),
+        })
+        .expect("merge should succeed");
+
+    let calls = runner.calls.lock().unwrap();
+    assert_eq!(calls.len(), 2);
+    assert_eq!(calls[1][0], "--empty");
+    assert_eq!(calls[1][1], "--pages");
+    assert_eq!(
+        PathBuf::from(&calls[1][2]),
+        std::path::absolute(first).unwrap()
+    );
+    assert_eq!(
+        PathBuf::from(&calls[1][3]),
+        std::path::absolute(second).unwrap()
+    );
+    assert_eq!(calls[1][2], calls[1][4]);
+    assert_eq!(calls[1][5], "--");
+    assert_eq!(
+        PathBuf::from(&calls[1][6]),
+        std::path::absolute(output).unwrap()
     );
 }
 

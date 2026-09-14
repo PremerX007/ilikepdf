@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:file_selector/file_selector.dart';
-import 'package:ilikepdf/src/rust/api/application.dart' as rust_application;
+import 'package:ilikepdf/src/rust/api/error.dart' as rust_application;
 import 'package:ilikepdf/src/rust/api/image_to_pdf.dart' as rust_image_pdf;
 
 class SelectedImage {
@@ -223,6 +223,22 @@ class LocalImageToPdfWorkflow implements ImageToPdfWorkflow {
           ImagePdfProblemCode.invalidRequest,
         rust_application.ApplicationErrorCode.pdfRuntimeUnavailable =>
           ImagePdfProblemCode.pdfRuntimeUnavailable,
+        rust_application.ApplicationErrorCode.structuralPdfRuntimeUnavailable =>
+          ImagePdfProblemCode.internal,
+        rust_application
+            .ApplicationErrorCode
+            .structuralPdfRuntimeIncompatible =>
+          ImagePdfProblemCode.internal,
+        rust_application.ApplicationErrorCode.structuralPdfLaunchFailed =>
+          ImagePdfProblemCode.internal,
+        rust_application.ApplicationErrorCode.passwordRequired =>
+          ImagePdfProblemCode.internal,
+        rust_application.ApplicationErrorCode.structuralPdfOperationFailed =>
+          ImagePdfProblemCode.internal,
+        rust_application
+            .ApplicationErrorCode
+            .structuralPdfOutputValidationFailed =>
+          ImagePdfProblemCode.internal,
         rust_application.ApplicationErrorCode.invalidOutputDirectory =>
           ImagePdfProblemCode.invalidOutputDirectory,
         rust_application.ApplicationErrorCode.permissionDenied =>

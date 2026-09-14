@@ -3,8 +3,8 @@ use std::io::Cursor;
 use std::path::{Path, PathBuf};
 
 use ilikepdf_core::{
-    ApplicationErrorCode, RewriteStructuralPdfRequest, StructuralPdfEngine,
-    StructuralPdfEngineFamily, StructuralPdfError, StructuralPdfVersion,
+    ApplicationErrorCode, MergePdfRequest, RewriteStructuralPdfRequest, StructuralPdfEngine,
+    StructuralPdfEngineFamily, StructuralPdfError, StructuralPdfVersion, merge_pdf,
     probe_structural_pdf_engine, rewrite_structural_pdf, validate_structural_pdf,
 };
 use ilikepdf_pdf::{PdfRenderRequest, inspect_document, render_page_to_png};
@@ -150,6 +150,118 @@ fn missing_bundled_runtime_maps_without_falling_back_to_path() {
     );
 }
 
+#[test]
+fn real_merge_preserves_order_duplicates_geometry_sources_and_collision_safety() {
+    install_pdfium_beside_test_executable();
+    let directory = tempfile::tempdir().unwrap();
+    let source_directory = directory.path().join("PDF sources with spaces พื้นที่");
+    let destination_directory = directory.path().join("custom output");
+    fs::create_dir(&source_directory).unwrap();
+    fs::create_dir(&destination_directory).unwrap();
+    let first = source_directory.join("A สองหน้า.pdf");
+    let second = source_directory.join("B one page.pdf");
+    fs::copy(fixture("two_page.pdf"), &first).unwrap();
+    fs::copy(fixture("one_page.pdf"), &second).unwrap();
+    let first_before = fs::read(&first).unwrap();
+    let second_before = fs::read(&second).unwrap();
+    fs::write(destination_directory.join("merged (2).pdf"), b"occupied").unwrap();
+    let engine = QpdfCliEngine::from_runtime_root(qpdf_runtime_root());
+    let request = MergePdfRequest {
+        source_paths: vec![first.clone(), second.clone(), first.clone()],
+        destination_directory: destination_directory.clone(),
+        output_name: "merged".to_owned(),
+    };
+
+    let first_result = merge_pdf(&engine, request.clone(), |_| {}).expect("merge should succeed");
+    let second_result = merge_pdf(&engine, request, |_| {}).expect("repeat merge should succeed");
+
+    assert_eq!(
+        first_result.output_path,
+        destination_directory.join("merged.pdf")
+    );
+    assert_eq!(
+        second_result.output_path,
+        destination_directory.join("merged (1).pdf")
+    );
+    assert_eq!(first_result.input_count, 3);
+    assert_eq!(first_result.page_count, 5);
+    assert!(!first_result.has_warnings);
+    assert_eq!(
+        inspect_document(&first_result.output_path)
+            .unwrap()
+            .page_count,
+        5
+    );
+    let rendered_heights = [0, 1, 2, 4]
+        .into_iter()
+        .map(|page_index| {
+            let mut rendered = Cursor::new(Vec::new());
+            render_page_to_png(
+                PdfRenderRequest {
+                    source_path: first_result.output_path.clone(),
+                    page_index,
+                    target_width: 120,
+                },
+                &mut rendered,
+            )
+            .expect("representative merged page should render")
+            .height_pixels
+        })
+        .collect::<Vec<_>>();
+    assert_eq!(rendered_heights, [80, 180, 80, 180]);
+    assert_eq!(fs::read(first).unwrap(), first_before);
+    assert_eq!(fs::read(second).unwrap(), second_before);
+    assert_eq!(
+        fs::read(destination_directory.join("merged (2).pdf")).unwrap(),
+        b"occupied"
+    );
+    assert_eq!(private_working_file_count(&destination_directory), 0);
+}
+
+#[test]
+fn malformed_or_missing_merge_input_publishes_nothing() {
+    install_pdfium_beside_test_executable();
+    let directory = tempfile::tempdir().unwrap();
+    let valid = fixture("one_page.pdf");
+    let malformed = fixture("malformed.pdf");
+    let engine = QpdfCliEngine::from_runtime_root(qpdf_runtime_root());
+
+    let malformed_failure = merge_pdf(
+        &engine,
+        MergePdfRequest {
+            source_paths: vec![valid.clone(), malformed.clone()],
+            destination_directory: directory.path().to_path_buf(),
+            output_name: "malformed-result.pdf".to_owned(),
+        },
+        |_| {},
+    )
+    .expect_err("malformed source should fail the whole merge");
+    assert_eq!(
+        malformed_failure.error.code,
+        ApplicationErrorCode::InvalidPdf
+    );
+    assert_eq!(malformed_failure.input_index, Some(1));
+    assert!(!directory.path().join("malformed-result.pdf").exists());
+
+    let missing_failure = merge_pdf(
+        &engine,
+        MergePdfRequest {
+            source_paths: vec![valid, directory.path().join("missing.pdf")],
+            destination_directory: directory.path().to_path_buf(),
+            output_name: "missing-result.pdf".to_owned(),
+        },
+        |_| {},
+    )
+    .expect_err("missing source should fail the whole merge");
+    assert_eq!(
+        missing_failure.error.code,
+        ApplicationErrorCode::SourceNotFound
+    );
+    assert_eq!(missing_failure.input_index, Some(1));
+    assert!(!directory.path().join("missing-result.pdf").exists());
+    assert_eq!(private_working_file_count(directory.path()), 0);
+}
+
 fn install_pdfium_beside_test_executable() {
     let executable = std::env::current_exe().expect("test executable should resolve");
     let destination = executable
@@ -170,7 +282,7 @@ fn private_working_file_count(directory: &Path) -> usize {
             entry
                 .file_name()
                 .to_string_lossy()
-                .contains(".ilikepdf-structural-pdf-")
+                .starts_with(".ilikepdf-")
         })
         .count()
 }

@@ -4,11 +4,13 @@ class ToolHome extends StatelessWidget {
   const ToolHome({
     required this.onOpenPdfToImages,
     required this.onOpenImagesToPdf,
+    required this.onOpenMergePdf,
     super.key,
   });
 
   final VoidCallback onOpenPdfToImages;
   final VoidCallback onOpenImagesToPdf;
+  final VoidCallback onOpenMergePdf;
 
   @override
   Widget build(BuildContext context) {
@@ -52,12 +54,13 @@ class ToolHome extends StatelessWidget {
                         'Arrange JPG, PNG, and WebP files into polished PDFs.',
                     onTap: onOpenImagesToPdf,
                   ),
-                  const _ToolCardData(
+                  _ToolCardData(
                     key: ValueKey('tool-card-merge-pdf'),
                     icon: Icons.call_merge_rounded,
                     title: 'Merge PDF',
                     description:
                         'Combine PDF documents in the order you choose.',
+                    onTap: onOpenMergePdf,
                   ),
                   const _ToolCardData(
                     key: ValueKey('tool-card-split-pdf'),

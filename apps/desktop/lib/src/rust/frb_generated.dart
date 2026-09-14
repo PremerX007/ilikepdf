@@ -4,7 +4,9 @@
 // ignore_for_file: unused_import, unused_element, unnecessary_import, duplicate_ignore, invalid_use_of_internal_member, annotate_overrides, non_constant_identifier_names, curly_braces_in_flow_control_structures, prefer_const_literals_to_create_immutables, unused_field
 
 import 'api/application.dart';
+import 'api/error.dart';
 import 'api/image_to_pdf.dart';
+import 'api/merge_pdf.dart';
 import 'api/pdf_export.dart';
 import 'api/pdf_preview.dart';
 
@@ -72,7 +74,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.13.0';
 
   @override
-  int get rustContentHash => 1053760489;
+  int get rustContentHash => 755409905;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -99,6 +101,10 @@ abstract class RustLibApi extends BaseApi {
   Future<ApplicationInfo> crateApiApplicationGetApplicationInfo();
 
   Future<void> crateApiLifecycleInitialize();
+
+  Stream<MergePdfUpdate> crateApiMergePdfMergePdf({
+    required MergePdfRequest request,
+  });
 
   Future<PdfDocumentInfo> crateApiPdfPreviewOpenPdfDocument({
     required String sourcePath,
@@ -304,6 +310,46 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: "initialize", argNames: []);
 
   @override
+  Stream<MergePdfUpdate> crateApiMergePdfMergePdf({
+    required MergePdfRequest request,
+  }) {
+    final progressSink = RustStreamSink<MergePdfUpdate>();
+    unawaited(
+      handler.executeNormal(
+        NormalTask(
+          callFfi: (port_) {
+            final serializer = SseSerializer(generalizedFrbRustBinding);
+            sse_encode_box_autoadd_merge_pdf_request(request, serializer);
+            sse_encode_StreamSink_merge_pdf_update_Sse(
+              progressSink,
+              serializer,
+            );
+            pdeCallFfi(
+              generalizedFrbRustBinding,
+              serializer,
+              funcId: 6,
+              port: port_,
+            );
+          },
+          codec: SseCodec(
+            decodeSuccessData: sse_decode_unit,
+            decodeErrorData: null,
+          ),
+          constMeta: kCrateApiMergePdfMergePdfConstMeta,
+          argValues: [request, progressSink],
+          apiImpl: this,
+        ),
+      ),
+    );
+    return progressSink.stream;
+  }
+
+  TaskConstMeta get kCrateApiMergePdfMergePdfConstMeta => const TaskConstMeta(
+    debugName: "merge_pdf",
+    argNames: ["request", "progressSink"],
+  );
+
+  @override
   Future<PdfDocumentInfo> crateApiPdfPreviewOpenPdfDocument({
     required String sourcePath,
   }) {
@@ -315,7 +361,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 6,
+            funcId: 7,
             port: port_,
           );
         },
@@ -348,7 +394,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 7,
+            funcId: 8,
             port: port_,
           );
         },
@@ -374,6 +420,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   RustStreamSink<ImagePdfUpdate> dco_decode_StreamSink_image_pdf_update_Sse(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    throw UnimplementedError();
+  }
+
+  @protected
+  RustStreamSink<MergePdfUpdate> dco_decode_StreamSink_merge_pdf_update_Sse(
     dynamic raw,
   ) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
@@ -466,6 +520,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_export_pdf_to_images_request(raw);
+  }
+
+  @protected
+  MergePdfRequest dco_decode_box_autoadd_merge_pdf_request(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_merge_pdf_request(raw);
   }
 
   @protected
@@ -607,6 +667,51 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as Uint8List;
+  }
+
+  @protected
+  MergePdfRequest dco_decode_merge_pdf_request(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return MergePdfRequest(
+      sourcePaths: dco_decode_list_String(arr[0]),
+      destinationDirectory: dco_decode_String(arr[1]),
+      outputName: dco_decode_String(arr[2]),
+    );
+  }
+
+  @protected
+  MergePdfStage dco_decode_merge_pdf_stage(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return MergePdfStage.values[raw as int];
+  }
+
+  @protected
+  MergePdfStatus dco_decode_merge_pdf_status(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return MergePdfStatus.values[raw as int];
+  }
+
+  @protected
+  MergePdfUpdate dco_decode_merge_pdf_update(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 10)
+      throw Exception('unexpected arr length: expect 10 but see ${arr.length}');
+    return MergePdfUpdate(
+      status: dco_decode_merge_pdf_status(arr[0]),
+      stage: dco_decode_merge_pdf_stage(arr[1]),
+      inputCount: dco_decode_u_32(arr[2]),
+      totalPageCount: dco_decode_u_32(arr[3]),
+      outputPath: dco_decode_opt_String(arr[4]),
+      warningInputCount: dco_decode_u_32(arr[5]),
+      hasWarnings: dco_decode_bool(arr[6]),
+      failedInputIndex: dco_decode_opt_box_autoadd_u_32(arr[7]),
+      failedInputPath: dco_decode_opt_String(arr[8]),
+      error: dco_decode_opt_box_autoadd_application_error(arr[9]),
+    );
   }
 
   @protected
@@ -802,6 +907,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  RustStreamSink<MergePdfUpdate> sse_decode_StreamSink_merge_pdf_update_Sse(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    throw UnimplementedError('Unreachable ()');
+  }
+
+  @protected
   RustStreamSink<PdfBatchExportUpdate>
   sse_decode_StreamSink_pdf_batch_export_update_Sse(
     SseDeserializer deserializer,
@@ -891,6 +1004,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return (sse_decode_export_pdf_to_images_request(deserializer));
+  }
+
+  @protected
+  MergePdfRequest sse_decode_box_autoadd_merge_pdf_request(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_merge_pdf_request(deserializer));
   }
 
   @protected
@@ -1068,6 +1189,60 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var len_ = sse_decode_i_32(deserializer);
     return deserializer.buffer.getUint8List(len_);
+  }
+
+  @protected
+  MergePdfRequest sse_decode_merge_pdf_request(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_sourcePaths = sse_decode_list_String(deserializer);
+    var var_destinationDirectory = sse_decode_String(deserializer);
+    var var_outputName = sse_decode_String(deserializer);
+    return MergePdfRequest(
+      sourcePaths: var_sourcePaths,
+      destinationDirectory: var_destinationDirectory,
+      outputName: var_outputName,
+    );
+  }
+
+  @protected
+  MergePdfStage sse_decode_merge_pdf_stage(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var inner = sse_decode_i_32(deserializer);
+    return MergePdfStage.values[inner];
+  }
+
+  @protected
+  MergePdfStatus sse_decode_merge_pdf_status(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var inner = sse_decode_i_32(deserializer);
+    return MergePdfStatus.values[inner];
+  }
+
+  @protected
+  MergePdfUpdate sse_decode_merge_pdf_update(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_status = sse_decode_merge_pdf_status(deserializer);
+    var var_stage = sse_decode_merge_pdf_stage(deserializer);
+    var var_inputCount = sse_decode_u_32(deserializer);
+    var var_totalPageCount = sse_decode_u_32(deserializer);
+    var var_outputPath = sse_decode_opt_String(deserializer);
+    var var_warningInputCount = sse_decode_u_32(deserializer);
+    var var_hasWarnings = sse_decode_bool(deserializer);
+    var var_failedInputIndex = sse_decode_opt_box_autoadd_u_32(deserializer);
+    var var_failedInputPath = sse_decode_opt_String(deserializer);
+    var var_error = sse_decode_opt_box_autoadd_application_error(deserializer);
+    return MergePdfUpdate(
+      status: var_status,
+      stage: var_stage,
+      inputCount: var_inputCount,
+      totalPageCount: var_totalPageCount,
+      outputPath: var_outputPath,
+      warningInputCount: var_warningInputCount,
+      hasWarnings: var_hasWarnings,
+      failedInputIndex: var_failedInputIndex,
+      failedInputPath: var_failedInputPath,
+      error: var_error,
+    );
   }
 
   @protected
@@ -1332,6 +1507,23 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_StreamSink_merge_pdf_update_Sse(
+    RustStreamSink<MergePdfUpdate> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(
+      self.setupAndSerialize(
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_merge_pdf_update,
+          decodeErrorData: sse_decode_AnyhowException,
+        ),
+      ),
+      serializer,
+    );
+  }
+
+  @protected
   void sse_encode_StreamSink_pdf_batch_export_update_Sse(
     RustStreamSink<PdfBatchExportUpdate> self,
     SseSerializer serializer,
@@ -1441,6 +1633,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_export_pdf_to_images_request(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_merge_pdf_request(
+    MergePdfRequest self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_merge_pdf_request(self, serializer);
   }
 
   @protected
@@ -1597,6 +1798,53 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.length, serializer);
     serializer.buffer.putUint8List(self);
+  }
+
+  @protected
+  void sse_encode_merge_pdf_request(
+    MergePdfRequest self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_list_String(self.sourcePaths, serializer);
+    sse_encode_String(self.destinationDirectory, serializer);
+    sse_encode_String(self.outputName, serializer);
+  }
+
+  @protected
+  void sse_encode_merge_pdf_stage(
+    MergePdfStage self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
+  void sse_encode_merge_pdf_status(
+    MergePdfStatus self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
+  void sse_encode_merge_pdf_update(
+    MergePdfUpdate self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_merge_pdf_status(self.status, serializer);
+    sse_encode_merge_pdf_stage(self.stage, serializer);
+    sse_encode_u_32(self.inputCount, serializer);
+    sse_encode_u_32(self.totalPageCount, serializer);
+    sse_encode_opt_String(self.outputPath, serializer);
+    sse_encode_u_32(self.warningInputCount, serializer);
+    sse_encode_bool(self.hasWarnings, serializer);
+    sse_encode_opt_box_autoadd_u_32(self.failedInputIndex, serializer);
+    sse_encode_opt_String(self.failedInputPath, serializer);
+    sse_encode_opt_box_autoadd_application_error(self.error, serializer);
   }
 
   @protected

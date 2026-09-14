@@ -23,6 +23,7 @@ pub enum ApplicationErrorCode {
     StructuralPdfRuntimeUnavailable,
     StructuralPdfRuntimeIncompatible,
     StructuralPdfLaunchFailed,
+    PasswordRequired,
     StructuralPdfOperationFailed,
     StructuralPdfOutputValidationFailed,
     InvalidOutputDirectory,

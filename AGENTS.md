@@ -23,6 +23,9 @@ infrastructure. Invoke bundled qpdf directly without a shell and never resolve i
 from system `PATH`. Never log passwords, full qpdf command lines, document paths,
 or raw diagnostics; future secret input belongs in the Rust infrastructure
 boundary and must avoid unnecessary command-line exposure.
+Validate structural outputs privately before publication, including an
+appropriate native reopen and invariant checks. Structural workflows must keep
+source PDFs read-only and publish outputs atomically without clobbering.
 
 ## Build, Test, and Development Commands
 
@@ -36,7 +39,7 @@ all generated changes. Before a pull request, run:
 - `dart format --output=none --set-exit-if-changed lib test integration_test hook`
 - `flutter analyze`, `flutter test`, and `flutter build windows --release`
 - Windows integration tests in `integration_test/`, including `app_info_test.dart`,
-  `pdf_preview_test.dart`, and `image_to_pdf_test.dart`
+  `pdf_preview_test.dart`, `image_to_pdf_test.dart`, and `merge_pdf_test.dart`
 
 Codex and the interactive Windows user can have isolated views of the user-wide
 Pub cache even when both paths display as `%LOCALAPPDATA%\Pub\Cache`. After Codex

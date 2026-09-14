@@ -20,10 +20,12 @@ pub use application::pdf_to_images::{
     export_pdf_to_images, inspect_pdf_document, render_pdf_page,
 };
 pub use application::structural_pdf::{
+    MergePdfFailure, MergePdfProgress, MergePdfRequest, MergePdfResult, MergePdfStage,
     RewriteStructuralPdfRequest, StructuralPdfEngine, StructuralPdfEngineFamily,
-    StructuralPdfEngineInfo, StructuralPdfError, StructuralPdfOperationResult,
-    StructuralPdfRewriteResult, StructuralPdfValidation, StructuralPdfVersion,
-    probe_structural_pdf_engine, rewrite_structural_pdf, validate_structural_pdf,
+    StructuralPdfEngineInfo, StructuralPdfError, StructuralPdfMergeRequest,
+    StructuralPdfOperationResult, StructuralPdfRewriteResult, StructuralPdfValidation,
+    StructuralPdfVersion, merge_pdf, probe_structural_pdf_engine, rewrite_structural_pdf,
+    validate_structural_pdf,
 };
 pub use error::{ApplicationError, ApplicationErrorCode, ApplicationResult};
 
