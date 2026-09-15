@@ -5,12 +5,14 @@ class ToolHome extends StatelessWidget {
     required this.onOpenPdfToImages,
     required this.onOpenImagesToPdf,
     required this.onOpenMergePdf,
+    required this.onOpenSplitPdf,
     super.key,
   });
 
   final VoidCallback onOpenPdfToImages;
   final VoidCallback onOpenImagesToPdf;
   final VoidCallback onOpenMergePdf;
+  final VoidCallback onOpenSplitPdf;
 
   @override
   Widget build(BuildContext context) {
@@ -62,11 +64,13 @@ class ToolHome extends StatelessWidget {
                         'Combine PDF documents in the order you choose.',
                     onTap: onOpenMergePdf,
                   ),
-                  const _ToolCardData(
+                  _ToolCardData(
                     key: ValueKey('tool-card-split-pdf'),
                     icon: Icons.content_cut_rounded,
                     title: 'Split PDF',
-                    description: 'Extract selected pages into new documents.',
+                    description:
+                        'Divide one PDF into ordered, lossless documents.',
+                    onTap: onOpenSplitPdf,
                   ),
                   const _ToolCardData(
                     key: ValueKey('tool-card-organize-pdf'),

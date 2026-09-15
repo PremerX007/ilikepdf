@@ -21,11 +21,13 @@ pub use application::pdf_to_images::{
 };
 pub use application::structural_pdf::{
     MergePdfFailure, MergePdfProgress, MergePdfRequest, MergePdfResult, MergePdfStage,
-    RewriteStructuralPdfRequest, StructuralPdfEngine, StructuralPdfEngineFamily,
-    StructuralPdfEngineInfo, StructuralPdfError, StructuralPdfMergeRequest,
-    StructuralPdfOperationResult, StructuralPdfRewriteResult, StructuralPdfValidation,
-    StructuralPdfVersion, merge_pdf, probe_structural_pdf_engine, rewrite_structural_pdf,
-    validate_structural_pdf,
+    RewriteStructuralPdfRequest, SplitPdfFailure, SplitPdfMode, SplitPdfPageRange, SplitPdfPart,
+    SplitPdfProgress, SplitPdfRequest, SplitPdfResult, SplitPdfSourceInfo, SplitPdfStage,
+    StructuralPdfEngine, StructuralPdfEngineFamily, StructuralPdfEngineInfo, StructuralPdfError,
+    StructuralPdfMergeRequest, StructuralPdfOperationResult, StructuralPdfPageRangeRequest,
+    StructuralPdfRewriteResult, StructuralPdfValidation, StructuralPdfVersion,
+    inspect_split_pdf_source, merge_pdf, probe_structural_pdf_engine, rewrite_structural_pdf,
+    split_pdf, validate_structural_pdf,
 };
 pub use error::{ApplicationError, ApplicationErrorCode, ApplicationResult};
 

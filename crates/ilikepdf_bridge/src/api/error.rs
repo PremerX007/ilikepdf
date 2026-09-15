@@ -36,6 +36,15 @@ pub enum ApplicationErrorCode {
     PdfPageCreationFailed,
     ImagePlacementFailed,
     PdfSaveFailed,
+    PdfHasTooFewPages,
+    InvalidSplitConfiguration,
+    SplitNotRequired,
+    SplitPageExceedsSizeLimit,
+    SplitCandidateGenerationFailed,
+    SplitOutputPageCountMismatch,
+    SplitOutputExceedsSizeLimit,
+    TemporaryDirectoryFailed,
+    PublicationFailed,
     Internal,
 }
 
@@ -126,6 +135,33 @@ impl From<ilikepdf_core::ApplicationError> for ApplicationError {
             }
             ilikepdf_core::ApplicationErrorCode::PdfSaveFailed => {
                 ApplicationErrorCode::PdfSaveFailed
+            }
+            ilikepdf_core::ApplicationErrorCode::PdfHasTooFewPages => {
+                ApplicationErrorCode::PdfHasTooFewPages
+            }
+            ilikepdf_core::ApplicationErrorCode::InvalidSplitConfiguration => {
+                ApplicationErrorCode::InvalidSplitConfiguration
+            }
+            ilikepdf_core::ApplicationErrorCode::SplitNotRequired => {
+                ApplicationErrorCode::SplitNotRequired
+            }
+            ilikepdf_core::ApplicationErrorCode::SplitPageExceedsSizeLimit => {
+                ApplicationErrorCode::SplitPageExceedsSizeLimit
+            }
+            ilikepdf_core::ApplicationErrorCode::SplitCandidateGenerationFailed => {
+                ApplicationErrorCode::SplitCandidateGenerationFailed
+            }
+            ilikepdf_core::ApplicationErrorCode::SplitOutputPageCountMismatch => {
+                ApplicationErrorCode::SplitOutputPageCountMismatch
+            }
+            ilikepdf_core::ApplicationErrorCode::SplitOutputExceedsSizeLimit => {
+                ApplicationErrorCode::SplitOutputExceedsSizeLimit
+            }
+            ilikepdf_core::ApplicationErrorCode::TemporaryDirectoryFailed => {
+                ApplicationErrorCode::TemporaryDirectoryFailed
+            }
+            ilikepdf_core::ApplicationErrorCode::PublicationFailed => {
+                ApplicationErrorCode::PublicationFailed
             }
             ilikepdf_core::ApplicationErrorCode::Internal => ApplicationErrorCode::Internal,
             _ => ApplicationErrorCode::Internal,

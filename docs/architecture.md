@@ -270,6 +270,54 @@ files, JavaScript, or document actions. It relies on qpdf's normal page
 composition semantics and does not flatten source pages merely to avoid those
 limitations.
 
+Split PDF is a deliberately single-source structural workflow. It accepts
+exactly one PDF with at least two pages and never anticipates batch state. The
+source remains read-only, every source page appears exactly once in its original
+order, and mixed page dimensions and orientation are preserved without
+rasterization, quality controls, compression, or geometry normalization.
+
+The application owns all four product policies: every page, every N pages,
+strictly ascending comma-separated split points, and maximum generated file
+size. These policies resolve to inclusive, ordered, contiguous page ranges. The
+engine contract knows only how to create a private PDF from one such range:
+
+```text
+SplitPdf workflow policy
+        |
+StructuralPdfEngine::create_page_range
+        |
+QpdfCliEngine
+        |
+shared QpdfProcessRunner
+```
+
+In particular, size grouping is not a qpdf engine capability. The application
+uses a deterministic greedy search and accepts or rejects each candidate from
+the actual generated PDF byte size. The UI uses decimal megabytes (1 MB =
+1,000,000 bytes), performs checked integer conversion, and does not run candidate
+generation while settings are edited. Final part count and ranges are discovered
+during execution; the workflow does not claim a globally minimal part count.
+When a page alone is over the hard limit, Split fails without compression or
+partial publication.
+
+Every-page outputs use `<stem>-page-0001.pdf`; all other modes use
+`<stem>-part-0001.pdf`, with numbering that expands beyond four digits. Parts are
+retained in a same-filesystem private directory, then every part is structurally
+validated, reopened with PDFium, checked for its expected page count, and, for
+size mode, measured again against the hard byte limit. Only the complete
+validated directory is renamed into `<stem>-split`; existing directories are
+never merged or changed, and the lowest case-insensitive suffix such as
+`<stem>-split (1)` is used on collision.
+
+The default destination follows the currently selected source parent. Once the
+user chooses a custom destination it survives mode changes and valid source
+replacement; a fully cleared workspace resets that session state. A replacement
+is inspected before it replaces the existing source. Password-protected input is
+blocked without password UI. Preview uses PDFium page 1, but preview failure does
+not invalidate an otherwise structurally usable source. Progress reports real
+stages only: preparing, finding split points when needed, creating parts,
+validating, publishing, and completed.
+
 ## Privacy and file safety
 
 Runtime PDF functionality must work without a network connection. Never add

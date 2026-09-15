@@ -242,6 +242,21 @@ fn real_password_protected_fixture_is_created_and_classified_in_test_setup() {
         engine.validate(&protected),
         Err(StructuralPdfError::PasswordRequired)
     );
+    let failure = ilikepdf_core::split_pdf(
+        &engine,
+        ilikepdf_core::SplitPdfRequest {
+            source_path: protected,
+            destination_directory: directory.path().to_path_buf(),
+            mode: ilikepdf_core::SplitPdfMode::EveryPage,
+        },
+        |_| {},
+    )
+    .expect_err("password-protected input must block Split before publication");
+    assert_eq!(
+        failure.error.code,
+        ilikepdf_core::ApplicationErrorCode::PasswordRequired
+    );
+    assert!(!directory.path().join("password protected-split").exists());
 }
 
 #[test]
@@ -286,6 +301,73 @@ fn merge_maps_ordered_duplicate_sources_to_qpdf_page_composition() {
         PathBuf::from(&calls[1][6]),
         std::path::absolute(output).unwrap()
     );
+}
+
+#[test]
+fn page_range_maps_an_inclusive_contiguous_range_to_qpdf_page_composition() {
+    let runtime_root = fixture_runtime_root();
+    let source = runtime_root.path().join("source with spaces.pdf");
+    let output = runtime_root.path().join("range.tmp");
+    fs::write(&source, b"source").unwrap();
+    fs::write(&output, b"").unwrap();
+    let runner = Arc::new(RecordingMergeRunner {
+        calls: Mutex::new(Vec::new()),
+    });
+    let engine = QpdfCliEngine::with_runner(
+        QpdfRuntimeResolver::from_root(runtime_root.path()),
+        runner.clone(),
+    );
+
+    engine
+        .create_page_range(&StructuralPdfPageRangeRequest {
+            source_path: source.clone(),
+            first_page: 7,
+            last_page: 12,
+            working_output_path: output.clone(),
+        })
+        .unwrap();
+
+    let calls = runner.calls.lock().unwrap();
+    assert_eq!(calls.len(), 2);
+    assert_eq!(calls[1][0], "--empty");
+    assert_eq!(calls[1][1], "--pages");
+    assert_eq!(
+        PathBuf::from(&calls[1][2]),
+        std::path::absolute(source).unwrap()
+    );
+    assert_eq!(calls[1][3], "7-12");
+    assert_eq!(calls[1][4], "--");
+    assert_eq!(
+        PathBuf::from(&calls[1][5]),
+        std::path::absolute(output).unwrap()
+    );
+}
+
+#[test]
+fn page_range_rejects_zero_and_descending_ranges_before_launch() {
+    let runtime_root = fixture_runtime_root();
+    let source = runtime_root.path().join("source.pdf");
+    fs::write(&source, b"source").unwrap();
+    let runner = Arc::new(RecordingMergeRunner {
+        calls: Mutex::new(Vec::new()),
+    });
+    let engine = QpdfCliEngine::with_runner(
+        QpdfRuntimeResolver::from_root(runtime_root.path()),
+        runner.clone(),
+    );
+
+    for (first_page, last_page) in [(0, 1), (4, 3)] {
+        assert_eq!(
+            engine.create_page_range(&StructuralPdfPageRangeRequest {
+                source_path: source.clone(),
+                first_page,
+                last_page,
+                working_output_path: runtime_root.path().join("output.pdf"),
+            }),
+            Err(StructuralPdfError::OperationFailed)
+        );
+    }
+    assert!(runner.calls.lock().unwrap().is_empty());
 }
 
 #[test]

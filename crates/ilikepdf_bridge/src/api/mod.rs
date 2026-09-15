@@ -8,3 +8,4 @@ mod mapping;
 pub mod merge_pdf;
 pub mod pdf_export;
 pub mod pdf_preview;
+pub mod split_pdf;

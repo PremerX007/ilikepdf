@@ -40,6 +40,8 @@ pub(crate) enum Event {
     PdfImageExportRequested,
     ImagePdfCreationRequested,
     MergePdfRequested,
+    SplitPdfInspectionRequested,
+    SplitPdfRequested,
     PdfPageRenderRequested,
 }
 
@@ -52,6 +54,8 @@ impl Event {
             Self::PdfImageExportRequested => "pdf_image_export_requested",
             Self::ImagePdfCreationRequested => "image_pdf_creation_requested",
             Self::MergePdfRequested => "merge_pdf_requested",
+            Self::SplitPdfInspectionRequested => "split_pdf_inspection_requested",
+            Self::SplitPdfRequested => "split_pdf_requested",
             Self::PdfPageRenderRequested => "pdf_page_render_requested",
         }
     }

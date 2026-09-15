@@ -2,8 +2,14 @@
 
 use std::path::{Path, PathBuf};
 
+mod split;
 mod workflow;
 
+pub use split::{
+    SplitPdfFailure, SplitPdfMode, SplitPdfPageRange, SplitPdfPart, SplitPdfProgress,
+    SplitPdfRequest, SplitPdfResult, SplitPdfSourceInfo, SplitPdfStage, inspect_split_pdf_source,
+    split_pdf,
+};
 pub use workflow::{
     merge_pdf, probe_structural_pdf_engine, rewrite_structural_pdf, validate_structural_pdf,
 };
@@ -85,11 +91,26 @@ pub trait StructuralPdfEngine: Send + Sync {
         &self,
         request: &StructuralPdfMergeRequest,
     ) -> Result<StructuralPdfOperationResult, StructuralPdfError>;
+
+    /// Structurally copies one inclusive, contiguous, one-based page range into
+    /// a private working output. The caller owns policy, validation, and publication.
+    fn create_page_range(
+        &self,
+        request: &StructuralPdfPageRangeRequest,
+    ) -> Result<StructuralPdfOperationResult, StructuralPdfError>;
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct StructuralPdfMergeRequest {
     pub ordered_source_paths: Vec<PathBuf>,
+    pub working_output_path: PathBuf,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct StructuralPdfPageRangeRequest {
+    pub source_path: PathBuf,
+    pub first_page: u32,
+    pub last_page: u32,
     pub working_output_path: PathBuf,
 }
 

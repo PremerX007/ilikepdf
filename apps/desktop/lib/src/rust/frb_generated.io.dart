@@ -9,6 +9,7 @@ import 'api/image_to_pdf.dart';
 import 'api/merge_pdf.dart';
 import 'api/pdf_export.dart';
 import 'api/pdf_preview.dart';
+import 'api/split_pdf.dart';
 
 import 'dart:async';
 import 'dart:convert';
@@ -45,6 +46,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   RustStreamSink<PdfExportUpdate> dco_decode_StreamSink_pdf_export_update_Sse(
+    dynamic raw,
+  );
+
+  @protected
+  RustStreamSink<SplitPdfUpdate> dco_decode_StreamSink_split_pdf_update_Sse(
     dynamic raw,
   );
 
@@ -93,7 +99,13 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  SplitPdfRequest dco_decode_box_autoadd_split_pdf_request(dynamic raw);
+
+  @protected
   int dco_decode_box_autoadd_u_32(dynamic raw);
+
+  @protected
+  BigInt dco_decode_box_autoadd_u_64(dynamic raw);
 
   @protected
   CreateImagePdfRequest dco_decode_create_image_pdf_request(dynamic raw);
@@ -137,6 +149,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw);
 
   @protected
+  List<SplitPdfPart> dco_decode_list_split_pdf_part(dynamic raw);
+
+  @protected
   MergePdfRequest dco_decode_merge_pdf_request(dynamic raw);
 
   @protected
@@ -159,6 +174,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   int? dco_decode_opt_box_autoadd_u_32(dynamic raw);
+
+  @protected
+  BigInt? dco_decode_opt_box_autoadd_u_64(dynamic raw);
 
   @protected
   PdfBatchDestinationMode dco_decode_pdf_batch_destination_mode(dynamic raw);
@@ -197,7 +215,31 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   RenderPdfPageResult dco_decode_render_pdf_page_result(dynamic raw);
 
   @protected
+  SplitPdfMode dco_decode_split_pdf_mode(dynamic raw);
+
+  @protected
+  SplitPdfPart dco_decode_split_pdf_part(dynamic raw);
+
+  @protected
+  SplitPdfRequest dco_decode_split_pdf_request(dynamic raw);
+
+  @protected
+  SplitPdfSourceInfo dco_decode_split_pdf_source_info(dynamic raw);
+
+  @protected
+  SplitPdfStage dco_decode_split_pdf_stage(dynamic raw);
+
+  @protected
+  SplitPdfStatus dco_decode_split_pdf_status(dynamic raw);
+
+  @protected
+  SplitPdfUpdate dco_decode_split_pdf_update(dynamic raw);
+
+  @protected
   int dco_decode_u_32(dynamic raw);
+
+  @protected
+  BigInt dco_decode_u_64(dynamic raw);
 
   @protected
   int dco_decode_u_8(dynamic raw);
@@ -226,6 +268,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   RustStreamSink<PdfExportUpdate> sse_decode_StreamSink_pdf_export_update_Sse(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  RustStreamSink<SplitPdfUpdate> sse_decode_StreamSink_split_pdf_update_Sse(
     SseDeserializer deserializer,
   );
 
@@ -282,7 +329,15 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  SplitPdfRequest sse_decode_box_autoadd_split_pdf_request(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   int sse_decode_box_autoadd_u_32(SseDeserializer deserializer);
+
+  @protected
+  BigInt sse_decode_box_autoadd_u_64(SseDeserializer deserializer);
 
   @protected
   CreateImagePdfRequest sse_decode_create_image_pdf_request(
@@ -334,6 +389,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer);
 
   @protected
+  List<SplitPdfPart> sse_decode_list_split_pdf_part(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   MergePdfRequest sse_decode_merge_pdf_request(SseDeserializer deserializer);
 
   @protected
@@ -360,6 +420,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   int? sse_decode_opt_box_autoadd_u_32(SseDeserializer deserializer);
+
+  @protected
+  BigInt? sse_decode_opt_box_autoadd_u_64(SseDeserializer deserializer);
 
   @protected
   PdfBatchDestinationMode sse_decode_pdf_batch_destination_mode(
@@ -410,7 +473,33 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  SplitPdfMode sse_decode_split_pdf_mode(SseDeserializer deserializer);
+
+  @protected
+  SplitPdfPart sse_decode_split_pdf_part(SseDeserializer deserializer);
+
+  @protected
+  SplitPdfRequest sse_decode_split_pdf_request(SseDeserializer deserializer);
+
+  @protected
+  SplitPdfSourceInfo sse_decode_split_pdf_source_info(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  SplitPdfStage sse_decode_split_pdf_stage(SseDeserializer deserializer);
+
+  @protected
+  SplitPdfStatus sse_decode_split_pdf_status(SseDeserializer deserializer);
+
+  @protected
+  SplitPdfUpdate sse_decode_split_pdf_update(SseDeserializer deserializer);
+
+  @protected
   int sse_decode_u_32(SseDeserializer deserializer);
+
+  @protected
+  BigInt sse_decode_u_64(SseDeserializer deserializer);
 
   @protected
   int sse_decode_u_8(SseDeserializer deserializer);
@@ -445,6 +534,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_StreamSink_pdf_export_update_Sse(
     RustStreamSink<PdfExportUpdate> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_StreamSink_split_pdf_update_Sse(
+    RustStreamSink<SplitPdfUpdate> self,
     SseSerializer serializer,
   );
 
@@ -515,7 +610,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_box_autoadd_split_pdf_request(
+    SplitPdfRequest self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_box_autoadd_u_32(int self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_box_autoadd_u_64(BigInt self, SseSerializer serializer);
 
   @protected
   void sse_encode_create_image_pdf_request(
@@ -587,6 +691,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_list_split_pdf_part(
+    List<SplitPdfPart> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_merge_pdf_request(
     MergePdfRequest self,
     SseSerializer serializer,
@@ -624,6 +734,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_opt_box_autoadd_u_32(int? self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_opt_box_autoadd_u_64(BigInt? self, SseSerializer serializer);
 
   @protected
   void sse_encode_pdf_batch_destination_mode(
@@ -695,7 +808,43 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_split_pdf_mode(SplitPdfMode self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_split_pdf_part(SplitPdfPart self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_split_pdf_request(
+    SplitPdfRequest self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_split_pdf_source_info(
+    SplitPdfSourceInfo self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_split_pdf_stage(SplitPdfStage self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_split_pdf_status(
+    SplitPdfStatus self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_split_pdf_update(
+    SplitPdfUpdate self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_u_32(int self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_u_64(BigInt self, SseSerializer serializer);
 
   @protected
   void sse_encode_u_8(int self, SseSerializer serializer);

@@ -273,6 +273,7 @@ class LocalImageToPdfWorkflow implements ImageToPdfWorkflow {
           ImagePdfProblemCode.pdfSaveFailed,
         rust_application.ApplicationErrorCode.internal =>
           ImagePdfProblemCode.internal,
+        _ => ImagePdfProblemCode.internal,
       },
       message: error.message,
     );

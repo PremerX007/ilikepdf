@@ -5,7 +5,7 @@ class FilePreviewCard extends StatefulWidget {
     required this.thumbnail,
     required this.filename,
     required this.positionLabel,
-    required this.reorderHandle,
+    this.reorderHandle,
     required this.onRemove,
     this.removeButtonKey,
     this.isDropTarget = false,
@@ -15,7 +15,7 @@ class FilePreviewCard extends StatefulWidget {
   final Widget thumbnail;
   final String filename;
   final String positionLabel;
-  final Widget reorderHandle;
+  final Widget? reorderHandle;
   final VoidCallback? onRemove;
   final Key? removeButtonKey;
   final bool isDropTarget;
@@ -71,11 +71,12 @@ class _FilePreviewCardState extends State<FilePreviewCard> {
                         ),
                       ),
                     ),
-                    Positioned(
-                      top: 6,
-                      left: 6,
-                      child: _CardControl(child: widget.reorderHandle),
-                    ),
+                    if (widget.reorderHandle case final reorderHandle?)
+                      Positioned(
+                        top: 6,
+                        left: 6,
+                        child: _CardControl(child: reorderHandle),
+                      ),
                     Positioned(
                       top: 6,
                       right: 6,

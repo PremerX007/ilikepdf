@@ -394,6 +394,7 @@ PdfExportProblem? _mapError(rust_application.ApplicationError? error) {
         PdfExportProblemCode.pdfSaveFailed,
       rust_application.ApplicationErrorCode.internal =>
         PdfExportProblemCode.internal,
+      _ => PdfExportProblemCode.internal,
     },
     message: error.message,
   );

@@ -9,6 +9,7 @@ import 'api/image_to_pdf.dart';
 import 'api/merge_pdf.dart';
 import 'api/pdf_export.dart';
 import 'api/pdf_preview.dart';
+import 'api/split_pdf.dart';
 
 import 'dart:async';
 import 'dart:convert';
@@ -74,7 +75,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.13.0';
 
   @override
-  int get rustContentHash => 755409905;
+  int get rustContentHash => 2119953143;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -102,6 +103,10 @@ abstract class RustLibApi extends BaseApi {
 
   Future<void> crateApiLifecycleInitialize();
 
+  Future<SplitPdfSourceInfo> crateApiSplitPdfInspectSplitPdfSource({
+    required String sourcePath,
+  });
+
   Stream<MergePdfUpdate> crateApiMergePdfMergePdf({
     required MergePdfRequest request,
   });
@@ -112,6 +117,10 @@ abstract class RustLibApi extends BaseApi {
 
   Future<RenderPdfPageResult> crateApiPdfPreviewRenderPdfPage({
     required RenderPdfPageRequest request,
+  });
+
+  Stream<SplitPdfUpdate> crateApiSplitPdfSplitPdf({
+    required SplitPdfRequest request,
   });
 }
 
@@ -310,6 +319,39 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: "initialize", argNames: []);
 
   @override
+  Future<SplitPdfSourceInfo> crateApiSplitPdfInspectSplitPdfSource({
+    required String sourcePath,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(sourcePath, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 6,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_split_pdf_source_info,
+          decodeErrorData: sse_decode_application_error,
+        ),
+        constMeta: kCrateApiSplitPdfInspectSplitPdfSourceConstMeta,
+        argValues: [sourcePath],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiSplitPdfInspectSplitPdfSourceConstMeta =>
+      const TaskConstMeta(
+        debugName: "inspect_split_pdf_source",
+        argNames: ["sourcePath"],
+      );
+
+  @override
   Stream<MergePdfUpdate> crateApiMergePdfMergePdf({
     required MergePdfRequest request,
   }) {
@@ -327,7 +369,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             pdeCallFfi(
               generalizedFrbRustBinding,
               serializer,
-              funcId: 6,
+              funcId: 7,
               port: port_,
             );
           },
@@ -361,7 +403,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 7,
+            funcId: 8,
             port: port_,
           );
         },
@@ -394,7 +436,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 8,
+            funcId: 9,
             port: port_,
           );
         },
@@ -411,6 +453,46 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   TaskConstMeta get kCrateApiPdfPreviewRenderPdfPageConstMeta =>
       const TaskConstMeta(debugName: "render_pdf_page", argNames: ["request"]);
+
+  @override
+  Stream<SplitPdfUpdate> crateApiSplitPdfSplitPdf({
+    required SplitPdfRequest request,
+  }) {
+    final progressSink = RustStreamSink<SplitPdfUpdate>();
+    unawaited(
+      handler.executeNormal(
+        NormalTask(
+          callFfi: (port_) {
+            final serializer = SseSerializer(generalizedFrbRustBinding);
+            sse_encode_box_autoadd_split_pdf_request(request, serializer);
+            sse_encode_StreamSink_split_pdf_update_Sse(
+              progressSink,
+              serializer,
+            );
+            pdeCallFfi(
+              generalizedFrbRustBinding,
+              serializer,
+              funcId: 10,
+              port: port_,
+            );
+          },
+          codec: SseCodec(
+            decodeSuccessData: sse_decode_unit,
+            decodeErrorData: null,
+          ),
+          constMeta: kCrateApiSplitPdfSplitPdfConstMeta,
+          argValues: [request, progressSink],
+          apiImpl: this,
+        ),
+      ),
+    );
+    return progressSink.stream;
+  }
+
+  TaskConstMeta get kCrateApiSplitPdfSplitPdfConstMeta => const TaskConstMeta(
+    debugName: "split_pdf",
+    argNames: ["request", "progressSink"],
+  );
 
   @protected
   AnyhowException dco_decode_AnyhowException(dynamic raw) {
@@ -443,6 +525,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   RustStreamSink<PdfExportUpdate> dco_decode_StreamSink_pdf_export_update_Sse(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    throw UnimplementedError();
+  }
+
+  @protected
+  RustStreamSink<SplitPdfUpdate> dco_decode_StreamSink_split_pdf_update_Sse(
     dynamic raw,
   ) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
@@ -543,9 +633,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  SplitPdfRequest dco_decode_box_autoadd_split_pdf_request(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_split_pdf_request(raw);
+  }
+
+  @protected
   int dco_decode_box_autoadd_u_32(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as int;
+  }
+
+  @protected
+  BigInt dco_decode_box_autoadd_u_64(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_u_64(raw);
   }
 
   @protected
@@ -670,6 +772,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<SplitPdfPart> dco_decode_list_split_pdf_part(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_split_pdf_part).toList();
+  }
+
+  @protected
   MergePdfRequest dco_decode_merge_pdf_request(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
@@ -736,6 +844,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   int? dco_decode_opt_box_autoadd_u_32(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_box_autoadd_u_32(raw);
+  }
+
+  @protected
+  BigInt? dco_decode_opt_box_autoadd_u_64(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_u_64(raw);
   }
 
   @protected
@@ -874,9 +988,98 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  SplitPdfMode dco_decode_split_pdf_mode(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return SplitPdfMode.values[raw as int];
+  }
+
+  @protected
+  SplitPdfPart dco_decode_split_pdf_part(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    return SplitPdfPart(
+      outputPath: dco_decode_String(arr[0]),
+      firstPage: dco_decode_u_32(arr[1]),
+      lastPage: dco_decode_u_32(arr[2]),
+      sizeBytes: dco_decode_u_64(arr[3]),
+    );
+  }
+
+  @protected
+  SplitPdfRequest dco_decode_split_pdf_request(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 6)
+      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    return SplitPdfRequest(
+      sourcePath: dco_decode_String(arr[0]),
+      destinationDirectory: dco_decode_String(arr[1]),
+      mode: dco_decode_split_pdf_mode(arr[2]),
+      everyNPages: dco_decode_opt_box_autoadd_u_32(arr[3]),
+      splitAfterPages: dco_decode_opt_String(arr[4]),
+      maximumSizeMb: dco_decode_opt_box_autoadd_u_64(arr[5]),
+    );
+  }
+
+  @protected
+  SplitPdfSourceInfo dco_decode_split_pdf_source_info(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return SplitPdfSourceInfo(
+      pageCount: dco_decode_u_32(arr[0]),
+      sizeBytes: dco_decode_u_64(arr[1]),
+      hasWarnings: dco_decode_bool(arr[2]),
+    );
+  }
+
+  @protected
+  SplitPdfStage dco_decode_split_pdf_stage(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return SplitPdfStage.values[raw as int];
+  }
+
+  @protected
+  SplitPdfStatus dco_decode_split_pdf_status(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return SplitPdfStatus.values[raw as int];
+  }
+
+  @protected
+  SplitPdfUpdate dco_decode_split_pdf_update(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 12)
+      throw Exception('unexpected arr length: expect 12 but see ${arr.length}');
+    return SplitPdfUpdate(
+      status: dco_decode_split_pdf_status(arr[0]),
+      stage: dco_decode_split_pdf_stage(arr[1]),
+      sourcePageCount: dco_decode_u_32(arr[2]),
+      currentPart: dco_decode_opt_box_autoadd_u_32(arr[3]),
+      totalParts: dco_decode_opt_box_autoadd_u_32(arr[4]),
+      outputDirectory: dco_decode_opt_String(arr[5]),
+      parts: dco_decode_list_split_pdf_part(arr[6]),
+      hasWarnings: dco_decode_bool(arr[7]),
+      failedPageNumber: dco_decode_opt_box_autoadd_u_32(arr[8]),
+      actualSizeBytes: dco_decode_opt_box_autoadd_u_64(arr[9]),
+      limitSizeBytes: dco_decode_opt_box_autoadd_u_64(arr[10]),
+      error: dco_decode_opt_box_autoadd_application_error(arr[11]),
+    );
+  }
+
+  @protected
   int dco_decode_u_32(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as int;
+  }
+
+  @protected
+  BigInt dco_decode_u_64(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dcoDecodeU64(raw);
   }
 
   @protected
@@ -925,6 +1128,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   RustStreamSink<PdfExportUpdate> sse_decode_StreamSink_pdf_export_update_Sse(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    throw UnimplementedError('Unreachable ()');
+  }
+
+  @protected
+  RustStreamSink<SplitPdfUpdate> sse_decode_StreamSink_split_pdf_update_Sse(
     SseDeserializer deserializer,
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
@@ -1031,9 +1242,23 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  SplitPdfRequest sse_decode_box_autoadd_split_pdf_request(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_split_pdf_request(deserializer));
+  }
+
+  @protected
   int sse_decode_box_autoadd_u_32(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return (sse_decode_u_32(deserializer));
+  }
+
+  @protected
+  BigInt sse_decode_box_autoadd_u_64(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_u_64(deserializer));
   }
 
   @protected
@@ -1192,6 +1417,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<SplitPdfPart> sse_decode_list_split_pdf_part(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <SplitPdfPart>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_split_pdf_part(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
   MergePdfRequest sse_decode_merge_pdf_request(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_sourcePaths = sse_decode_list_String(deserializer);
@@ -1288,6 +1527,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
     if (sse_decode_bool(deserializer)) {
       return (sse_decode_box_autoadd_u_32(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  BigInt? sse_decode_opt_box_autoadd_u_64(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_u_64(deserializer));
     } else {
       return null;
     }
@@ -1464,9 +1714,116 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  SplitPdfMode sse_decode_split_pdf_mode(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var inner = sse_decode_i_32(deserializer);
+    return SplitPdfMode.values[inner];
+  }
+
+  @protected
+  SplitPdfPart sse_decode_split_pdf_part(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_outputPath = sse_decode_String(deserializer);
+    var var_firstPage = sse_decode_u_32(deserializer);
+    var var_lastPage = sse_decode_u_32(deserializer);
+    var var_sizeBytes = sse_decode_u_64(deserializer);
+    return SplitPdfPart(
+      outputPath: var_outputPath,
+      firstPage: var_firstPage,
+      lastPage: var_lastPage,
+      sizeBytes: var_sizeBytes,
+    );
+  }
+
+  @protected
+  SplitPdfRequest sse_decode_split_pdf_request(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_sourcePath = sse_decode_String(deserializer);
+    var var_destinationDirectory = sse_decode_String(deserializer);
+    var var_mode = sse_decode_split_pdf_mode(deserializer);
+    var var_everyNPages = sse_decode_opt_box_autoadd_u_32(deserializer);
+    var var_splitAfterPages = sse_decode_opt_String(deserializer);
+    var var_maximumSizeMb = sse_decode_opt_box_autoadd_u_64(deserializer);
+    return SplitPdfRequest(
+      sourcePath: var_sourcePath,
+      destinationDirectory: var_destinationDirectory,
+      mode: var_mode,
+      everyNPages: var_everyNPages,
+      splitAfterPages: var_splitAfterPages,
+      maximumSizeMb: var_maximumSizeMb,
+    );
+  }
+
+  @protected
+  SplitPdfSourceInfo sse_decode_split_pdf_source_info(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_pageCount = sse_decode_u_32(deserializer);
+    var var_sizeBytes = sse_decode_u_64(deserializer);
+    var var_hasWarnings = sse_decode_bool(deserializer);
+    return SplitPdfSourceInfo(
+      pageCount: var_pageCount,
+      sizeBytes: var_sizeBytes,
+      hasWarnings: var_hasWarnings,
+    );
+  }
+
+  @protected
+  SplitPdfStage sse_decode_split_pdf_stage(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var inner = sse_decode_i_32(deserializer);
+    return SplitPdfStage.values[inner];
+  }
+
+  @protected
+  SplitPdfStatus sse_decode_split_pdf_status(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var inner = sse_decode_i_32(deserializer);
+    return SplitPdfStatus.values[inner];
+  }
+
+  @protected
+  SplitPdfUpdate sse_decode_split_pdf_update(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_status = sse_decode_split_pdf_status(deserializer);
+    var var_stage = sse_decode_split_pdf_stage(deserializer);
+    var var_sourcePageCount = sse_decode_u_32(deserializer);
+    var var_currentPart = sse_decode_opt_box_autoadd_u_32(deserializer);
+    var var_totalParts = sse_decode_opt_box_autoadd_u_32(deserializer);
+    var var_outputDirectory = sse_decode_opt_String(deserializer);
+    var var_parts = sse_decode_list_split_pdf_part(deserializer);
+    var var_hasWarnings = sse_decode_bool(deserializer);
+    var var_failedPageNumber = sse_decode_opt_box_autoadd_u_32(deserializer);
+    var var_actualSizeBytes = sse_decode_opt_box_autoadd_u_64(deserializer);
+    var var_limitSizeBytes = sse_decode_opt_box_autoadd_u_64(deserializer);
+    var var_error = sse_decode_opt_box_autoadd_application_error(deserializer);
+    return SplitPdfUpdate(
+      status: var_status,
+      stage: var_stage,
+      sourcePageCount: var_sourcePageCount,
+      currentPart: var_currentPart,
+      totalParts: var_totalParts,
+      outputDirectory: var_outputDirectory,
+      parts: var_parts,
+      hasWarnings: var_hasWarnings,
+      failedPageNumber: var_failedPageNumber,
+      actualSizeBytes: var_actualSizeBytes,
+      limitSizeBytes: var_limitSizeBytes,
+      error: var_error,
+    );
+  }
+
+  @protected
   int sse_decode_u_32(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return deserializer.buffer.getUint32();
+  }
+
+  @protected
+  BigInt sse_decode_u_64(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return deserializer.buffer.getBigUint64();
   }
 
   @protected
@@ -1550,6 +1907,23 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       self.setupAndSerialize(
         codec: SseCodec(
           decodeSuccessData: sse_decode_pdf_export_update,
+          decodeErrorData: sse_decode_AnyhowException,
+        ),
+      ),
+      serializer,
+    );
+  }
+
+  @protected
+  void sse_encode_StreamSink_split_pdf_update_Sse(
+    RustStreamSink<SplitPdfUpdate> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(
+      self.setupAndSerialize(
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_split_pdf_update,
           decodeErrorData: sse_decode_AnyhowException,
         ),
       ),
@@ -1663,9 +2037,24 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_box_autoadd_split_pdf_request(
+    SplitPdfRequest self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_split_pdf_request(self, serializer);
+  }
+
+  @protected
   void sse_encode_box_autoadd_u_32(int self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_u_32(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_u_64(BigInt self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_u_64(self, serializer);
   }
 
   @protected
@@ -1801,6 +2190,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_list_split_pdf_part(
+    List<SplitPdfPart> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_split_pdf_part(item, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_merge_pdf_request(
     MergePdfRequest self,
     SseSerializer serializer,
@@ -1890,6 +2291,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_bool(self != null, serializer);
     if (self != null) {
       sse_encode_box_autoadd_u_32(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_u_64(BigInt? self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_u_64(self, serializer);
     }
   }
 
@@ -2027,9 +2438,93 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_split_pdf_mode(SplitPdfMode self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
+  void sse_encode_split_pdf_part(SplitPdfPart self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.outputPath, serializer);
+    sse_encode_u_32(self.firstPage, serializer);
+    sse_encode_u_32(self.lastPage, serializer);
+    sse_encode_u_64(self.sizeBytes, serializer);
+  }
+
+  @protected
+  void sse_encode_split_pdf_request(
+    SplitPdfRequest self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.sourcePath, serializer);
+    sse_encode_String(self.destinationDirectory, serializer);
+    sse_encode_split_pdf_mode(self.mode, serializer);
+    sse_encode_opt_box_autoadd_u_32(self.everyNPages, serializer);
+    sse_encode_opt_String(self.splitAfterPages, serializer);
+    sse_encode_opt_box_autoadd_u_64(self.maximumSizeMb, serializer);
+  }
+
+  @protected
+  void sse_encode_split_pdf_source_info(
+    SplitPdfSourceInfo self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_u_32(self.pageCount, serializer);
+    sse_encode_u_64(self.sizeBytes, serializer);
+    sse_encode_bool(self.hasWarnings, serializer);
+  }
+
+  @protected
+  void sse_encode_split_pdf_stage(
+    SplitPdfStage self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
+  void sse_encode_split_pdf_status(
+    SplitPdfStatus self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
+  void sse_encode_split_pdf_update(
+    SplitPdfUpdate self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_split_pdf_status(self.status, serializer);
+    sse_encode_split_pdf_stage(self.stage, serializer);
+    sse_encode_u_32(self.sourcePageCount, serializer);
+    sse_encode_opt_box_autoadd_u_32(self.currentPart, serializer);
+    sse_encode_opt_box_autoadd_u_32(self.totalParts, serializer);
+    sse_encode_opt_String(self.outputDirectory, serializer);
+    sse_encode_list_split_pdf_part(self.parts, serializer);
+    sse_encode_bool(self.hasWarnings, serializer);
+    sse_encode_opt_box_autoadd_u_32(self.failedPageNumber, serializer);
+    sse_encode_opt_box_autoadd_u_64(self.actualSizeBytes, serializer);
+    sse_encode_opt_box_autoadd_u_64(self.limitSizeBytes, serializer);
+    sse_encode_opt_box_autoadd_application_error(self.error, serializer);
+  }
+
+  @protected
   void sse_encode_u_32(int self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     serializer.buffer.putUint32(self);
+  }
+
+  @protected
+  void sse_encode_u_64(BigInt self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    serializer.buffer.putBigUint64(self);
   }
 
   @protected

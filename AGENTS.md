@@ -23,6 +23,8 @@ infrastructure. Invoke bundled qpdf directly without a shell and never resolve i
 from system `PATH`. Never log passwords, full qpdf command lines, document paths,
 or raw diagnostics; future secret input belongs in the Rust infrastructure
 boundary and must avoid unnecessary command-line exposure.
+Product-level structural policies such as split-by-size must remain in
+application/core workflows and must not be encoded into `QpdfCliEngine`.
 Validate structural outputs privately before publication, including an
 appropriate native reopen and invariant checks. Structural workflows must keep
 source PDFs read-only and publish outputs atomically without clobbering.

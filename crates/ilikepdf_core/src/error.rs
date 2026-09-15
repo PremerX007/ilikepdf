@@ -42,6 +42,15 @@ pub enum ApplicationErrorCode {
     PdfPageCreationFailed,
     ImagePlacementFailed,
     PdfSaveFailed,
+    PdfHasTooFewPages,
+    InvalidSplitConfiguration,
+    SplitNotRequired,
+    SplitPageExceedsSizeLimit,
+    SplitCandidateGenerationFailed,
+    SplitOutputPageCountMismatch,
+    SplitOutputExceedsSizeLimit,
+    TemporaryDirectoryFailed,
+    PublicationFailed,
     Internal,
 }
 
@@ -50,6 +59,13 @@ impl ApplicationError {
         Self {
             code,
             message: message.to_owned(),
+        }
+    }
+
+    pub(crate) fn with_message(code: ApplicationErrorCode, message: impl Into<String>) -> Self {
+        Self {
+            code,
+            message: message.into(),
         }
     }
 }

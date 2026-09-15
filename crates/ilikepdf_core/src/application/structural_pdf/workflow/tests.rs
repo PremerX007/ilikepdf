@@ -5,6 +5,7 @@ use std::sync::Mutex;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 use super::*;
+use crate::StructuralPdfPageRangeRequest;
 use crate::{StructuralPdfEngineFamily, StructuralPdfOperationResult, StructuralPdfVersion};
 
 struct FakeStructuralPdfEngine {
@@ -60,6 +61,15 @@ impl StructuralPdfEngine for FakeStructuralPdfEngine {
             fs::write(&request.working_output_path, b"merged PDF")
                 .map_err(|_| StructuralPdfError::OutputWriteFailed)?;
         }
+        self.rewrite_result
+    }
+
+    fn create_page_range(
+        &self,
+        request: &StructuralPdfPageRangeRequest,
+    ) -> Result<StructuralPdfOperationResult, StructuralPdfError> {
+        fs::write(&request.working_output_path, b"range")
+            .map_err(|_| StructuralPdfError::OutputWriteFailed)?;
         self.rewrite_result
     }
 }
@@ -142,6 +152,13 @@ impl StructuralPdfEngine for RecordingMergeEngine {
                 .map_err(|_| StructuralPdfError::OutputWriteFailed)?;
         }
         self.merge_result
+    }
+
+    fn create_page_range(
+        &self,
+        _request: &StructuralPdfPageRangeRequest,
+    ) -> Result<StructuralPdfOperationResult, StructuralPdfError> {
+        Err(StructuralPdfError::OperationFailed)
     }
 }
 

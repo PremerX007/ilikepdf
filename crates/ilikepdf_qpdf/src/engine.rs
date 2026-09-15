@@ -5,8 +5,8 @@ use std::sync::{Arc, OnceLock};
 
 use ilikepdf_core::{
     StructuralPdfEngine, StructuralPdfEngineFamily, StructuralPdfEngineInfo, StructuralPdfError,
-    StructuralPdfMergeRequest, StructuralPdfOperationResult, StructuralPdfValidation,
-    StructuralPdfVersion,
+    StructuralPdfMergeRequest, StructuralPdfOperationResult, StructuralPdfPageRangeRequest,
+    StructuralPdfValidation, StructuralPdfVersion,
 };
 
 use crate::process::{QpdfProcessError, QpdfProcessOutput, QpdfProcessRunner, QpdfRunner};
@@ -159,6 +159,43 @@ impl StructuralPdfEngine for QpdfCliEngine {
         arguments.push(OsString::from("--"));
         arguments.push(working_output_path.as_os_str().to_owned());
         let output = self.run(arguments)?;
+        let has_warnings = match output.exit_code {
+            Some(0) => false,
+            Some(3) => true,
+            _ => return Err(StructuralPdfError::OperationFailed),
+        };
+        match fs::metadata(working_output_path) {
+            Ok(metadata) if metadata.is_file() && metadata.len() > 0 => {
+                Ok(StructuralPdfOperationResult { has_warnings })
+            }
+            _ => Err(StructuralPdfError::OutputWriteFailed),
+        }
+    }
+
+    fn create_page_range(
+        &self,
+        request: &StructuralPdfPageRangeRequest,
+    ) -> Result<StructuralPdfOperationResult, StructuralPdfError> {
+        if request.first_page == 0 || request.last_page < request.first_page {
+            return Err(StructuralPdfError::OperationFailed);
+        }
+        let source = validated_source(&request.source_path)?;
+        let working_output_path =
+            validated_working_output(std::slice::from_ref(&source), &request.working_output_path)?;
+        self.probe()?;
+        let page_range = if request.first_page == request.last_page {
+            request.first_page.to_string()
+        } else {
+            format!("{}-{}", request.first_page, request.last_page)
+        };
+        let output = self.run(vec![
+            OsString::from("--empty"),
+            OsString::from("--pages"),
+            source.argument.as_os_str().to_owned(),
+            OsString::from(page_range),
+            OsString::from("--"),
+            working_output_path.as_os_str().to_owned(),
+        ])?;
         let has_warnings = match output.exit_code {
             Some(0) => false,
             Some(3) => true,
