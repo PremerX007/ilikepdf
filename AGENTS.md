@@ -25,6 +25,8 @@ or raw diagnostics; future secret input belongs in the Rust infrastructure
 boundary and must avoid unnecessary command-line exposure.
 Product-level structural policies such as split-by-size must remain in
 application/core workflows and must not be encoded into `QpdfCliEngine`.
+Organize-style page-plan policy also belongs in core; page-workspace thumbnails
+must be loaded lazily with bounded rendering concurrency and bitmap retention.
 Validate structural outputs privately before publication, including an
 appropriate native reopen and invariant checks. Structural workflows must keep
 source PDFs read-only and publish outputs atomically without clobbering.
@@ -41,7 +43,8 @@ all generated changes. Before a pull request, run:
 - `dart format --output=none --set-exit-if-changed lib test integration_test hook`
 - `flutter analyze`, `flutter test`, and `flutter build windows --release`
 - Windows integration tests in `integration_test/`, including `app_info_test.dart`,
-  `pdf_preview_test.dart`, `image_to_pdf_test.dart`, and `merge_pdf_test.dart`
+  `pdf_preview_test.dart`, `image_to_pdf_test.dart`, `merge_pdf_test.dart`,
+  `split_pdf_test.dart`, and `organize_pdf_test.dart`
 
 Codex and the interactive Windows user can have isolated views of the user-wide
 Pub cache even when both paths display as `%LOCALAPPDATA%\Pub\Cache`. After Codex

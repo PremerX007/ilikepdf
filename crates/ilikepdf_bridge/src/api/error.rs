@@ -37,6 +37,9 @@ pub enum ApplicationErrorCode {
     ImagePlacementFailed,
     PdfSaveFailed,
     PdfHasTooFewPages,
+    DuplicateSource,
+    InvalidOrganizePlan,
+    OrganizeOutputPageCountMismatch,
     InvalidSplitConfiguration,
     SplitNotRequired,
     SplitPageExceedsSizeLimit,
@@ -138,6 +141,15 @@ impl From<ilikepdf_core::ApplicationError> for ApplicationError {
             }
             ilikepdf_core::ApplicationErrorCode::PdfHasTooFewPages => {
                 ApplicationErrorCode::PdfHasTooFewPages
+            }
+            ilikepdf_core::ApplicationErrorCode::DuplicateSource => {
+                ApplicationErrorCode::DuplicateSource
+            }
+            ilikepdf_core::ApplicationErrorCode::InvalidOrganizePlan => {
+                ApplicationErrorCode::InvalidOrganizePlan
+            }
+            ilikepdf_core::ApplicationErrorCode::OrganizeOutputPageCountMismatch => {
+                ApplicationErrorCode::OrganizeOutputPageCountMismatch
             }
             ilikepdf_core::ApplicationErrorCode::InvalidSplitConfiguration => {
                 ApplicationErrorCode::InvalidSplitConfiguration

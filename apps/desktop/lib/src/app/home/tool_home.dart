@@ -6,6 +6,7 @@ class ToolHome extends StatelessWidget {
     required this.onOpenImagesToPdf,
     required this.onOpenMergePdf,
     required this.onOpenSplitPdf,
+    required this.onOpenOrganizePdf,
     super.key,
   });
 
@@ -13,6 +14,7 @@ class ToolHome extends StatelessWidget {
   final VoidCallback onOpenImagesToPdf;
   final VoidCallback onOpenMergePdf;
   final VoidCallback onOpenSplitPdf;
+  final VoidCallback onOpenOrganizePdf;
 
   @override
   Widget build(BuildContext context) {
@@ -72,11 +74,13 @@ class ToolHome extends StatelessWidget {
                         'Divide one PDF into ordered, lossless documents.',
                     onTap: onOpenSplitPdf,
                   ),
-                  const _ToolCardData(
+                  _ToolCardData(
                     key: ValueKey('tool-card-organize-pdf'),
                     icon: Icons.grid_view_rounded,
                     title: 'Organize PDF',
-                    description: 'Reorder and remove pages visually.',
+                    description:
+                        'Reorder, rotate, and remove pages across PDFs.',
+                    onTap: onOpenOrganizePdf,
                   ),
                   const _ToolCardData(
                     key: ValueKey('tool-card-protect-pdf'),

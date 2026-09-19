@@ -318,6 +318,60 @@ not invalidate an otherwise structurally usable source. Progress reports real
 stages only: preparing, finding split points when needed, creating parts,
 validating, publishing, and completed.
 
+Organize PDF is one multi-source session that creates one output PDF; it is not
+a batch workflow. Core owns the source set, stable page-item/page-plan model,
+duplicate-source policy, initial flattening order, page deletion and rotation
+semantics, reset behavior, output naming, and destination rules:
+
+```text
+Organize session and ordered page-plan policy
+        |
+StructuralPdfEngine::create_page_plan
+        |
+QpdfCliEngine
+        |
+shared QpdfProcessRunner
+```
+
+Sources are flattened in file insertion order and source page order. Adding
+valid files later appends their pages to the current workspace and does not
+disturb prior edits. Candidate additions are atomic as a group: if any candidate
+is invalid, password-protected, or equivalent to an already-loaded path, none of
+that candidate group is added and the existing session remains intact. Removing
+a source removes all of its current and resettable page items. Deleting every
+page does not remove its source entry; at least one remaining page is required
+to execute. Reset restores the original order and zero rotation for every page
+in the current source set, without re-reading source metadata or resurrecting a
+source that was explicitly removed.
+
+The engine receives only an arbitrary ordered list of source path, one-based
+source page, and relative quarter-turn rotation. `QpdfCliEngine` maps that typed
+plan to qpdf page composition and rotation arguments. It does not know session
+IDs, deletion, reset, insertion order, or destination policy. Every invocation
+uses the central runner, so direct executable launch, bounded diagnostics,
+no-shell behavior, controlled runtime resolution, and the Windows hidden-console
+flag remain shared with Merge and Split.
+
+Organize defaults to `organized.pdf` and the first-added source's parent
+directory. The filename field is filename-only and uses the existing Windows-safe
+normalization. Adding/removing sources, editing pages, and Reset do not change an
+established destination; an explicit custom destination persists until the
+session becomes empty. Publication uses the same case-insensitive lowest-gap
+numbering and atomic no-clobber persistence as Merge. Core preflights the complete
+loaded source set at execution time, writes one private file, structurally
+validates it, reopens it with PDFium, checks exact page-count equality, and only
+then publishes. Any failure removes the private output and leaves every source
+byte-identical.
+
+Page thumbnails remain a presentation/preview concern and use PDFium, never the
+structural output path. The Organize grid is lazily built near the viewport,
+allows at most two native thumbnail renders concurrently, and keeps at most 32
+rendered thumbnails in its own least-recently-used cache. Evicted and
+session-owned temporary thumbnail files are removed on a best-effort basis.
+This bounds eager work
+and retained page bitmaps for large multi-file sessions while leaving room for a
+future shared thumbnail scheduler if more page-centric tools need one.
+
 ## Privacy and file safety
 
 Runtime PDF functionality must work without a network connection. Never add
@@ -402,3 +456,12 @@ presentation identity rather than using its path as identity, so the same file
 may appear more than once and each instance can be reordered or removed
 independently. A thumbnail failure remains a lightweight card state and does not
 replace execution-time structural preflight.
+
+Organize PDF reuses the application shell, file drop target, destination picker,
+settings inspector, anchored action, and reorder interaction language. Its main
+area is a lazy page-item grid rather than a document-card list. The right-side
+inspector owns the insertion-ordered source list, whole-source removal, Reset all,
+output filename, and destination. The page cards expose reorder, rotate-left,
+rotate-right, and delete controls directly; dragging near a workspace edge scrolls
+the lazy grid for long-distance moves. The displayed thumbnail is wrapped in the
+current quarter-turn so presentation matches the structural output plan.

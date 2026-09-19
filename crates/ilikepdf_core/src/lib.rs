@@ -21,13 +21,18 @@ pub use application::pdf_to_images::{
 };
 pub use application::structural_pdf::{
     MergePdfFailure, MergePdfProgress, MergePdfRequest, MergePdfResult, MergePdfStage,
-    RewriteStructuralPdfRequest, SplitPdfFailure, SplitPdfMode, SplitPdfPageRange, SplitPdfPart,
-    SplitPdfProgress, SplitPdfRequest, SplitPdfResult, SplitPdfSourceInfo, SplitPdfStage,
-    StructuralPdfEngine, StructuralPdfEngineFamily, StructuralPdfEngineInfo, StructuralPdfError,
-    StructuralPdfMergeRequest, StructuralPdfOperationResult, StructuralPdfPageRangeRequest,
+    OrganizePdfFailure, OrganizePdfPageItem, OrganizePdfPageRotation, OrganizePdfProgress,
+    OrganizePdfRequest, OrganizePdfResult, OrganizePdfSession, OrganizePdfSource,
+    OrganizePdfSourceInfo, OrganizePdfStage, PageRotationDirection, RewriteStructuralPdfRequest,
+    SplitPdfFailure, SplitPdfMode, SplitPdfPageRange, SplitPdfPart, SplitPdfProgress,
+    SplitPdfRequest, SplitPdfResult, SplitPdfSourceInfo, SplitPdfStage, StructuralPdfEngine,
+    StructuralPdfEngineFamily, StructuralPdfEngineInfo, StructuralPdfError,
+    StructuralPdfMergeRequest, StructuralPdfOperationResult, StructuralPdfPagePlanItem,
+    StructuralPdfPagePlanRequest, StructuralPdfPageRangeRequest, StructuralPdfPageRotation,
     StructuralPdfRewriteResult, StructuralPdfValidation, StructuralPdfVersion,
-    inspect_split_pdf_source, merge_pdf, probe_structural_pdf_engine, rewrite_structural_pdf,
-    split_pdf, validate_structural_pdf,
+    inspect_organize_pdf_sources, inspect_split_pdf_source, merge_pdf,
+    normalize_organize_pdf_output_name, organize_pdf, probe_structural_pdf_engine,
+    rewrite_structural_pdf, split_pdf, validate_structural_pdf,
 };
 pub use error::{ApplicationError, ApplicationErrorCode, ApplicationResult};
 

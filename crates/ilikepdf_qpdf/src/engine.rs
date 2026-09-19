@@ -5,8 +5,9 @@ use std::sync::{Arc, OnceLock};
 
 use ilikepdf_core::{
     StructuralPdfEngine, StructuralPdfEngineFamily, StructuralPdfEngineInfo, StructuralPdfError,
-    StructuralPdfMergeRequest, StructuralPdfOperationResult, StructuralPdfPageRangeRequest,
-    StructuralPdfValidation, StructuralPdfVersion,
+    StructuralPdfMergeRequest, StructuralPdfOperationResult, StructuralPdfPagePlanRequest,
+    StructuralPdfPageRangeRequest, StructuralPdfPageRotation, StructuralPdfValidation,
+    StructuralPdfVersion,
 };
 
 use crate::process::{QpdfProcessError, QpdfProcessOutput, QpdfProcessRunner, QpdfRunner};
@@ -196,6 +197,59 @@ impl StructuralPdfEngine for QpdfCliEngine {
             OsString::from("--"),
             working_output_path.as_os_str().to_owned(),
         ])?;
+        let has_warnings = match output.exit_code {
+            Some(0) => false,
+            Some(3) => true,
+            _ => return Err(StructuralPdfError::OperationFailed),
+        };
+        match fs::metadata(working_output_path) {
+            Ok(metadata) if metadata.is_file() && metadata.len() > 0 => {
+                Ok(StructuralPdfOperationResult { has_warnings })
+            }
+            _ => Err(StructuralPdfError::OutputWriteFailed),
+        }
+    }
+
+    fn create_page_plan(
+        &self,
+        request: &StructuralPdfPagePlanRequest,
+    ) -> Result<StructuralPdfOperationResult, StructuralPdfError> {
+        if request.ordered_pages.is_empty()
+            || request
+                .ordered_pages
+                .iter()
+                .any(|page| page.page_number == 0)
+        {
+            return Err(StructuralPdfError::OperationFailed);
+        }
+        let sources = request
+            .ordered_pages
+            .iter()
+            .map(|page| validated_source(&page.source_path))
+            .collect::<Result<Vec<_>, _>>()?;
+        let working_output_path = validated_working_output(&sources, &request.working_output_path)?;
+        self.probe()?;
+
+        let mut arguments = Vec::with_capacity(request.ordered_pages.len() * 3 + 4);
+        arguments.push(OsString::from("--empty"));
+        arguments.push(OsString::from("--pages"));
+        for (source, page) in sources.iter().zip(&request.ordered_pages) {
+            arguments.push(source.argument.as_os_str().to_owned());
+            arguments.push(OsString::from(page.page_number.to_string()));
+        }
+        arguments.push(OsString::from("--"));
+        for (index, page) in request.ordered_pages.iter().enumerate() {
+            let angle = match page.rotation {
+                StructuralPdfPageRotation::None => continue,
+                StructuralPdfPageRotation::Clockwise90 => "+90",
+                StructuralPdfPageRotation::HalfTurn => "+180",
+                StructuralPdfPageRotation::CounterClockwise90 => "-90",
+            };
+            arguments.push(OsString::from(format!("--rotate={angle}:{}", index + 1)));
+        }
+        arguments.push(working_output_path.as_os_str().to_owned());
+
+        let output = self.run(arguments)?;
         let has_warnings = match output.exit_code {
             Some(0) => false,
             Some(3) => true,

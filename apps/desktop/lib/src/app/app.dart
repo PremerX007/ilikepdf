@@ -5,6 +5,8 @@ import 'package:ilikepdf/src/app/image_to_pdf/image_to_pdf_panel.dart';
 import 'package:ilikepdf/src/app/image_to_pdf/image_to_pdf_workflow.dart';
 import 'package:ilikepdf/src/app/merge_pdf/merge_pdf_panel.dart';
 import 'package:ilikepdf/src/app/merge_pdf/merge_pdf_workflow.dart';
+import 'package:ilikepdf/src/app/organize_pdf/organize_pdf_panel.dart';
+import 'package:ilikepdf/src/app/organize_pdf/organize_pdf_workflow.dart';
 import 'package:ilikepdf/src/app/pdf_to_image/pdf_to_image_panel.dart';
 import 'package:ilikepdf/src/app/pdf_to_image/pdf_to_image_workflow.dart';
 import 'package:ilikepdf/src/app/shared/application_shell.dart';
@@ -19,6 +21,7 @@ class IlikepdfApp extends StatelessWidget {
     required this.pdfToImageWorkflow,
     this.imageToPdfWorkflow = const LocalImageToPdfWorkflow(),
     this.mergePdfWorkflow = const LocalMergePdfWorkflow(),
+    this.organizePdfWorkflow = const LocalOrganizePdfWorkflow(),
     this.splitPdfWorkflow = const LocalSplitPdfWorkflow(),
     super.key,
   });
@@ -29,6 +32,7 @@ class IlikepdfApp extends StatelessWidget {
   final PdfToImageWorkflow pdfToImageWorkflow;
   final ImageToPdfWorkflow imageToPdfWorkflow;
   final MergePdfWorkflow mergePdfWorkflow;
+  final OrganizePdfWorkflow organizePdfWorkflow;
   final SplitPdfWorkflow splitPdfWorkflow;
 
   @override
@@ -73,13 +77,21 @@ class IlikepdfApp extends StatelessWidget {
         pdfToImageWorkflow: pdfToImageWorkflow,
         imageToPdfWorkflow: imageToPdfWorkflow,
         mergePdfWorkflow: mergePdfWorkflow,
+        organizePdfWorkflow: organizePdfWorkflow,
         splitPdfWorkflow: splitPdfWorkflow,
       ),
     );
   }
 }
 
-enum _ActiveTool { home, pdfToImages, imagesToPdf, mergePdf, splitPdf }
+enum _ActiveTool {
+  home,
+  pdfToImages,
+  imagesToPdf,
+  mergePdf,
+  splitPdf,
+  organizePdf,
+}
 
 class _ApplicationWorkspace extends StatefulWidget {
   const _ApplicationWorkspace({
@@ -88,6 +100,7 @@ class _ApplicationWorkspace extends StatefulWidget {
     required this.pdfToImageWorkflow,
     required this.imageToPdfWorkflow,
     required this.mergePdfWorkflow,
+    required this.organizePdfWorkflow,
     required this.splitPdfWorkflow,
   });
 
@@ -96,6 +109,7 @@ class _ApplicationWorkspace extends StatefulWidget {
   final PdfToImageWorkflow pdfToImageWorkflow;
   final ImageToPdfWorkflow imageToPdfWorkflow;
   final MergePdfWorkflow mergePdfWorkflow;
+  final OrganizePdfWorkflow organizePdfWorkflow;
   final SplitPdfWorkflow splitPdfWorkflow;
 
   @override
@@ -150,6 +164,7 @@ class _ApplicationWorkspaceState extends State<_ApplicationWorkspace> {
         onOpenImagesToPdf: () => _show(_ActiveTool.imagesToPdf),
         onOpenMergePdf: () => _show(_ActiveTool.mergePdf),
         onOpenSplitPdf: () => _show(_ActiveTool.splitPdf),
+        onOpenOrganizePdf: () => _show(_ActiveTool.organizePdf),
       ),
       _ActiveTool.pdfToImages => PdfToImagePanel(
         key: const ValueKey('pdf-to-images-content'),
@@ -166,6 +181,10 @@ class _ApplicationWorkspaceState extends State<_ApplicationWorkspace> {
       _ActiveTool.splitPdf => SplitPdfPanel(
         key: const ValueKey('split-pdf-content'),
         workflow: widget.splitPdfWorkflow,
+      ),
+      _ActiveTool.organizePdf => OrganizePdfPanel(
+        key: const ValueKey('organize-pdf-content'),
+        workflow: widget.organizePdfWorkflow,
       ),
     };
   }

@@ -173,7 +173,7 @@ void main() {
       find.byKey(const ValueKey('tool-card-images-to-pdf')),
       findsOneWidget,
     );
-    expect(find.text('Coming soon'), findsNWidgets(3));
+    expect(find.text('Coming soon'), findsNWidgets(2));
   });
 
   testWidgets('implemented cards navigate and back returns Home', (
@@ -193,6 +193,19 @@ void main() {
     expect(find.text('Images to PDF'), findsOneWidget);
     expect(
       find.byKey(const ValueKey('tool-workspace-surface')),
+      findsOneWidget,
+    );
+    await tester.tap(find.byKey(const ValueKey('back-home-button')));
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('tool-card-organize-pdf')),
+    );
+    await tester.tap(find.byKey(const ValueKey('tool-card-organize-pdf')));
+    await tester.pumpAndSettle();
+    expect(find.text('Organize PDF'), findsWidgets);
+    expect(
+      find.byKey(const ValueKey('empty-organize-pdf-drop-zone')),
       findsOneWidget,
     );
     await tester.tap(find.byKey(const ValueKey('back-home-button')));
@@ -360,9 +373,9 @@ void main() {
     );
 
     await tester.ensureVisible(
-      find.byKey(const ValueKey('tool-card-organize-pdf')),
+      find.byKey(const ValueKey('tool-card-protect-pdf')),
     );
-    await tester.tap(find.byKey(const ValueKey('tool-card-organize-pdf')));
+    await tester.tap(find.byKey(const ValueKey('tool-card-protect-pdf')));
     await tester.pumpAndSettle();
 
     expect(find.text('PDF tools'), findsOneWidget);

@@ -2,9 +2,16 @@
 
 use std::path::{Path, PathBuf};
 
+mod organize;
 mod split;
 mod workflow;
 
+pub use organize::{
+    OrganizePdfFailure, OrganizePdfPageItem, OrganizePdfPageRotation, OrganizePdfProgress,
+    OrganizePdfRequest, OrganizePdfResult, OrganizePdfSession, OrganizePdfSource,
+    OrganizePdfSourceInfo, OrganizePdfStage, PageRotationDirection, inspect_organize_pdf_sources,
+    normalize_organize_pdf_output_name, organize_pdf,
+};
 pub use split::{
     SplitPdfFailure, SplitPdfMode, SplitPdfPageRange, SplitPdfPart, SplitPdfProgress,
     SplitPdfRequest, SplitPdfResult, SplitPdfSourceInfo, SplitPdfStage, inspect_split_pdf_source,
@@ -98,6 +105,15 @@ pub trait StructuralPdfEngine: Send + Sync {
         &self,
         request: &StructuralPdfPageRangeRequest,
     ) -> Result<StructuralPdfOperationResult, StructuralPdfError>;
+
+    /// Builds one private PDF from an arbitrary ordered page plan. Each page
+    /// keeps its source geometry and may receive a relative quarter-turn.
+    fn create_page_plan(
+        &self,
+        _request: &StructuralPdfPagePlanRequest,
+    ) -> Result<StructuralPdfOperationResult, StructuralPdfError> {
+        Err(StructuralPdfError::OperationFailed)
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -111,6 +127,27 @@ pub struct StructuralPdfPageRangeRequest {
     pub source_path: PathBuf,
     pub first_page: u32,
     pub last_page: u32,
+    pub working_output_path: PathBuf,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum StructuralPdfPageRotation {
+    None,
+    Clockwise90,
+    HalfTurn,
+    CounterClockwise90,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct StructuralPdfPagePlanItem {
+    pub source_path: PathBuf,
+    pub page_number: u32,
+    pub rotation: StructuralPdfPageRotation,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct StructuralPdfPagePlanRequest {
+    pub ordered_pages: Vec<StructuralPdfPagePlanItem>,
     pub working_output_path: PathBuf,
 }
 

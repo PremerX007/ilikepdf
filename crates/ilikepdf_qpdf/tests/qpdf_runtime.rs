@@ -4,10 +4,11 @@ use std::io::{Cursor, Write as _};
 use std::path::{Path, PathBuf};
 
 use ilikepdf_core::{
-    ApplicationErrorCode, MergePdfRequest, RewriteStructuralPdfRequest, SplitPdfMode,
+    ApplicationErrorCode, MergePdfRequest, OrganizePdfPageItem, OrganizePdfPageRotation,
+    OrganizePdfRequest, OrganizePdfSource, RewriteStructuralPdfRequest, SplitPdfMode,
     SplitPdfRequest, StructuralPdfEngine, StructuralPdfEngineFamily, StructuralPdfError,
-    StructuralPdfMergeRequest, StructuralPdfVersion, merge_pdf, probe_structural_pdf_engine,
-    rewrite_structural_pdf, split_pdf, validate_structural_pdf,
+    StructuralPdfMergeRequest, StructuralPdfVersion, merge_pdf, organize_pdf,
+    probe_structural_pdf_engine, rewrite_structural_pdf, split_pdf, validate_structural_pdf,
 };
 use ilikepdf_pdf::{PdfRenderRequest, inspect_document, render_page_to_png};
 use ilikepdf_qpdf::QpdfCliEngine;
@@ -369,6 +370,168 @@ fn real_split_modes_preserve_ranges_geometry_unicode_paths_and_sources() {
 }
 
 #[test]
+fn real_organize_preserves_cross_source_order_rotation_sources_and_collision_safety() {
+    install_pdfium_beside_test_executable();
+    let directory = tempfile::tempdir().unwrap();
+    let source_directory = directory.path().join("แหล่ง organize with spaces");
+    let destination_directory = directory.path().join("ผลลัพธ์ organized");
+    fs::create_dir(&source_directory).unwrap();
+    fs::create_dir(&destination_directory).unwrap();
+    let first = source_directory.join("A สองหน้า.pdf");
+    let second = source_directory.join("B two pages.pdf");
+    let third = source_directory.join("C หนึ่งหน้า.pdf");
+    create_geometry_pdf(&first, &[(300, 200), (200, 300)]);
+    create_geometry_pdf(&second, &[(400, 200), (200, 400)]);
+    create_geometry_pdf(&third, &[(500, 200)]);
+    let before = [&first, &second, &third]
+        .into_iter()
+        .map(|path| fs::read(path).unwrap())
+        .collect::<Vec<_>>();
+    fs::write(destination_directory.join("organized.PDF"), b"occupied").unwrap();
+    let engine = QpdfCliEngine::from_runtime_root(qpdf_runtime_root());
+    let sources = vec![
+        OrganizePdfSource {
+            source_id: 0,
+            source_path: first.clone(),
+            page_count: 2,
+            has_warnings: false,
+        },
+        OrganizePdfSource {
+            source_id: 1,
+            source_path: second.clone(),
+            page_count: 2,
+            has_warnings: false,
+        },
+        OrganizePdfSource {
+            source_id: 2,
+            source_path: third.clone(),
+            page_count: 1,
+            has_warnings: false,
+        },
+    ];
+    // B2, A1, C1, A2 rotated clockwise. B1 is deliberately deleted.
+    let page_items = vec![
+        OrganizePdfPageItem {
+            page_item_id: 3,
+            source_id: 1,
+            source_page_index: 1,
+            rotation: OrganizePdfPageRotation::None,
+        },
+        OrganizePdfPageItem {
+            page_item_id: 0,
+            source_id: 0,
+            source_page_index: 0,
+            rotation: OrganizePdfPageRotation::None,
+        },
+        OrganizePdfPageItem {
+            page_item_id: 4,
+            source_id: 2,
+            source_page_index: 0,
+            rotation: OrganizePdfPageRotation::None,
+        },
+        OrganizePdfPageItem {
+            page_item_id: 1,
+            source_id: 0,
+            source_page_index: 1,
+            rotation: OrganizePdfPageRotation::Clockwise90,
+        },
+    ];
+    let request = OrganizePdfRequest {
+        sources,
+        page_items,
+        destination_directory: destination_directory.clone(),
+        output_name: "organized".to_owned(),
+    };
+
+    let first_result = organize_pdf(&engine, request.clone(), |_| {}).unwrap();
+    let second_result = organize_pdf(&engine, request, |_| {}).unwrap();
+    let removed_source_result = organize_pdf(
+        &engine,
+        OrganizePdfRequest {
+            sources: vec![
+                OrganizePdfSource {
+                    source_id: 0,
+                    source_path: first.clone(),
+                    page_count: 2,
+                    has_warnings: false,
+                },
+                OrganizePdfSource {
+                    source_id: 2,
+                    source_path: third.clone(),
+                    page_count: 1,
+                    has_warnings: false,
+                },
+            ],
+            page_items: vec![
+                OrganizePdfPageItem {
+                    page_item_id: 0,
+                    source_id: 0,
+                    source_page_index: 0,
+                    rotation: OrganizePdfPageRotation::None,
+                },
+                OrganizePdfPageItem {
+                    page_item_id: 4,
+                    source_id: 2,
+                    source_page_index: 0,
+                    rotation: OrganizePdfPageRotation::None,
+                },
+            ],
+            destination_directory: destination_directory.clone(),
+            output_name: "without B.pdf".to_owned(),
+        },
+        |_| {},
+    )
+    .unwrap();
+
+    assert_eq!(
+        first_result.output_path,
+        destination_directory.join("organized (1).pdf")
+    );
+    assert_eq!(
+        second_result.output_path,
+        destination_directory.join("organized (2).pdf")
+    );
+    assert_eq!(first_result.source_count, 3);
+    assert_eq!(first_result.page_count, 4);
+    assert_eq!(removed_source_result.source_count, 2);
+    assert_eq!(removed_source_result.page_count, 2);
+    assert_eq!(
+        inspect_document(&first_result.output_path)
+            .unwrap()
+            .page_count,
+        4
+    );
+    let rendered_heights = (0..4)
+        .map(|page_index| {
+            let mut rendered = Cursor::new(Vec::new());
+            render_page_to_png(
+                PdfRenderRequest {
+                    source_path: first_result.output_path.clone(),
+                    page_index,
+                    target_width: 120,
+                },
+                &mut rendered,
+            )
+            .unwrap()
+            .height_pixels
+        })
+        .collect::<Vec<_>>();
+    assert_eq!(rendered_heights, [240, 80, 48, 80]);
+    for ((path, expected), original) in [(&first, 2), (&second, 2), (&third, 1)]
+        .into_iter()
+        .zip(before)
+    {
+        assert_eq!(inspect_document(path).unwrap().page_count, expected);
+        assert_eq!(fs::read(path).unwrap(), original);
+    }
+    assert_eq!(
+        fs::read(destination_directory.join("organized.PDF")).unwrap(),
+        b"occupied"
+    );
+    assert_eq!(private_working_file_count(&destination_directory), 0);
+}
+
+#[test]
 fn real_size_split_measures_outputs_and_impossible_limit_publishes_nothing() {
     install_pdfium_beside_test_executable();
     let directory = tempfile::tempdir().unwrap();
@@ -486,6 +649,51 @@ fn create_large_content_pdf(path: &Path, page_count: usize, content_bytes: usize
         stream.extend_from_slice(&content);
         stream.extend_from_slice(b"\nendstream");
         append_object(content_object(index), &stream);
+    }
+    let xref_offset = output.len();
+    write!(output, "xref\n0 {}\n", object_count + 1).unwrap();
+    output.extend_from_slice(b"0000000000 65535 f \n");
+    for offset in offsets.iter().skip(1) {
+        writeln!(output, "{offset:010} 00000 n ").unwrap();
+    }
+    write!(
+        output,
+        "trailer\n<< /Size {} /Root 1 0 R >>\nstartxref\n{xref_offset}\n%%EOF\n",
+        object_count + 1
+    )
+    .unwrap();
+    fs::write(path, output).unwrap();
+}
+
+fn create_geometry_pdf(path: &Path, page_sizes: &[(u32, u32)]) {
+    let object_count = 2 + page_sizes.len() * 2;
+    let page_object = |index: usize| 3 + index * 2;
+    let content_object = |index: usize| 4 + index * 2;
+    let mut output = b"%PDF-1.7\n%\xE2\xE3\xCF\xD3\n".to_vec();
+    let mut offsets = vec![0_usize; object_count + 1];
+    let mut append_object = |number: usize, body: &[u8]| {
+        offsets[number] = output.len();
+        writeln!(output, "{number} 0 obj").unwrap();
+        output.extend_from_slice(body);
+        output.extend_from_slice(b"\nendobj\n");
+    };
+    append_object(1, b"<< /Type /Catalog /Pages 2 0 R >>");
+    let mut pages = String::from("<< /Type /Pages /Kids [");
+    for index in 0..page_sizes.len() {
+        write!(pages, " {} 0 R", page_object(index)).unwrap();
+    }
+    write!(pages, " ] /Count {} >>", page_sizes.len()).unwrap();
+    append_object(2, pages.as_bytes());
+    for (index, (width, height)) in page_sizes.iter().copied().enumerate() {
+        let page = format!(
+            "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 {width} {height}] /Resources << >> /Contents {} 0 R >>",
+            content_object(index)
+        );
+        append_object(page_object(index), page.as_bytes());
+        append_object(
+            content_object(index),
+            b"<< /Length 0 >>\nstream\n\nendstream",
+        );
     }
     let xref_offset = output.len();
     write!(output, "xref\n0 {}\n", object_count + 1).unwrap();

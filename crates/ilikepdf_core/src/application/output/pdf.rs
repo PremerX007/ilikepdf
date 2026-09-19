@@ -202,7 +202,7 @@ impl PendingNumberedPdfOutput {
     }
 }
 
-fn normalize_pdf_filename(output_name: &str) -> ApplicationResult<OsString> {
+pub(crate) fn normalize_pdf_filename(output_name: &str) -> ApplicationResult<OsString> {
     let name = output_name.trim();
     let invalid_character = name
         .chars()

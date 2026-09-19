@@ -39,7 +39,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.13.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 2119953143;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 1054267701;
 
 // Section: executor
 
@@ -242,6 +242,43 @@ fn wire__crate__api__lifecycle__initialize_impl(
         },
     )
 }
+fn wire__crate__api__organize_pdf__inspect_organize_pdf_sources_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "inspect_organize_pdf_sources",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_existing_source_paths = <Vec<String>>::sse_decode(&mut deserializer);
+            let api_candidate_source_paths = <Vec<String>>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, crate::api::error::ApplicationError>((move || {
+                    let output_ok = crate::api::organize_pdf::inspect_organize_pdf_sources(
+                        api_existing_source_paths,
+                        api_candidate_source_paths,
+                    )?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
 fn wire__crate__api__split_pdf__inspect_split_pdf_source_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -343,6 +380,46 @@ fn wire__crate__api__pdf_preview__open_pdf_document_impl(
             move |context| {
                 transform_result_sse::<_, crate::api::error::ApplicationError>((move || {
                     let output_ok = crate::api::pdf_preview::open_pdf_document(api_source_path)?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__crate__api__organize_pdf__organize_pdf_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "organize_pdf",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_request =
+                <crate::api::organize_pdf::OrganizePdfRequest>::sse_decode(&mut deserializer);
+            let api_progress_sink = <StreamSink<
+                crate::api::organize_pdf::OrganizePdfUpdate,
+                flutter_rust_bridge::for_generated::SseCodec,
+            >>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, ()>((move || {
+                    let output_ok = Ok::<_, ()>({
+                        crate::api::organize_pdf::organize_pdf(api_request, api_progress_sink);
+                    })?;
                     std::result::Result::Ok(output_ok)
                 })())
             }
@@ -462,6 +539,19 @@ impl SseDecode
 
 impl SseDecode
     for StreamSink<
+        crate::api::organize_pdf::OrganizePdfUpdate,
+        flutter_rust_bridge::for_generated::SseCodec,
+    >
+{
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <String>::sse_decode(deserializer);
+        return StreamSink::deserialize(inner);
+    }
+}
+
+impl SseDecode
+    for StreamSink<
         crate::api::pdf_export::PdfBatchExportUpdate,
         flutter_rust_bridge::for_generated::SseCodec,
     >
@@ -554,15 +644,18 @@ impl SseDecode for crate::api::error::ApplicationErrorCode {
             27 => crate::api::error::ApplicationErrorCode::ImagePlacementFailed,
             28 => crate::api::error::ApplicationErrorCode::PdfSaveFailed,
             29 => crate::api::error::ApplicationErrorCode::PdfHasTooFewPages,
-            30 => crate::api::error::ApplicationErrorCode::InvalidSplitConfiguration,
-            31 => crate::api::error::ApplicationErrorCode::SplitNotRequired,
-            32 => crate::api::error::ApplicationErrorCode::SplitPageExceedsSizeLimit,
-            33 => crate::api::error::ApplicationErrorCode::SplitCandidateGenerationFailed,
-            34 => crate::api::error::ApplicationErrorCode::SplitOutputPageCountMismatch,
-            35 => crate::api::error::ApplicationErrorCode::SplitOutputExceedsSizeLimit,
-            36 => crate::api::error::ApplicationErrorCode::TemporaryDirectoryFailed,
-            37 => crate::api::error::ApplicationErrorCode::PublicationFailed,
-            38 => crate::api::error::ApplicationErrorCode::Internal,
+            30 => crate::api::error::ApplicationErrorCode::DuplicateSource,
+            31 => crate::api::error::ApplicationErrorCode::InvalidOrganizePlan,
+            32 => crate::api::error::ApplicationErrorCode::OrganizeOutputPageCountMismatch,
+            33 => crate::api::error::ApplicationErrorCode::InvalidSplitConfiguration,
+            34 => crate::api::error::ApplicationErrorCode::SplitNotRequired,
+            35 => crate::api::error::ApplicationErrorCode::SplitPageExceedsSizeLimit,
+            36 => crate::api::error::ApplicationErrorCode::SplitCandidateGenerationFailed,
+            37 => crate::api::error::ApplicationErrorCode::SplitOutputPageCountMismatch,
+            38 => crate::api::error::ApplicationErrorCode::SplitOutputExceedsSizeLimit,
+            39 => crate::api::error::ApplicationErrorCode::TemporaryDirectoryFailed,
+            40 => crate::api::error::ApplicationErrorCode::PublicationFailed,
+            41 => crate::api::error::ApplicationErrorCode::Internal,
             _ => unreachable!("Invalid variant for ApplicationErrorCode: {}", inner),
         };
     }
@@ -743,6 +836,46 @@ impl SseDecode for Vec<String> {
     }
 }
 
+impl SseDecode for Vec<crate::api::organize_pdf::OrganizePdfPageItem> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ {
+            ans_.push(<crate::api::organize_pdf::OrganizePdfPageItem>::sse_decode(
+                deserializer,
+            ));
+        }
+        return ans_;
+    }
+}
+
+impl SseDecode for Vec<crate::api::organize_pdf::OrganizePdfSource> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ {
+            ans_.push(<crate::api::organize_pdf::OrganizePdfSource>::sse_decode(
+                deserializer,
+            ));
+        }
+        return ans_;
+    }
+}
+
+impl SseDecode for Vec<crate::api::organize_pdf::OrganizePdfSourceInfo> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ {
+            ans_.push(<crate::api::organize_pdf::OrganizePdfSourceInfo>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
 impl SseDecode for Vec<crate::api::pdf_export::PdfBatchDocumentResult> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -907,6 +1040,144 @@ impl SseDecode for Option<u64> {
         } else {
             return None;
         }
+    }
+}
+
+impl SseDecode for crate::api::organize_pdf::OrganizePdfPageItem {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_pageItemId = <u32>::sse_decode(deserializer);
+        let mut var_sourceId = <u32>::sse_decode(deserializer);
+        let mut var_sourcePageIndex = <u32>::sse_decode(deserializer);
+        let mut var_rotation =
+            <crate::api::organize_pdf::OrganizePdfPageRotation>::sse_decode(deserializer);
+        return crate::api::organize_pdf::OrganizePdfPageItem {
+            page_item_id: var_pageItemId,
+            source_id: var_sourceId,
+            source_page_index: var_sourcePageIndex,
+            rotation: var_rotation,
+        };
+    }
+}
+
+impl SseDecode for crate::api::organize_pdf::OrganizePdfPageRotation {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::organize_pdf::OrganizePdfPageRotation::None,
+            1 => crate::api::organize_pdf::OrganizePdfPageRotation::Clockwise90,
+            2 => crate::api::organize_pdf::OrganizePdfPageRotation::HalfTurn,
+            3 => crate::api::organize_pdf::OrganizePdfPageRotation::CounterClockwise90,
+            _ => unreachable!("Invalid variant for OrganizePdfPageRotation: {}", inner),
+        };
+    }
+}
+
+impl SseDecode for crate::api::organize_pdf::OrganizePdfRequest {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_sources =
+            <Vec<crate::api::organize_pdf::OrganizePdfSource>>::sse_decode(deserializer);
+        let mut var_pageItems =
+            <Vec<crate::api::organize_pdf::OrganizePdfPageItem>>::sse_decode(deserializer);
+        let mut var_destinationDirectory = <String>::sse_decode(deserializer);
+        let mut var_outputName = <String>::sse_decode(deserializer);
+        return crate::api::organize_pdf::OrganizePdfRequest {
+            sources: var_sources,
+            page_items: var_pageItems,
+            destination_directory: var_destinationDirectory,
+            output_name: var_outputName,
+        };
+    }
+}
+
+impl SseDecode for crate::api::organize_pdf::OrganizePdfSource {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_sourceId = <u32>::sse_decode(deserializer);
+        let mut var_sourcePath = <String>::sse_decode(deserializer);
+        let mut var_pageCount = <u32>::sse_decode(deserializer);
+        let mut var_hasWarnings = <bool>::sse_decode(deserializer);
+        return crate::api::organize_pdf::OrganizePdfSource {
+            source_id: var_sourceId,
+            source_path: var_sourcePath,
+            page_count: var_pageCount,
+            has_warnings: var_hasWarnings,
+        };
+    }
+}
+
+impl SseDecode for crate::api::organize_pdf::OrganizePdfSourceInfo {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_sourcePath = <String>::sse_decode(deserializer);
+        let mut var_pageCount = <u32>::sse_decode(deserializer);
+        let mut var_hasWarnings = <bool>::sse_decode(deserializer);
+        return crate::api::organize_pdf::OrganizePdfSourceInfo {
+            source_path: var_sourcePath,
+            page_count: var_pageCount,
+            has_warnings: var_hasWarnings,
+        };
+    }
+}
+
+impl SseDecode for crate::api::organize_pdf::OrganizePdfStage {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::organize_pdf::OrganizePdfStage::Preparing,
+            1 => crate::api::organize_pdf::OrganizePdfStage::Organizing,
+            2 => crate::api::organize_pdf::OrganizePdfStage::Validating,
+            3 => crate::api::organize_pdf::OrganizePdfStage::Publishing,
+            4 => crate::api::organize_pdf::OrganizePdfStage::Completed,
+            _ => unreachable!("Invalid variant for OrganizePdfStage: {}", inner),
+        };
+    }
+}
+
+impl SseDecode for crate::api::organize_pdf::OrganizePdfStatus {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::organize_pdf::OrganizePdfStatus::Running,
+            1 => crate::api::organize_pdf::OrganizePdfStatus::Complete,
+            2 => crate::api::organize_pdf::OrganizePdfStatus::Failed,
+            _ => unreachable!("Invalid variant for OrganizePdfStatus: {}", inner),
+        };
+    }
+}
+
+impl SseDecode for crate::api::organize_pdf::OrganizePdfUpdate {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_status =
+            <crate::api::organize_pdf::OrganizePdfStatus>::sse_decode(deserializer);
+        let mut var_stage = <crate::api::organize_pdf::OrganizePdfStage>::sse_decode(deserializer);
+        let mut var_sourceCount = <u32>::sse_decode(deserializer);
+        let mut var_pageCount = <u32>::sse_decode(deserializer);
+        let mut var_outputPath = <Option<String>>::sse_decode(deserializer);
+        let mut var_warningSourceCount = <u32>::sse_decode(deserializer);
+        let mut var_hasWarnings = <bool>::sse_decode(deserializer);
+        let mut var_failedSourceId = <Option<u32>>::sse_decode(deserializer);
+        let mut var_failedSourcePath = <Option<String>>::sse_decode(deserializer);
+        let mut var_failedPageItemId = <Option<u32>>::sse_decode(deserializer);
+        let mut var_error = <Option<crate::api::error::ApplicationError>>::sse_decode(deserializer);
+        return crate::api::organize_pdf::OrganizePdfUpdate {
+            status: var_status,
+            stage: var_stage,
+            source_count: var_sourceCount,
+            page_count: var_pageCount,
+            output_path: var_outputPath,
+            warning_source_count: var_warningSourceCount,
+            has_warnings: var_hasWarnings,
+            failed_source_id: var_failedSourceId,
+            failed_source_path: var_failedSourcePath,
+            failed_page_item_id: var_failedPageItemId,
+            error: var_error,
+        };
     }
 }
 
@@ -1287,18 +1558,27 @@ fn pde_ffi_dispatcher_primary_impl(
             data_len,
         ),
         5 => wire__crate__api__lifecycle__initialize_impl(port, ptr, rust_vec_len, data_len),
-        6 => wire__crate__api__split_pdf__inspect_split_pdf_source_impl(
+        6 => wire__crate__api__organize_pdf__inspect_organize_pdf_sources_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        7 => wire__crate__api__merge_pdf__merge_pdf_impl(port, ptr, rust_vec_len, data_len),
-        8 => {
+        7 => wire__crate__api__split_pdf__inspect_split_pdf_source_impl(
+            port,
+            ptr,
+            rust_vec_len,
+            data_len,
+        ),
+        8 => wire__crate__api__merge_pdf__merge_pdf_impl(port, ptr, rust_vec_len, data_len),
+        9 => {
             wire__crate__api__pdf_preview__open_pdf_document_impl(port, ptr, rust_vec_len, data_len)
         }
-        9 => wire__crate__api__pdf_preview__render_pdf_page_impl(port, ptr, rust_vec_len, data_len),
-        10 => wire__crate__api__split_pdf__split_pdf_impl(port, ptr, rust_vec_len, data_len),
+        10 => wire__crate__api__organize_pdf__organize_pdf_impl(port, ptr, rust_vec_len, data_len),
+        11 => {
+            wire__crate__api__pdf_preview__render_pdf_page_impl(port, ptr, rust_vec_len, data_len)
+        }
+        12 => wire__crate__api__split_pdf__split_pdf_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -1372,15 +1652,18 @@ impl flutter_rust_bridge::IntoDart for crate::api::error::ApplicationErrorCode {
             Self::ImagePlacementFailed => 27.into_dart(),
             Self::PdfSaveFailed => 28.into_dart(),
             Self::PdfHasTooFewPages => 29.into_dart(),
-            Self::InvalidSplitConfiguration => 30.into_dart(),
-            Self::SplitNotRequired => 31.into_dart(),
-            Self::SplitPageExceedsSizeLimit => 32.into_dart(),
-            Self::SplitCandidateGenerationFailed => 33.into_dart(),
-            Self::SplitOutputPageCountMismatch => 34.into_dart(),
-            Self::SplitOutputExceedsSizeLimit => 35.into_dart(),
-            Self::TemporaryDirectoryFailed => 36.into_dart(),
-            Self::PublicationFailed => 37.into_dart(),
-            Self::Internal => 38.into_dart(),
+            Self::DuplicateSource => 30.into_dart(),
+            Self::InvalidOrganizePlan => 31.into_dart(),
+            Self::OrganizeOutputPageCountMismatch => 32.into_dart(),
+            Self::InvalidSplitConfiguration => 33.into_dart(),
+            Self::SplitNotRequired => 34.into_dart(),
+            Self::SplitPageExceedsSizeLimit => 35.into_dart(),
+            Self::SplitCandidateGenerationFailed => 36.into_dart(),
+            Self::SplitOutputPageCountMismatch => 37.into_dart(),
+            Self::SplitOutputExceedsSizeLimit => 38.into_dart(),
+            Self::TemporaryDirectoryFailed => 39.into_dart(),
+            Self::PublicationFailed => 40.into_dart(),
+            Self::Internal => 41.into_dart(),
             _ => unreachable!(),
         }
     }
@@ -1698,6 +1981,196 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::merge_pdf::MergePdfUpdate>
     for crate::api::merge_pdf::MergePdfUpdate
 {
     fn into_into_dart(self) -> crate::api::merge_pdf::MergePdfUpdate {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::organize_pdf::OrganizePdfPageItem {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.page_item_id.into_into_dart().into_dart(),
+            self.source_id.into_into_dart().into_dart(),
+            self.source_page_index.into_into_dart().into_dart(),
+            self.rotation.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::organize_pdf::OrganizePdfPageItem
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::organize_pdf::OrganizePdfPageItem>
+    for crate::api::organize_pdf::OrganizePdfPageItem
+{
+    fn into_into_dart(self) -> crate::api::organize_pdf::OrganizePdfPageItem {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::organize_pdf::OrganizePdfPageRotation {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self {
+            Self::None => 0.into_dart(),
+            Self::Clockwise90 => 1.into_dart(),
+            Self::HalfTurn => 2.into_dart(),
+            Self::CounterClockwise90 => 3.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::organize_pdf::OrganizePdfPageRotation
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::organize_pdf::OrganizePdfPageRotation>
+    for crate::api::organize_pdf::OrganizePdfPageRotation
+{
+    fn into_into_dart(self) -> crate::api::organize_pdf::OrganizePdfPageRotation {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::organize_pdf::OrganizePdfRequest {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.sources.into_into_dart().into_dart(),
+            self.page_items.into_into_dart().into_dart(),
+            self.destination_directory.into_into_dart().into_dart(),
+            self.output_name.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::organize_pdf::OrganizePdfRequest
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::organize_pdf::OrganizePdfRequest>
+    for crate::api::organize_pdf::OrganizePdfRequest
+{
+    fn into_into_dart(self) -> crate::api::organize_pdf::OrganizePdfRequest {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::organize_pdf::OrganizePdfSource {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.source_id.into_into_dart().into_dart(),
+            self.source_path.into_into_dart().into_dart(),
+            self.page_count.into_into_dart().into_dart(),
+            self.has_warnings.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::organize_pdf::OrganizePdfSource
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::organize_pdf::OrganizePdfSource>
+    for crate::api::organize_pdf::OrganizePdfSource
+{
+    fn into_into_dart(self) -> crate::api::organize_pdf::OrganizePdfSource {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::organize_pdf::OrganizePdfSourceInfo {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.source_path.into_into_dart().into_dart(),
+            self.page_count.into_into_dart().into_dart(),
+            self.has_warnings.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::organize_pdf::OrganizePdfSourceInfo
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::organize_pdf::OrganizePdfSourceInfo>
+    for crate::api::organize_pdf::OrganizePdfSourceInfo
+{
+    fn into_into_dart(self) -> crate::api::organize_pdf::OrganizePdfSourceInfo {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::organize_pdf::OrganizePdfStage {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self {
+            Self::Preparing => 0.into_dart(),
+            Self::Organizing => 1.into_dart(),
+            Self::Validating => 2.into_dart(),
+            Self::Publishing => 3.into_dart(),
+            Self::Completed => 4.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::organize_pdf::OrganizePdfStage
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::organize_pdf::OrganizePdfStage>
+    for crate::api::organize_pdf::OrganizePdfStage
+{
+    fn into_into_dart(self) -> crate::api::organize_pdf::OrganizePdfStage {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::organize_pdf::OrganizePdfStatus {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self {
+            Self::Running => 0.into_dart(),
+            Self::Complete => 1.into_dart(),
+            Self::Failed => 2.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::organize_pdf::OrganizePdfStatus
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::organize_pdf::OrganizePdfStatus>
+    for crate::api::organize_pdf::OrganizePdfStatus
+{
+    fn into_into_dart(self) -> crate::api::organize_pdf::OrganizePdfStatus {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::organize_pdf::OrganizePdfUpdate {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.status.into_into_dart().into_dart(),
+            self.stage.into_into_dart().into_dart(),
+            self.source_count.into_into_dart().into_dart(),
+            self.page_count.into_into_dart().into_dart(),
+            self.output_path.into_into_dart().into_dart(),
+            self.warning_source_count.into_into_dart().into_dart(),
+            self.has_warnings.into_into_dart().into_dart(),
+            self.failed_source_id.into_into_dart().into_dart(),
+            self.failed_source_path.into_into_dart().into_dart(),
+            self.failed_page_item_id.into_into_dart().into_dart(),
+            self.error.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::organize_pdf::OrganizePdfUpdate
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::organize_pdf::OrganizePdfUpdate>
+    for crate::api::organize_pdf::OrganizePdfUpdate
+{
+    fn into_into_dart(self) -> crate::api::organize_pdf::OrganizePdfUpdate {
         self
     }
 }
@@ -2182,6 +2655,18 @@ impl SseEncode
 
 impl SseEncode
     for StreamSink<
+        crate::api::organize_pdf::OrganizePdfUpdate,
+        flutter_rust_bridge::for_generated::SseCodec,
+    >
+{
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        unimplemented!("")
+    }
+}
+
+impl SseEncode
+    for StreamSink<
         crate::api::pdf_export::PdfBatchExportUpdate,
         flutter_rust_bridge::for_generated::SseCodec,
     >
@@ -2266,15 +2751,18 @@ impl SseEncode for crate::api::error::ApplicationErrorCode {
                 crate::api::error::ApplicationErrorCode::ImagePlacementFailed => 27,
                 crate::api::error::ApplicationErrorCode::PdfSaveFailed => 28,
                 crate::api::error::ApplicationErrorCode::PdfHasTooFewPages => 29,
-                crate::api::error::ApplicationErrorCode::InvalidSplitConfiguration => 30,
-                crate::api::error::ApplicationErrorCode::SplitNotRequired => 31,
-                crate::api::error::ApplicationErrorCode::SplitPageExceedsSizeLimit => 32,
-                crate::api::error::ApplicationErrorCode::SplitCandidateGenerationFailed => 33,
-                crate::api::error::ApplicationErrorCode::SplitOutputPageCountMismatch => 34,
-                crate::api::error::ApplicationErrorCode::SplitOutputExceedsSizeLimit => 35,
-                crate::api::error::ApplicationErrorCode::TemporaryDirectoryFailed => 36,
-                crate::api::error::ApplicationErrorCode::PublicationFailed => 37,
-                crate::api::error::ApplicationErrorCode::Internal => 38,
+                crate::api::error::ApplicationErrorCode::DuplicateSource => 30,
+                crate::api::error::ApplicationErrorCode::InvalidOrganizePlan => 31,
+                crate::api::error::ApplicationErrorCode::OrganizeOutputPageCountMismatch => 32,
+                crate::api::error::ApplicationErrorCode::InvalidSplitConfiguration => 33,
+                crate::api::error::ApplicationErrorCode::SplitNotRequired => 34,
+                crate::api::error::ApplicationErrorCode::SplitPageExceedsSizeLimit => 35,
+                crate::api::error::ApplicationErrorCode::SplitCandidateGenerationFailed => 36,
+                crate::api::error::ApplicationErrorCode::SplitOutputPageCountMismatch => 37,
+                crate::api::error::ApplicationErrorCode::SplitOutputExceedsSizeLimit => 38,
+                crate::api::error::ApplicationErrorCode::TemporaryDirectoryFailed => 39,
+                crate::api::error::ApplicationErrorCode::PublicationFailed => 40,
+                crate::api::error::ApplicationErrorCode::Internal => 41,
                 _ => {
                     unimplemented!("");
                 }
@@ -2439,6 +2927,36 @@ impl SseEncode for Vec<String> {
     }
 }
 
+impl SseEncode for Vec<crate::api::organize_pdf::OrganizePdfPageItem> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::api::organize_pdf::OrganizePdfPageItem>::sse_encode(item, serializer);
+        }
+    }
+}
+
+impl SseEncode for Vec<crate::api::organize_pdf::OrganizePdfSource> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::api::organize_pdf::OrganizePdfSource>::sse_encode(item, serializer);
+        }
+    }
+}
+
+impl SseEncode for Vec<crate::api::organize_pdf::OrganizePdfSourceInfo> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::api::organize_pdf::OrganizePdfSourceInfo>::sse_encode(item, serializer);
+        }
+    }
+}
+
 impl SseEncode for Vec<crate::api::pdf_export::PdfBatchDocumentResult> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -2577,6 +3095,119 @@ impl SseEncode for Option<u64> {
         if let Some(value) = self {
             <u64>::sse_encode(value, serializer);
         }
+    }
+}
+
+impl SseEncode for crate::api::organize_pdf::OrganizePdfPageItem {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <u32>::sse_encode(self.page_item_id, serializer);
+        <u32>::sse_encode(self.source_id, serializer);
+        <u32>::sse_encode(self.source_page_index, serializer);
+        <crate::api::organize_pdf::OrganizePdfPageRotation>::sse_encode(self.rotation, serializer);
+    }
+}
+
+impl SseEncode for crate::api::organize_pdf::OrganizePdfPageRotation {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                crate::api::organize_pdf::OrganizePdfPageRotation::None => 0,
+                crate::api::organize_pdf::OrganizePdfPageRotation::Clockwise90 => 1,
+                crate::api::organize_pdf::OrganizePdfPageRotation::HalfTurn => 2,
+                crate::api::organize_pdf::OrganizePdfPageRotation::CounterClockwise90 => 3,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
+    }
+}
+
+impl SseEncode for crate::api::organize_pdf::OrganizePdfRequest {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <Vec<crate::api::organize_pdf::OrganizePdfSource>>::sse_encode(self.sources, serializer);
+        <Vec<crate::api::organize_pdf::OrganizePdfPageItem>>::sse_encode(
+            self.page_items,
+            serializer,
+        );
+        <String>::sse_encode(self.destination_directory, serializer);
+        <String>::sse_encode(self.output_name, serializer);
+    }
+}
+
+impl SseEncode for crate::api::organize_pdf::OrganizePdfSource {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <u32>::sse_encode(self.source_id, serializer);
+        <String>::sse_encode(self.source_path, serializer);
+        <u32>::sse_encode(self.page_count, serializer);
+        <bool>::sse_encode(self.has_warnings, serializer);
+    }
+}
+
+impl SseEncode for crate::api::organize_pdf::OrganizePdfSourceInfo {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.source_path, serializer);
+        <u32>::sse_encode(self.page_count, serializer);
+        <bool>::sse_encode(self.has_warnings, serializer);
+    }
+}
+
+impl SseEncode for crate::api::organize_pdf::OrganizePdfStage {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                crate::api::organize_pdf::OrganizePdfStage::Preparing => 0,
+                crate::api::organize_pdf::OrganizePdfStage::Organizing => 1,
+                crate::api::organize_pdf::OrganizePdfStage::Validating => 2,
+                crate::api::organize_pdf::OrganizePdfStage::Publishing => 3,
+                crate::api::organize_pdf::OrganizePdfStage::Completed => 4,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
+    }
+}
+
+impl SseEncode for crate::api::organize_pdf::OrganizePdfStatus {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                crate::api::organize_pdf::OrganizePdfStatus::Running => 0,
+                crate::api::organize_pdf::OrganizePdfStatus::Complete => 1,
+                crate::api::organize_pdf::OrganizePdfStatus::Failed => 2,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
+    }
+}
+
+impl SseEncode for crate::api::organize_pdf::OrganizePdfUpdate {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <crate::api::organize_pdf::OrganizePdfStatus>::sse_encode(self.status, serializer);
+        <crate::api::organize_pdf::OrganizePdfStage>::sse_encode(self.stage, serializer);
+        <u32>::sse_encode(self.source_count, serializer);
+        <u32>::sse_encode(self.page_count, serializer);
+        <Option<String>>::sse_encode(self.output_path, serializer);
+        <u32>::sse_encode(self.warning_source_count, serializer);
+        <bool>::sse_encode(self.has_warnings, serializer);
+        <Option<u32>>::sse_encode(self.failed_source_id, serializer);
+        <Option<String>>::sse_encode(self.failed_source_path, serializer);
+        <Option<u32>>::sse_encode(self.failed_page_item_id, serializer);
+        <Option<crate::api::error::ApplicationError>>::sse_encode(self.error, serializer);
     }
 }
 

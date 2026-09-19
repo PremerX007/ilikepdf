@@ -4,8 +4,17 @@ ilikepdf is an open-source, privacy-first Windows PDF toolkit. Flutter provides
 the desktop presentation layer while Rust owns application logic and native PDF
 integration. Documents and images are processed locally and are never uploaded.
 
-Current production workflows include Split PDF, Merge PDF, batch PDF-to-PNG/JPG
-export, and Image-to-PDF creation. Split PDF accepts exactly one source and
+Current production workflows include Organize PDF, Split PDF, Merge PDF, batch
+PDF-to-PNG/JPG export, and Image-to-PDF creation. Organize PDF loads one or more
+source PDFs into one page workspace and produces one structural output PDF. It
+supports adding files later, cross-file page reordering, page deletion,
+quarter-turn rotation, whole-source removal, and resetting the current source
+set to its original flattened page order. Duplicate source paths are rejected,
+the default output is `organized.pdf` beside the first-added source, and a
+custom destination persists while the session changes. Thumbnails are rendered
+through PDFium lazily with bounded concurrency and caching; final pages are
+composed through qpdf without rasterization. Split PDF accepts exactly one
+source and
 structurally divides it by page, fixed page count, explicit split points, or an
 actual generated-file size limit. It preserves every page once in order and
 publishes all parts together in a collision-safe `<source>-split` directory.
@@ -60,6 +69,7 @@ flutter test integration_test/pdf_preview_test.dart -d windows
 flutter test integration_test/image_to_pdf_test.dart -d windows
 flutter test integration_test/merge_pdf_test.dart -d windows
 flutter test integration_test/split_pdf_test.dart -d windows
+flutter test integration_test/organize_pdf_test.dart -d windows
 ```
 
 See [docs/architecture.md](docs/architecture.md) for boundaries and privacy

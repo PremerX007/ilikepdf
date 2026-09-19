@@ -10,6 +10,7 @@ import 'api/application.dart';
 import 'api/error.dart';
 import 'api/image_to_pdf.dart';
 import 'api/merge_pdf.dart';
+import 'api/organize_pdf.dart';
 import 'api/pdf_export.dart';
 import 'api/pdf_preview.dart';
 import 'api/split_pdf.dart';
@@ -41,6 +42,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   RustStreamSink<MergePdfUpdate> dco_decode_StreamSink_merge_pdf_update_Sse(
     dynamic raw,
   );
+
+  @protected
+  RustStreamSink<OrganizePdfUpdate>
+  dco_decode_StreamSink_organize_pdf_update_Sse(dynamic raw);
 
   @protected
   RustStreamSink<PdfBatchExportUpdate>
@@ -93,6 +98,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   MergePdfRequest dco_decode_box_autoadd_merge_pdf_request(dynamic raw);
 
   @protected
+  OrganizePdfRequest dco_decode_box_autoadd_organize_pdf_request(dynamic raw);
+
+  @protected
   PdfPageSize dco_decode_box_autoadd_pdf_page_size(dynamic raw);
 
   @protected
@@ -143,6 +151,17 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<String> dco_decode_list_String(dynamic raw);
 
   @protected
+  List<OrganizePdfPageItem> dco_decode_list_organize_pdf_page_item(dynamic raw);
+
+  @protected
+  List<OrganizePdfSource> dco_decode_list_organize_pdf_source(dynamic raw);
+
+  @protected
+  List<OrganizePdfSourceInfo> dco_decode_list_organize_pdf_source_info(
+    dynamic raw,
+  );
+
+  @protected
   List<PdfBatchDocumentResult> dco_decode_list_pdf_batch_document_result(
     dynamic raw,
   );
@@ -179,6 +198,30 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   BigInt? dco_decode_opt_box_autoadd_u_64(dynamic raw);
+
+  @protected
+  OrganizePdfPageItem dco_decode_organize_pdf_page_item(dynamic raw);
+
+  @protected
+  OrganizePdfPageRotation dco_decode_organize_pdf_page_rotation(dynamic raw);
+
+  @protected
+  OrganizePdfRequest dco_decode_organize_pdf_request(dynamic raw);
+
+  @protected
+  OrganizePdfSource dco_decode_organize_pdf_source(dynamic raw);
+
+  @protected
+  OrganizePdfSourceInfo dco_decode_organize_pdf_source_info(dynamic raw);
+
+  @protected
+  OrganizePdfStage dco_decode_organize_pdf_stage(dynamic raw);
+
+  @protected
+  OrganizePdfStatus dco_decode_organize_pdf_status(dynamic raw);
+
+  @protected
+  OrganizePdfUpdate dco_decode_organize_pdf_update(dynamic raw);
 
   @protected
   PdfBatchDestinationMode dco_decode_pdf_batch_destination_mode(dynamic raw);
@@ -263,6 +306,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  RustStreamSink<OrganizePdfUpdate>
+  sse_decode_StreamSink_organize_pdf_update_Sse(SseDeserializer deserializer);
+
+  @protected
   RustStreamSink<PdfBatchExportUpdate>
   sse_decode_StreamSink_pdf_batch_export_update_Sse(
     SseDeserializer deserializer,
@@ -317,6 +364,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   MergePdfRequest sse_decode_box_autoadd_merge_pdf_request(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  OrganizePdfRequest sse_decode_box_autoadd_organize_pdf_request(
     SseDeserializer deserializer,
   );
 
@@ -383,6 +435,21 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<String> sse_decode_list_String(SseDeserializer deserializer);
 
   @protected
+  List<OrganizePdfPageItem> sse_decode_list_organize_pdf_page_item(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<OrganizePdfSource> sse_decode_list_organize_pdf_source(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<OrganizePdfSourceInfo> sse_decode_list_organize_pdf_source_info(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   List<PdfBatchDocumentResult> sse_decode_list_pdf_batch_document_result(
     SseDeserializer deserializer,
   );
@@ -425,6 +492,44 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   BigInt? sse_decode_opt_box_autoadd_u_64(SseDeserializer deserializer);
+
+  @protected
+  OrganizePdfPageItem sse_decode_organize_pdf_page_item(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  OrganizePdfPageRotation sse_decode_organize_pdf_page_rotation(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  OrganizePdfRequest sse_decode_organize_pdf_request(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  OrganizePdfSource sse_decode_organize_pdf_source(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  OrganizePdfSourceInfo sse_decode_organize_pdf_source_info(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  OrganizePdfStage sse_decode_organize_pdf_stage(SseDeserializer deserializer);
+
+  @protected
+  OrganizePdfStatus sse_decode_organize_pdf_status(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  OrganizePdfUpdate sse_decode_organize_pdf_update(
+    SseDeserializer deserializer,
+  );
 
   @protected
   PdfBatchDestinationMode sse_decode_pdf_batch_destination_mode(
@@ -528,6 +633,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_StreamSink_organize_pdf_update_Sse(
+    RustStreamSink<OrganizePdfUpdate> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_StreamSink_pdf_batch_export_update_Sse(
     RustStreamSink<PdfBatchExportUpdate> self,
     SseSerializer serializer,
@@ -596,6 +707,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_box_autoadd_merge_pdf_request(
     MergePdfRequest self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_organize_pdf_request(
+    OrganizePdfRequest self,
     SseSerializer serializer,
   );
 
@@ -681,6 +798,24 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_list_String(List<String> self, SseSerializer serializer);
 
   @protected
+  void sse_encode_list_organize_pdf_page_item(
+    List<OrganizePdfPageItem> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_organize_pdf_source(
+    List<OrganizePdfSource> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_organize_pdf_source_info(
+    List<OrganizePdfSourceInfo> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_pdf_batch_document_result(
     List<PdfBatchDocumentResult> self,
     SseSerializer serializer,
@@ -739,6 +874,54 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_opt_box_autoadd_u_64(BigInt? self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_organize_pdf_page_item(
+    OrganizePdfPageItem self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_organize_pdf_page_rotation(
+    OrganizePdfPageRotation self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_organize_pdf_request(
+    OrganizePdfRequest self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_organize_pdf_source(
+    OrganizePdfSource self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_organize_pdf_source_info(
+    OrganizePdfSourceInfo self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_organize_pdf_stage(
+    OrganizePdfStage self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_organize_pdf_status(
+    OrganizePdfStatus self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_organize_pdf_update(
+    OrganizePdfUpdate self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_pdf_batch_destination_mode(

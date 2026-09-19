@@ -3,6 +3,7 @@ use std::sync::Mutex;
 
 use crate::manifest::runtime_manifest;
 use crate::process::BoundedDiagnostic;
+use ilikepdf_core::StructuralPdfPagePlanItem;
 
 use super::*;
 
@@ -245,7 +246,7 @@ fn real_password_protected_fixture_is_created_and_classified_in_test_setup() {
     let failure = ilikepdf_core::split_pdf(
         &engine,
         ilikepdf_core::SplitPdfRequest {
-            source_path: protected,
+            source_path: protected.clone(),
             destination_directory: directory.path().to_path_buf(),
             mode: ilikepdf_core::SplitPdfMode::EveryPage,
         },
@@ -254,6 +255,13 @@ fn real_password_protected_fixture_is_created_and_classified_in_test_setup() {
     .expect_err("password-protected input must block Split before publication");
     assert_eq!(
         failure.error.code,
+        ilikepdf_core::ApplicationErrorCode::PasswordRequired
+    );
+    let organize_error =
+        ilikepdf_core::inspect_organize_pdf_sources(&engine, &[], std::slice::from_ref(&protected))
+            .expect_err("password-protected input must not enter an organize session");
+    assert_eq!(
+        organize_error.code,
         ilikepdf_core::ApplicationErrorCode::PasswordRequired
     );
     assert!(!directory.path().join("password protected-split").exists());
@@ -362,6 +370,111 @@ fn page_range_rejects_zero_and_descending_ranges_before_launch() {
                 source_path: source.clone(),
                 first_page,
                 last_page,
+                working_output_path: runtime_root.path().join("output.pdf"),
+            }),
+            Err(StructuralPdfError::OperationFailed)
+        );
+    }
+    assert!(runner.calls.lock().unwrap().is_empty());
+}
+
+#[test]
+fn page_plan_maps_cross_source_order_and_relative_rotations_to_qpdf() {
+    let runtime_root = fixture_runtime_root();
+    let first = runtime_root.path().join("first source.pdf");
+    let second = runtime_root.path().join("second.pdf");
+    let output = runtime_root.path().join("organized.tmp");
+    fs::write(&first, b"first").unwrap();
+    fs::write(&second, b"second").unwrap();
+    fs::write(&output, b"").unwrap();
+    let runner = Arc::new(RecordingMergeRunner {
+        calls: Mutex::new(Vec::new()),
+    });
+    let engine = QpdfCliEngine::with_runner(
+        QpdfRuntimeResolver::from_root(runtime_root.path()),
+        runner.clone(),
+    );
+
+    engine
+        .create_page_plan(&StructuralPdfPagePlanRequest {
+            ordered_pages: vec![
+                StructuralPdfPagePlanItem {
+                    source_path: second.clone(),
+                    page_number: 2,
+                    rotation: StructuralPdfPageRotation::Clockwise90,
+                },
+                StructuralPdfPagePlanItem {
+                    source_path: first.clone(),
+                    page_number: 1,
+                    rotation: StructuralPdfPageRotation::None,
+                },
+                StructuralPdfPagePlanItem {
+                    source_path: second.clone(),
+                    page_number: 1,
+                    rotation: StructuralPdfPageRotation::CounterClockwise90,
+                },
+                StructuralPdfPagePlanItem {
+                    source_path: first.clone(),
+                    page_number: 3,
+                    rotation: StructuralPdfPageRotation::HalfTurn,
+                },
+            ],
+            working_output_path: output.clone(),
+        })
+        .unwrap();
+
+    let calls = runner.calls.lock().unwrap();
+    assert_eq!(calls.len(), 2);
+    assert_eq!(calls[1][0], "--empty");
+    assert_eq!(calls[1][1], "--pages");
+    assert_eq!(
+        PathBuf::from(&calls[1][2]),
+        std::path::absolute(second).unwrap()
+    );
+    assert_eq!(calls[1][3], "2");
+    assert_eq!(
+        PathBuf::from(&calls[1][4]),
+        std::path::absolute(first).unwrap()
+    );
+    assert_eq!(calls[1][5], "1");
+    assert_eq!(calls[1][6], calls[1][2]);
+    assert_eq!(calls[1][7], "1");
+    assert_eq!(calls[1][8], calls[1][4]);
+    assert_eq!(calls[1][9], "3");
+    assert_eq!(calls[1][10], "--");
+    assert_eq!(calls[1][11], "--rotate=+90:1");
+    assert_eq!(calls[1][12], "--rotate=-90:3");
+    assert_eq!(calls[1][13], "--rotate=+180:4");
+    assert_eq!(
+        PathBuf::from(&calls[1][14]),
+        std::path::absolute(output).unwrap()
+    );
+}
+
+#[test]
+fn page_plan_rejects_empty_or_zero_page_items_before_launch() {
+    let runtime_root = fixture_runtime_root();
+    let source = runtime_root.path().join("source.pdf");
+    fs::write(&source, b"source").unwrap();
+    let runner = Arc::new(RecordingMergeRunner {
+        calls: Mutex::new(Vec::new()),
+    });
+    let engine = QpdfCliEngine::with_runner(
+        QpdfRuntimeResolver::from_root(runtime_root.path()),
+        runner.clone(),
+    );
+
+    for ordered_pages in [
+        Vec::new(),
+        vec![StructuralPdfPagePlanItem {
+            source_path: source.clone(),
+            page_number: 0,
+            rotation: StructuralPdfPageRotation::None,
+        }],
+    ] {
+        assert_eq!(
+            engine.create_page_plan(&StructuralPdfPagePlanRequest {
+                ordered_pages,
                 working_output_path: runtime_root.path().join("output.pdf"),
             }),
             Err(StructuralPdfError::OperationFailed)
