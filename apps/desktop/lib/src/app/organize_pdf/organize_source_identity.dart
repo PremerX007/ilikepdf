@@ -35,6 +35,19 @@ class OrganizeSourceAccent {
   }
 
   Color get primaryColor => _palette[index % _palette.length];
+
+  Color surfaceColor(Brightness brightness) =>
+      _tintedSurface(brightness, brightness == Brightness.light ? 0.08 : 0.14);
+
+  Color previewColor(Brightness brightness) =>
+      _tintedSurface(brightness, brightness == Brightness.light ? 0.18 : 0.24);
+
+  // Blend over a neutral base so the app's red theme cannot tint every source.
+  Color _tintedSurface(Brightness brightness, double opacity) =>
+      Color.alphaBlend(
+        primaryColor.withValues(alpha: opacity),
+        brightness == Brightness.light ? Colors.white : const Color(0xFF1B1B1B),
+      );
 }
 
 /// The numbered badge and filename description also identify sources without
@@ -63,7 +76,7 @@ class OrganizeSourceIdentity extends StatelessWidget {
           height: 26,
           clipBehavior: Clip.antiAlias,
           decoration: BoxDecoration(
-            color: accent.primaryColor.withValues(alpha: 0.10),
+            color: accent.previewColor(colors.brightness),
             borderRadius: BorderRadius.circular(5),
             border: Border.all(
               color: accent.primaryColor.withValues(alpha: 0.65),

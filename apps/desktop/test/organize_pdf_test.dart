@@ -272,6 +272,82 @@ void main() {
     expect(_identity(tester, 'organize-page-identity-3').accent, same(third));
   });
 
+  for (final brightness in Brightness.values) {
+    testWidgets(
+      'source backgrounds stay distinct under a red $brightness theme',
+      (tester) async {
+        final workflow = FakeOrganizePdfWorkflow(previewPath: previewPath)
+          ..selections.add([firstPdf, secondPdf]);
+        await _pumpPanel(
+          tester,
+          workflow,
+          theme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: const Color(0xFFB42318),
+              brightness: brightness,
+            ),
+          ),
+        );
+        await tester.tap(find.text('Select PDFs'));
+        await tester.pumpAndSettle();
+
+        Card card(int id) => tester.widget<Card>(
+          find.descendant(
+            of: find.byKey(ValueKey('organize-page-card-$id')),
+            matching: find.byType(Card),
+          ),
+        );
+        Color preview(int id) => tester
+            .widget<ColoredBox>(
+              find.byKey(ValueKey('organize-page-preview-surface-$id')),
+            )
+            .color;
+        Color? sourceSurface(int id) =>
+            (tester
+                        .widget<DecoratedBox>(
+                          find.byKey(ValueKey('organize-source-surface-$id')),
+                        )
+                        .decoration
+                    as BoxDecoration)
+                .color;
+
+        final firstBackground = card(0).color;
+        final secondBackground = card(2).color;
+        final firstPreview = preview(0);
+        final secondPreview = preview(2);
+        expect(firstBackground, isNotNull);
+        expect(firstBackground, isNot(secondBackground));
+        expect(card(1).color, firstBackground);
+        expect(firstPreview, isNot(secondPreview));
+        expect(preview(1), firstPreview);
+        expect(sourceSurface(0), firstBackground);
+        expect(sourceSurface(1), secondBackground);
+        expect(card(0).surfaceTintColor, Colors.transparent);
+        expect(card(2).surfaceTintColor, Colors.transparent);
+
+        // A different app seed must not recolor source-owned surfaces.
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: ThemeData(
+              colorScheme: ColorScheme.fromSeed(
+                seedColor: Colors.green,
+                brightness: brightness,
+              ),
+            ),
+            home: Scaffold(body: OrganizePdfPanel(workflow: workflow)),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(card(0).color, firstBackground);
+        expect(card(2).color, secondBackground);
+        expect(preview(0), firstPreview);
+        expect(preview(2), secondPreview);
+        expect(sourceSurface(0), firstBackground);
+        expect(sourceSurface(1), secondBackground);
+      },
+    );
+  }
+
   testWidgets('source filename is available in tooltips and semantics', (
     tester,
   ) async {
@@ -698,14 +774,16 @@ List<int> _cardOrder(WidgetTester tester) => tester
 
 Future<void> _pumpPanel(
   WidgetTester tester,
-  FakeOrganizePdfWorkflow workflow,
-) async {
+  FakeOrganizePdfWorkflow workflow, {
+  ThemeData? theme,
+}) async {
   tester.view.devicePixelRatio = 1;
   tester.view.physicalSize = const Size(1280, 820);
   addTearDown(tester.view.resetDevicePixelRatio);
   addTearDown(tester.view.resetPhysicalSize);
   await tester.pumpWidget(
     MaterialApp(
+      theme: theme,
       home: Scaffold(body: OrganizePdfPanel(workflow: workflow)),
     ),
   );

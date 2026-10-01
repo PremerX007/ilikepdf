@@ -579,8 +579,11 @@ class _OrganizePdfPanelState extends State<OrganizePdfPanel> {
             (source) => Padding(
               padding: const EdgeInsets.only(bottom: 8),
               child: DecoratedBox(
+                key: ValueKey('organize-source-surface-${source.id}'),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceContainerLow,
+                  color: source.accent.surfaceColor(
+                    Theme.of(context).brightness,
+                  ),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
                     color: source.accent.primaryColor.withValues(alpha: 0.65),
@@ -778,6 +781,8 @@ class _OrganizePageCardState extends State<_OrganizePageCard> {
 
   Widget _buildCard(BuildContext context, ColorScheme colors) {
     return Card(
+      color: widget.sourceAccent.surfaceColor(colors.brightness),
+      surfaceTintColor: Colors.transparent,
       margin: EdgeInsets.zero,
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
@@ -792,7 +797,8 @@ class _OrganizePageCardState extends State<_OrganizePageCard> {
         children: [
           Expanded(
             child: ColoredBox(
-              color: colors.surfaceContainerHighest,
+              key: ValueKey('organize-page-preview-surface-${widget.page.id}'),
+              color: widget.sourceAccent.previewColor(colors.brightness),
               child: Padding(
                 padding: const EdgeInsets.all(10),
                 child: Center(child: _buildThumbnail(colors)),
