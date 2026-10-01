@@ -185,6 +185,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw);
 
   @protected
+  List<SplitPdfPageRange> dco_decode_list_split_pdf_page_range(dynamic raw);
+
+  @protected
   List<SplitPdfPart> dco_decode_list_split_pdf_part(dynamic raw);
 
   @protected
@@ -213,6 +216,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   BigInt? dco_decode_opt_box_autoadd_u_64(dynamic raw);
+
+  @protected
+  List<SplitPdfPageRange>? dco_decode_opt_list_split_pdf_page_range(
+    dynamic raw,
+  );
 
   @protected
   OrganizePdfPageItem dco_decode_organize_pdf_page_item(dynamic raw);
@@ -294,6 +302,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   SplitPdfMode dco_decode_split_pdf_mode(dynamic raw);
+
+  @protected
+  SplitPdfPageRange dco_decode_split_pdf_page_range(dynamic raw);
 
   @protected
   SplitPdfPart dco_decode_split_pdf_part(dynamic raw);
@@ -523,6 +534,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer);
 
   @protected
+  List<SplitPdfPageRange> sse_decode_list_split_pdf_page_range(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   List<SplitPdfPart> sse_decode_list_split_pdf_part(
     SseDeserializer deserializer,
   );
@@ -557,6 +573,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   BigInt? sse_decode_opt_box_autoadd_u_64(SseDeserializer deserializer);
+
+  @protected
+  List<SplitPdfPageRange>? sse_decode_opt_list_split_pdf_page_range(
+    SseDeserializer deserializer,
+  );
 
   @protected
   OrganizePdfPageItem sse_decode_organize_pdf_page_item(
@@ -672,6 +693,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   SplitPdfMode sse_decode_split_pdf_mode(SseDeserializer deserializer);
+
+  @protected
+  SplitPdfPageRange sse_decode_split_pdf_page_range(
+    SseDeserializer deserializer,
+  );
 
   @protected
   SplitPdfPart sse_decode_split_pdf_part(SseDeserializer deserializer);
@@ -957,6 +983,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_list_split_pdf_page_range(
+    List<SplitPdfPageRange> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_split_pdf_part(
     List<SplitPdfPart> self,
     SseSerializer serializer,
@@ -1003,6 +1035,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_opt_box_autoadd_u_64(BigInt? self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_opt_list_split_pdf_page_range(
+    List<SplitPdfPageRange>? self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_organize_pdf_page_item(
@@ -1159,6 +1197,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_split_pdf_mode(SplitPdfMode self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_split_pdf_page_range(
+    SplitPdfPageRange self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_split_pdf_part(SplitPdfPart self, SseSerializer serializer);

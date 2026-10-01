@@ -23,7 +23,7 @@ pub use security::{
 pub use split::{
     SplitPdfFailure, SplitPdfMode, SplitPdfPageRange, SplitPdfPart, SplitPdfProgress,
     SplitPdfRequest, SplitPdfResult, SplitPdfSourceInfo, SplitPdfStage, inspect_split_pdf_source,
-    split_pdf,
+    plan_split_pdf_ranges, split_pdf,
 };
 pub use workflow::{
     merge_pdf, probe_structural_pdf_engine, rewrite_structural_pdf, validate_structural_pdf,

@@ -30,6 +30,39 @@ pub struct SplitPdfRequest {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct SplitPdfPageRange {
+    pub first_page: u32,
+    pub last_page: u32,
+}
+
+/// Derive the same ranges as execution, without opening a PDF or running qpdf.
+/// None explicitly means size-based discovery, never estimated ranges.
+pub fn preview_split_pdf_ranges(
+    page_count: u32,
+    mode: SplitPdfMode,
+    every_n_pages: Option<u32>,
+    split_after_pages: Option<String>,
+) -> Result<Option<Vec<SplitPdfPageRange>>, ApplicationError> {
+    if mode == SplitPdfMode::MaximumFileSize {
+        return Ok(None);
+    }
+    let mode = to_core_mode(mode, every_n_pages, split_after_pages.as_deref(), None)?;
+    ilikepdf_core::plan_split_pdf_ranges(page_count, &mode)
+        .map(|ranges| {
+            Some(
+                ranges
+                    .into_iter()
+                    .map(|range| SplitPdfPageRange {
+                        first_page: range.first_page,
+                        last_page: range.last_page,
+                    })
+                    .collect(),
+            )
+        })
+        .map_err(Into::into)
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SplitPdfStage {
     Preparing,
     FindingSplitPoints,
@@ -87,7 +120,12 @@ pub fn inspect_split_pdf_source(
 pub fn split_pdf(request: SplitPdfRequest, progress_sink: StreamSink<SplitPdfUpdate>) {
     crate::logging::record(crate::logging::Event::SplitPdfRequested);
     let mut last_stage = SplitPdfStage::Preparing;
-    let mode = match to_core_mode(&request) {
+    let mode = match to_core_mode(
+        request.mode,
+        request.every_n_pages,
+        request.split_after_pages.as_deref(),
+        request.maximum_size_mb,
+    ) {
         Ok(mode) => mode,
         Err(error) => {
             let _ = progress_sink.add(failed_update(last_stage, 0, error));
@@ -164,22 +202,25 @@ pub fn split_pdf(request: SplitPdfRequest, progress_sink: StreamSink<SplitPdfUpd
 }
 
 fn to_core_mode(
-    request: &SplitPdfRequest,
+    mode: SplitPdfMode,
+    every_n_pages: Option<u32>,
+    split_after_pages: Option<&str>,
+    maximum_size_mb: Option<u64>,
 ) -> Result<ilikepdf_core::SplitPdfMode, ApplicationError> {
     let invalid = || ApplicationError {
         code: super::error::ApplicationErrorCode::InvalidSplitConfiguration,
         message: "The selected split settings are incomplete".to_owned(),
     };
-    match request.mode {
+    match mode {
         SplitPdfMode::EveryPage => Ok(ilikepdf_core::SplitPdfMode::EveryPage),
         SplitPdfMode::EveryNPages => Ok(ilikepdf_core::SplitPdfMode::EveryNPages {
-            pages_per_part: request.every_n_pages.ok_or_else(invalid)?,
+            pages_per_part: every_n_pages.ok_or_else(invalid)?,
         }),
         SplitPdfMode::SplitAfterPages => Ok(ilikepdf_core::SplitPdfMode::SplitAfterPages {
-            split_after_pages: request.split_after_pages.clone().ok_or_else(invalid)?,
+            split_after_pages: split_after_pages.ok_or_else(invalid)?.to_owned(),
         }),
         SplitPdfMode::MaximumFileSize => Ok(ilikepdf_core::SplitPdfMode::MaximumFileSize {
-            maximum_size_mb: request.maximum_size_mb.ok_or_else(invalid)?,
+            maximum_size_mb: maximum_size_mb.ok_or_else(invalid)?,
         }),
     }
 }

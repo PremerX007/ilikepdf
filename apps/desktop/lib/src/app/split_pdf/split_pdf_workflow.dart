@@ -113,7 +113,14 @@ abstract interface class SplitPdfWorkflow {
 
   Future<String?> chooseDestinationDirectory();
 
-  Future<RenderedSplitPdfPage> renderFirstPage(String sourcePath);
+  Future<RenderedSplitPdfPage> renderPage(String sourcePath, int pageIndex);
+
+  Future<List<SplitPdfRange>?> previewRanges({
+    required int pageCount,
+    required SplitPdfMode mode,
+    required int? everyNPages,
+    required String splitAfterPages,
+  });
 
   Stream<SplitPdfUpdate> split({
     required String sourcePath,
@@ -192,16 +199,48 @@ class LocalSplitPdfWorkflow implements SplitPdfWorkflow {
       getDirectoryPath(confirmButtonText: 'Choose output folder');
 
   @override
-  Future<RenderedSplitPdfPage> renderFirstPage(String sourcePath) async {
+  Future<RenderedSplitPdfPage> renderPage(
+    String sourcePath,
+    int pageIndex,
+  ) async {
     final result = await rust_preview.renderPdfPage(
       request: rust_preview.RenderPdfPageRequest(
         sourcePath: sourcePath,
-        pageIndex: 0,
-        targetWidth: 1000,
+        pageIndex: pageIndex,
+        targetWidth: 360,
         destinationPath: null,
       ),
     );
     return RenderedSplitPdfPage(outputPath: result.outputPath);
+  }
+
+  @override
+  Future<List<SplitPdfRange>?> previewRanges({
+    required int pageCount,
+    required SplitPdfMode mode,
+    required int? everyNPages,
+    required String splitAfterPages,
+  }) async {
+    try {
+      final ranges = await rust_split.previewSplitPdfRanges(
+        pageCount: pageCount,
+        mode: _bridgeMode(mode),
+        everyNPages: everyNPages,
+        splitAfterPages: splitAfterPages,
+      );
+      return ranges
+          ?.map(
+            (range) => SplitPdfRange(
+              firstPage: range.firstPage,
+              lastPage: range.lastPage,
+            ),
+          )
+          .toList(growable: false);
+    } on rust_application.ApplicationError catch (error) {
+      throw SplitPdfSelectionException(
+        SplitPdfProblem(code: error.code, message: error.message),
+      );
+    }
   }
 
   @override
@@ -217,14 +256,7 @@ class LocalSplitPdfWorkflow implements SplitPdfWorkflow {
       request: rust_split.SplitPdfRequest(
         sourcePath: sourcePath,
         destinationDirectory: destinationDirectory,
-        mode: switch (mode) {
-          SplitPdfMode.everyPage => rust_split.SplitPdfMode.everyPage,
-          SplitPdfMode.everyNPages => rust_split.SplitPdfMode.everyNPages,
-          SplitPdfMode.splitAfterPages =>
-            rust_split.SplitPdfMode.splitAfterPages,
-          SplitPdfMode.maximumFileSize =>
-            rust_split.SplitPdfMode.maximumFileSize,
-        },
+        mode: _bridgeMode(mode),
         everyNPages: everyNPages,
         splitAfterPages: splitAfterPages,
         maximumSizeMb: maximumSizeMb == null
@@ -288,54 +320,9 @@ int? parsePositiveWholeNumber(String value) {
   return parsed != null && parsed > 0 ? parsed : null;
 }
 
-List<SplitPdfRange>? deriveDeterministicSplitRanges({
-  required int pageCount,
-  required SplitPdfMode mode,
-  required String everyNPages,
-  required String splitAfterPages,
-}) {
-  if (pageCount < 2) return null;
-  switch (mode) {
-    case SplitPdfMode.everyPage:
-      return [
-        for (var page = 1; page <= pageCount; page++)
-          SplitPdfRange(firstPage: page, lastPage: page),
-      ];
-    case SplitPdfMode.everyNPages:
-      final every = parsePositiveWholeNumber(everyNPages);
-      if (every == null || every >= pageCount) return null;
-      return [
-        for (var first = 1; first <= pageCount; first += every)
-          SplitPdfRange(
-            firstPage: first,
-            lastPage: (first + every - 1).clamp(1, pageCount),
-          ),
-      ];
-    case SplitPdfMode.splitAfterPages:
-      final tokens = splitAfterPages.split(',');
-      if (splitAfterPages.trim().isEmpty ||
-          tokens.any((token) => token.trim().isEmpty)) {
-        return null;
-      }
-      final points = <int>[];
-      for (final token in tokens) {
-        final point = parsePositiveWholeNumber(token);
-        if (point == null ||
-            point >= pageCount ||
-            (points.isNotEmpty && point <= points.last)) {
-          return null;
-        }
-        points.add(point);
-      }
-      var first = 1;
-      final ranges = <SplitPdfRange>[];
-      for (final point in points) {
-        ranges.add(SplitPdfRange(firstPage: first, lastPage: point));
-        first = point + 1;
-      }
-      ranges.add(SplitPdfRange(firstPage: first, lastPage: pageCount));
-      return ranges;
-    case SplitPdfMode.maximumFileSize:
-      return null;
-  }
-}
+rust_split.SplitPdfMode _bridgeMode(SplitPdfMode mode) => switch (mode) {
+  SplitPdfMode.everyPage => rust_split.SplitPdfMode.everyPage,
+  SplitPdfMode.everyNPages => rust_split.SplitPdfMode.everyNPages,
+  SplitPdfMode.splitAfterPages => rust_split.SplitPdfMode.splitAfterPages,
+  SplitPdfMode.maximumFileSize => rust_split.SplitPdfMode.maximumFileSize,
+};

@@ -77,7 +77,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.13.0';
 
   @override
-  int get rustContentHash => -336962832;
+  int get rustContentHash => 1454100309;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -133,6 +133,13 @@ abstract class RustLibApi extends BaseApi {
 
   Stream<OrganizePdfUpdate> crateApiOrganizePdfOrganizePdf({
     required OrganizePdfRequest request,
+  });
+
+  Future<List<SplitPdfPageRange>?> crateApiSplitPdfPreviewSplitPdfRanges({
+    required int pageCount,
+    required SplitPdfMode mode,
+    int? everyNPages,
+    String? splitAfterPages,
   });
 
   Stream<ProtectPdfUpdate> crateApiPdfSecurityProtectPdf({
@@ -596,6 +603,45 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
+  Future<List<SplitPdfPageRange>?> crateApiSplitPdfPreviewSplitPdfRanges({
+    required int pageCount,
+    required SplitPdfMode mode,
+    int? everyNPages,
+    String? splitAfterPages,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_u_32(pageCount, serializer);
+          sse_encode_split_pdf_mode(mode, serializer);
+          sse_encode_opt_box_autoadd_u_32(everyNPages, serializer);
+          sse_encode_opt_String(splitAfterPages, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 13,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_opt_list_split_pdf_page_range,
+          decodeErrorData: sse_decode_application_error,
+        ),
+        constMeta: kCrateApiSplitPdfPreviewSplitPdfRangesConstMeta,
+        argValues: [pageCount, mode, everyNPages, splitAfterPages],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiSplitPdfPreviewSplitPdfRangesConstMeta =>
+      const TaskConstMeta(
+        debugName: "preview_split_pdf_ranges",
+        argNames: ["pageCount", "mode", "everyNPages", "splitAfterPages"],
+      );
+
+  @override
   Stream<ProtectPdfUpdate> crateApiPdfSecurityProtectPdf({
     required ProtectPdfRequest request,
   }) {
@@ -613,7 +659,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             pdeCallFfi(
               generalizedFrbRustBinding,
               serializer,
-              funcId: 13,
+              funcId: 14,
               port: port_,
             );
           },
@@ -648,7 +694,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 14,
+            funcId: 15,
             port: port_,
           );
         },
@@ -684,7 +730,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             pdeCallFfi(
               generalizedFrbRustBinding,
               serializer,
-              funcId: 15,
+              funcId: 16,
               port: port_,
             );
           },
@@ -724,7 +770,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             pdeCallFfi(
               generalizedFrbRustBinding,
               serializer,
-              funcId: 16,
+              funcId: 17,
               port: port_,
             );
           },
@@ -1092,6 +1138,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<SplitPdfPageRange> dco_decode_list_split_pdf_page_range(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_split_pdf_page_range).toList();
+  }
+
+  @protected
   List<SplitPdfPart> dco_decode_list_split_pdf_part(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_split_pdf_part).toList();
@@ -1170,6 +1222,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   BigInt? dco_decode_opt_box_autoadd_u_64(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_box_autoadd_u_64(raw);
+  }
+
+  @protected
+  List<SplitPdfPageRange>? dco_decode_opt_list_split_pdf_page_range(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_list_split_pdf_page_range(raw);
   }
 
   @protected
@@ -1470,6 +1530,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   SplitPdfMode dco_decode_split_pdf_mode(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return SplitPdfMode.values[raw as int];
+  }
+
+  @protected
+  SplitPdfPageRange dco_decode_split_pdf_page_range(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return SplitPdfPageRange(
+      firstPage: dco_decode_u_32(arr[0]),
+      lastPage: dco_decode_u_32(arr[1]),
+    );
   }
 
   @protected
@@ -2037,6 +2109,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<SplitPdfPageRange> sse_decode_list_split_pdf_page_range(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <SplitPdfPageRange>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_split_pdf_page_range(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
   List<SplitPdfPart> sse_decode_list_split_pdf_part(
     SseDeserializer deserializer,
   ) {
@@ -2158,6 +2244,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
     if (sse_decode_bool(deserializer)) {
       return (sse_decode_box_autoadd_u_64(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  List<SplitPdfPageRange>? sse_decode_opt_list_split_pdf_page_range(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_list_split_pdf_page_range(deserializer));
     } else {
       return null;
     }
@@ -2544,6 +2643,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var inner = sse_decode_i_32(deserializer);
     return SplitPdfMode.values[inner];
+  }
+
+  @protected
+  SplitPdfPageRange sse_decode_split_pdf_page_range(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_firstPage = sse_decode_u_32(deserializer);
+    var var_lastPage = sse_decode_u_32(deserializer);
+    return SplitPdfPageRange(firstPage: var_firstPage, lastPage: var_lastPage);
   }
 
   @protected
@@ -3192,6 +3301,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_list_split_pdf_page_range(
+    List<SplitPdfPageRange> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_split_pdf_page_range(item, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_list_split_pdf_part(
     List<SplitPdfPart> self,
     SseSerializer serializer,
@@ -3303,6 +3424,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_bool(self != null, serializer);
     if (self != null) {
       sse_encode_box_autoadd_u_64(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_list_split_pdf_page_range(
+    List<SplitPdfPageRange>? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_list_split_pdf_page_range(self, serializer);
     }
   }
 
@@ -3604,6 +3738,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   void sse_encode_split_pdf_mode(SplitPdfMode self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
+  void sse_encode_split_pdf_page_range(
+    SplitPdfPageRange self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_u_32(self.firstPage, serializer);
+    sse_encode_u_32(self.lastPage, serializer);
   }
 
   @protected

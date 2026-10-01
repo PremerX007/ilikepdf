@@ -168,7 +168,7 @@ fn split_pdf_with_verifier(
         }
         mode => (
             Some(
-                plan_deterministic_ranges(source_page_count, mode)
+                plan_split_pdf_ranges(source_page_count, mode)
                     .map_err(|error| SplitPdfFailure::with_page_count(error, source_page_count))?,
             ),
             None,
@@ -329,10 +329,18 @@ fn split_pdf_with_verifier(
     })
 }
 
-fn plan_deterministic_ranges(
+/// Pure range policy shared by the visual preview and execution. No PDF I/O.
+/// Size-based ranges must be discovered by generating actual outputs instead.
+pub fn plan_split_pdf_ranges(
     page_count: u32,
     mode: &SplitPdfMode,
 ) -> ApplicationResult<Vec<SplitPdfPageRange>> {
+    if page_count < 2 {
+        return Err(ApplicationError::new(
+            ApplicationErrorCode::PdfHasTooFewPages,
+            "This PDF has only one page and cannot be split",
+        ));
+    }
     match mode {
         SplitPdfMode::EveryPage => Ok((1..=page_count)
             .map(|page| SplitPdfPageRange {

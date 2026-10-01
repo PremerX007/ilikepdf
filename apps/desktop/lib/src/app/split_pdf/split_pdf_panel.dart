@@ -1,10 +1,9 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:ilikepdf/src/app/shared/destination_picker.dart';
 import 'package:ilikepdf/src/app/shared/file_drop_zone.dart';
-import 'package:ilikepdf/src/app/shared/file_preview_card.dart';
+import 'package:ilikepdf/src/app/shared/page_thumbnail_cache.dart';
 import 'package:ilikepdf/src/app/shared/tool_workspace.dart';
+import 'package:ilikepdf/src/app/split_pdf/split_page_workspace.dart';
 import 'package:ilikepdf/src/app/split_pdf/split_pdf_workflow.dart';
 
 class SplitPdfPanel extends StatefulWidget {
@@ -28,14 +27,17 @@ class _SplitPdfPanelState extends State<SplitPdfPanel> {
   );
 
   SelectedSplitPdf? _source;
-  RenderedSplitPdfPage? _preview;
+  PageThumbnailCache? _thumbnails;
+  Future<void>? _previousThumbnailsIdle;
+  List<SplitPdfRange>? _deterministicRanges;
+  String? _planError;
+  bool _planning = false;
+  int _planRevision = 0;
   SplitPdfMode _mode = SplitPdfMode.everyPage;
   String? _destinationDirectory;
   bool _customDestination = false;
   bool _isSelecting = false;
   bool _isSplitting = false;
-  bool _isPreviewing = false;
-  bool _previewFailed = false;
   String? _interactionError;
   SplitPdfUpdate? _splitUpdate;
 
@@ -45,17 +47,6 @@ class _SplitPdfPanelState extends State<SplitPdfPanel> {
   int? get _maximumSizeMb =>
       parsePositiveWholeNumber(_maximumSizeController.text);
 
-  List<SplitPdfRange>? get _deterministicRanges {
-    final source = _source;
-    if (source == null) return null;
-    return deriveDeterministicSplitRanges(
-      pageCount: source.pageCount,
-      mode: _mode,
-      everyNPages: _everyNController.text,
-      splitAfterPages: _splitAfterController.text,
-    );
-  }
-
   String? get _configurationError {
     final source = _source;
     if (source == null) return null;
@@ -64,20 +55,20 @@ class _SplitPdfPanelState extends State<SplitPdfPanel> {
     }
     switch (_mode) {
       case SplitPdfMode.everyPage:
-        return null;
+        return _planError;
       case SplitPdfMode.everyNPages:
         final every = _everyN;
         if (every == null) return 'Enter a positive whole number of pages.';
         if (every >= source.pageCount) {
           return 'Enter a value smaller than ${source.pageCount}.';
         }
-        return null;
+        return _planError;
       case SplitPdfMode.splitAfterPages:
         if (_splitAfterController.text.trim().isEmpty) {
           return 'Enter at least one split point.';
         }
         if (_deterministicRanges == null) {
-          return 'Use ascending, comma-separated pages from 1 to ${source.pageCount - 1}.';
+          return _planning ? null : _planError;
         }
         return null;
       case SplitPdfMode.maximumFileSize:
@@ -97,10 +88,14 @@ class _SplitPdfPanelState extends State<SplitPdfPanel> {
       !_isBusy &&
       _source != null &&
       _destinationDirectory != null &&
-      _configurationError == null;
+      _configurationError == null &&
+      !_planning &&
+      (_mode == SplitPdfMode.maximumFileSize || _deterministicRanges != null);
 
   @override
   void dispose() {
+    _planRevision++;
+    _disposeThumbnails();
     _everyNController.dispose();
     _splitAfterController.dispose();
     _maximumSizeController.dispose();
@@ -152,47 +147,102 @@ class _SplitPdfPanelState extends State<SplitPdfPanel> {
   }
 
   Future<void> _replaceSource(SelectedSplitPdf selected) async {
+    _disposeThumbnails();
     setState(() {
       _source = selected;
-      _preview = null;
-      _previewFailed = false;
-      if (!_customDestination) {
-        _destinationDirectory = selected.sourceDirectory;
-      }
+      _thumbnails = PageThumbnailCache(
+        previousSessionIdle: _previousThumbnailsIdle,
+        render: (pageIndex) async => (await widget.workflow.renderPage(
+          selected.sourcePath,
+          pageIndex,
+        )).outputPath,
+      );
+      if (!_customDestination) _destinationDirectory = selected.sourceDirectory;
       _interactionError = null;
       _splitUpdate = null;
     });
-    await _loadPreview(selected);
+    await _refreshPlan();
   }
 
-  Future<void> _loadPreview(SelectedSplitPdf source) async {
-    setState(() => _isPreviewing = true);
+  void _disposeThumbnails() {
+    final cache = _thumbnails;
+    if (cache == null) return;
+    cache.dispose();
+    _previousThumbnailsIdle = cache.disposedAndIdle;
+  }
+
+  Future<void> _refreshPlan() async {
+    final revision = ++_planRevision;
+    final source = _source;
+    setState(() {
+      _deterministicRanges = null;
+      _planError = null;
+      _planning = source != null && _mode != SplitPdfMode.maximumFileSize;
+    });
+    if (!_planning || source == null) return;
     try {
-      final preview = await widget.workflow.renderFirstPage(source.sourcePath);
-      if (mounted && _source?.sourcePath == source.sourcePath) {
-        setState(() {
-          _preview = preview;
-          _previewFailed = false;
-        });
-      }
-    } on Object {
-      if (mounted && _source?.sourcePath == source.sourcePath) {
-        setState(() => _previewFailed = true);
-      }
-    } finally {
-      if (mounted && _source?.sourcePath == source.sourcePath) {
-        setState(() => _isPreviewing = false);
-      }
+      final ranges = await widget.workflow.previewRanges(
+        pageCount: source.pageCount,
+        mode: _mode,
+        everyNPages: _everyN,
+        splitAfterPages: _splitAfterController.text,
+      );
+      if (!mounted || revision != _planRevision) return;
+      setState(() {
+        _deterministicRanges = ranges;
+        _planning = false;
+      });
+    } on Object catch (error) {
+      if (!mounted || revision != _planRevision) return;
+      setState(() {
+        _planning = false;
+        _planError = error is SplitPdfSelectionException
+            ? error.problem.message
+            : 'The split preview could not be calculated.';
+      });
     }
+  }
+
+  void _toggleBoundary(int page) {
+    final source = _source;
+    if (_isBusy ||
+        _planning ||
+        _mode != SplitPdfMode.splitAfterPages ||
+        source == null ||
+        page < 1 ||
+        page >= source.pageCount) {
+      return;
+    }
+    // Only empty input or a current valid plan can be edited visually.
+    // Invalid typed text must be corrected explicitly, never silently sorted.
+    final ranges = _deterministicRanges;
+    if (ranges == null && _splitAfterController.text.trim().isNotEmpty) return;
+    final points = ranges == null
+        ? <int>[]
+        : ranges
+              .take(ranges.length - 1)
+              .map((range) => range.lastPage)
+              .toList();
+    if (!points.remove(page)) points.add(page);
+    points.sort();
+    final text = points.join(',');
+    _splitAfterController.value = TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(offset: text.length),
+    );
+    _parametersChanged();
   }
 
   void _clearSource() {
     if (_isBusy) return;
+    _planRevision++;
+    _disposeThumbnails();
     setState(() {
       _source = null;
-      _preview = null;
-      _previewFailed = false;
-      _isPreviewing = false;
+      _thumbnails = null;
+      _deterministicRanges = null;
+      _planning = false;
+      _planError = null;
       _destinationDirectory = null;
       _customDestination = false;
       _mode = SplitPdfMode.everyPage;
@@ -238,6 +288,7 @@ class _SplitPdfPanelState extends State<SplitPdfPanel> {
       _interactionError = null;
       _splitUpdate = null;
     });
+    _refreshPlan();
   }
 
   void _parametersChanged() {
@@ -245,6 +296,7 @@ class _SplitPdfPanelState extends State<SplitPdfPanel> {
       _interactionError = null;
       _splitUpdate = null;
     });
+    _refreshPlan();
   }
 
   Future<void> _split() async {
@@ -334,6 +386,31 @@ class _SplitPdfPanelState extends State<SplitPdfPanel> {
 
   Widget _buildPopulatedWorkspace() {
     final source = _source!;
+    final completed = _splitUpdate?.status == SplitPdfUpdateStatus.complete
+        ? _splitUpdate
+        : null;
+    final ranges = completed == null
+        ? _deterministicRanges
+        : completed.parts.map((part) => part.range).toList(growable: false);
+    final String guidance;
+    if (completed != null) {
+      guidance = '${completed.parts.length} parts created';
+    } else if (_mode == SplitPdfMode.maximumFileSize) {
+      guidance = 'Parts will be determined during splitting.';
+    } else if (_planning) {
+      guidance = 'Updating split preview…';
+    } else if (_mode == SplitPdfMode.splitAfterPages &&
+        _splitAfterController.text.trim().isEmpty) {
+      guidance =
+          'Choose pages to split after. The final page ends the last part.';
+    } else if (ranges == null) {
+      guidance = 'Preview unavailable. Correct the split settings to continue.';
+    } else if (_mode == SplitPdfMode.splitAfterPages) {
+      guidance =
+          'Choose pages to split after. Each outlined group becomes one PDF.';
+    } else {
+      guidance = '${source.pageCount} pages → ${ranges.length} PDF outputs';
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -342,9 +419,20 @@ class _SplitPdfPanelState extends State<SplitPdfPanel> {
           child: Row(
             children: [
               Expanded(
-                child: Text(
-                  '1 selected PDF',
-                  style: Theme.of(context).textTheme.titleMedium,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      source.displayName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    Text(
+                      '${source.pageCount} pages',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
                 ),
               ),
               OutlinedButton.icon(
@@ -353,32 +441,40 @@ class _SplitPdfPanelState extends State<SplitPdfPanel> {
                 icon: const Icon(Icons.swap_horiz_rounded),
                 label: const Text('Replace PDF'),
               ),
+              IconButton(
+                key: const ValueKey('remove-split-pdf'),
+                tooltip: 'Remove PDF',
+                onPressed: _isBusy ? null : _clearSource,
+                icon: const Icon(Icons.close_rounded),
+              ),
             ],
           ),
         ),
         const Divider(height: 1),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+          child: Text(
+            guidance,
+            key: const ValueKey('split-workspace-guidance'),
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ),
         Expanded(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: SizedBox(
-                width: 280,
-                height: 330,
-                child: FilePreviewCard(
-                  key: const ValueKey('split-pdf-source-card'),
-                  thumbnail: _SplitPdfThumbnail(
-                    preview: _preview,
-                    isPreviewing: _isPreviewing,
-                    previewFailed: _previewFailed,
-                  ),
-                  filename: source.displayName,
-                  positionLabel:
-                      '${source.pageCount} ${source.pageCount == 1 ? 'page' : 'pages'}',
-                  removeButtonKey: const ValueKey('remove-split-pdf'),
-                  onRemove: _isBusy ? null : _clearSource,
-                ),
-              ),
-            ),
+          child: SplitPageWorkspace(
+            cache: _thumbnails!,
+            pageCount: source.pageCount,
+            ranges: ranges,
+            compactParts: _mode == SplitPdfMode.everyPage,
+            boundaryMode: _mode == SplitPdfMode.splitAfterPages,
+            canToggle:
+                !_isBusy &&
+                !_planning &&
+                (_deterministicRanges != null ||
+                    _splitAfterController.text.trim().isEmpty),
+            onToggle: _toggleBoundary,
+            partSizes: completed?.parts
+                .map((part) => part.sizeBytes)
+                .toList(growable: false),
           ),
         ),
       ],
@@ -505,7 +601,7 @@ class _SplitPdfPanelState extends State<SplitPdfPanel> {
         [
           '${source.pageCount} pages',
           if (maximum != null) 'Maximum $maximum MB per PDF',
-          'Parts will be determined during splitting.',
+          'Output count is available after splitting.',
         ].join('\n'),
         key: const ValueKey('split-output-summary'),
       );
@@ -557,63 +653,6 @@ class _SplitPdfPanelState extends State<SplitPdfPanel> {
       return _SplitSuccess(update: update);
     }
     return null;
-  }
-}
-
-class _SplitPdfThumbnail extends StatelessWidget {
-  const _SplitPdfThumbnail({
-    required this.preview,
-    required this.isPreviewing,
-    required this.previewFailed,
-  });
-
-  final RenderedSplitPdfPage? preview;
-  final bool isPreviewing;
-  final bool previewFailed;
-
-  @override
-  Widget build(BuildContext context) {
-    if (isPreviewing) {
-      return const Center(
-        key: ValueKey('split-pdf-preview-loading'),
-        child: SizedBox.square(
-          dimension: 24,
-          child: CircularProgressIndicator(strokeWidth: 2),
-        ),
-      );
-    }
-    if (previewFailed) {
-      return const _PreviewUnavailable(
-        key: ValueKey('split-pdf-preview-error'),
-      );
-    }
-    if (preview case final rendered?) {
-      return Image.file(
-        File(rendered.outputPath),
-        key: const ValueKey('split-pdf-preview-image'),
-        fit: BoxFit.contain,
-        errorBuilder: (_, _, _) => const _PreviewUnavailable(),
-      );
-    }
-    return const _PreviewUnavailable();
-  }
-}
-
-class _PreviewUnavailable extends StatelessWidget {
-  const _PreviewUnavailable({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.broken_image_outlined),
-          SizedBox(height: 8),
-          Text('Preview unavailable'),
-        ],
-      ),
-    );
   }
 }
 

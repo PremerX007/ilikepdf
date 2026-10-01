@@ -38,8 +38,8 @@ pub use application::structural_pdf::{
     default_protect_pdf_output_name, default_unlock_pdf_output_name, inspect_organize_pdf_sources,
     inspect_protect_pdf_source, inspect_split_pdf_source, inspect_unlock_pdf_source, merge_pdf,
     normalize_organize_pdf_output_name, normalize_secure_pdf_output_name, organize_pdf,
-    probe_structural_pdf_engine, protect_pdf, rewrite_structural_pdf, split_pdf, unlock_pdf,
-    validate_structural_pdf,
+    plan_split_pdf_ranges, probe_structural_pdf_engine, protect_pdf, rewrite_structural_pdf,
+    split_pdf, unlock_pdf, validate_structural_pdf,
 };
 pub use error::{ApplicationError, ApplicationErrorCode, ApplicationResult};
 pub use secret::SecretString;

@@ -4,7 +4,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ilikepdf/src/app/shared/file_drop_zone.dart';
+import 'package:ilikepdf/src/app/shared/page_thumbnail_cache.dart';
 import 'package:ilikepdf/src/app/shared/tool_workspace.dart';
+import 'package:ilikepdf/src/app/split_pdf/split_page_workspace.dart';
 import 'package:ilikepdf/src/app/split_pdf/split_pdf_panel.dart';
 import 'package:ilikepdf/src/app/split_pdf/split_pdf_workflow.dart';
 import 'package:ilikepdf/src/rust/api/error.dart';
@@ -31,6 +33,9 @@ class FakeSplitPdfWorkflow implements SplitPdfWorkflow {
   FakeSplitPdfWorkflow({required this.previewPath});
 
   final String previewPath;
+  static int nextThumbnail = 0;
+  final List<int> renderedPages = [];
+  Future<List<SplitPdfRange>?> Function(int?, String)? previewOverride;
   SelectedSplitPdf? selected = firstPdf;
   bool rejectPrepared = false;
   String chosenDestination = r'E:\exports';
@@ -64,8 +69,44 @@ class FakeSplitPdfWorkflow implements SplitPdfWorkflow {
   }
 
   @override
-  Future<RenderedSplitPdfPage> renderFirstPage(String sourcePath) async =>
-      RenderedSplitPdfPage(outputPath: previewPath);
+  Future<RenderedSplitPdfPage> renderPage(
+    String sourcePath,
+    int pageIndex,
+  ) async {
+    renderedPages.add(pageIndex);
+    final copy = File(previewPath)
+        .copySync('$previewPath-${nextThumbnail++}.png');
+    return RenderedSplitPdfPage(outputPath: copy.path);
+  }
+
+  @override
+  Future<List<SplitPdfRange>?> previewRanges({
+    required int pageCount,
+    required SplitPdfMode mode,
+    required int? everyNPages,
+    required String splitAfterPages,
+  }) async {
+    if (previewOverride != null) {
+      return previewOverride!(everyNPages, splitAfterPages);
+    }
+    if (mode == SplitPdfMode.maximumFileSize) return null;
+    final ranges = _fakeRanges(
+      pageCount: pageCount,
+      mode: mode,
+      everyNPages: everyNPages?.toString() ?? '',
+      splitAfterPages: splitAfterPages,
+    );
+    if (ranges == null) {
+      throw const SplitPdfSelectionException(
+        SplitPdfProblem(
+          code: ApplicationErrorCode.invalidSplitConfiguration,
+          message:
+              'Use ascending, comma-separated pages before the final page.',
+        ),
+      );
+    }
+    return ranges;
+  }
 
   @override
   Future<SelectedSplitPdf?> selectPdf() async => selected;
@@ -187,20 +228,19 @@ void main() {
     );
   });
 
-  testWidgets('selection shows one source preview and default destination', (
+  testWidgets('selection shows lazy page previews and default destination', (
     tester,
   ) async {
     await _pumpPanel(tester, FakeSplitPdfWorkflow(previewPath: previewPath));
     await tester.tap(find.text('Select PDF'));
     await tester.pumpAndSettle();
 
-    expect(find.byKey(const ValueKey('split-pdf-source-card')), findsOneWidget);
+    expect(find.byType(SplitPageWorkspace), findsOneWidget);
+    expect(find.byType(LazyPageThumbnail), findsWidgets);
+    expect(find.byKey(const ValueKey('split-output-1')), findsOneWidget);
     expect(find.text('report.pdf'), findsOneWidget);
     expect(find.text('20 pages'), findsWidgets);
-    expect(
-      find.byKey(const ValueKey('split-pdf-preview-image')),
-      findsOneWidget,
-    );
+    expect(find.byKey(const ValueKey('page-thumbnail-0')), findsOneWidget);
     expect(find.text(r'C:\docs'), findsOneWidget);
     expect(find.textContaining('20 PDF files'), findsOneWidget);
     expect(
@@ -427,4 +467,57 @@ Future<void> _pumpPanel(
       home: Scaffold(body: SplitPdfPanel(workflow: workflow)),
     ),
   );
+}
+
+// Test double only. Real planner/execution parity is covered in Rust and Windows tests.
+List<SplitPdfRange>? _fakeRanges({
+  required int pageCount,
+  required SplitPdfMode mode,
+  required String everyNPages,
+  required String splitAfterPages,
+}) {
+  if (pageCount < 2) return null;
+  switch (mode) {
+    case SplitPdfMode.everyPage:
+      return [
+        for (var page = 1; page <= pageCount; page++)
+          SplitPdfRange(firstPage: page, lastPage: page),
+      ];
+    case SplitPdfMode.everyNPages:
+      final every = parsePositiveWholeNumber(everyNPages);
+      if (every == null || every >= pageCount) return null;
+      return [
+        for (var first = 1; first <= pageCount; first += every)
+          SplitPdfRange(
+            firstPage: first,
+            lastPage: (first + every - 1).clamp(1, pageCount),
+          ),
+      ];
+    case SplitPdfMode.splitAfterPages:
+      final tokens = splitAfterPages.split(',');
+      if (splitAfterPages.trim().isEmpty ||
+          tokens.any((token) => token.trim().isEmpty)) {
+        return null;
+      }
+      final points = <int>[];
+      for (final token in tokens) {
+        final point = parsePositiveWholeNumber(token);
+        if (point == null ||
+            point >= pageCount ||
+            (points.isNotEmpty && point <= points.last)) {
+          return null;
+        }
+        points.add(point);
+      }
+      var first = 1;
+      final ranges = <SplitPdfRange>[];
+      for (final point in points) {
+        ranges.add(SplitPdfRange(firstPage: first, lastPage: point));
+        first = point + 1;
+      }
+      ranges.add(SplitPdfRange(firstPage: first, lastPage: pageCount));
+      return ranges;
+    case SplitPdfMode.maximumFileSize:
+      return null;
+  }
 }

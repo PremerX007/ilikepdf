@@ -136,6 +136,88 @@ fn run(
 }
 
 #[test]
+fn visual_preview_ranges_are_exactly_the_executed_ranges() {
+    for (mode, expected) in [
+        (
+            SplitPdfMode::EveryPage,
+            (1..=10).map(|p| (p, p)).collect::<Vec<_>>(),
+        ),
+        (
+            SplitPdfMode::EveryNPages { pages_per_part: 3 },
+            vec![(1, 3), (4, 6), (7, 9), (10, 10)],
+        ),
+        (
+            SplitPdfMode::SplitAfterPages {
+                split_after_pages: "3,7".to_owned(),
+            },
+            vec![(1, 3), (4, 7), (8, 10)],
+        ),
+        (
+            SplitPdfMode::SplitAfterPages {
+                split_after_pages: "1,9".to_owned(),
+            },
+            vec![(1, 1), (2, 9), (10, 10)],
+        ),
+    ] {
+        let directory = tempfile::tempdir().unwrap();
+        let source = source_file(directory.path(), "preview.pdf", 10, 100);
+        let engine = FakeRangeEngine::successful();
+        let preview = plan_split_pdf_ranges(10, &mode).unwrap();
+        let result = run(&engine, source, directory.path().to_owned(), mode).unwrap();
+        assert_eq!(
+            preview
+                .iter()
+                .map(|r| (r.first_page, r.last_page))
+                .collect::<Vec<_>>(),
+            expected
+        );
+        assert_eq!(
+            result
+                .parts
+                .iter()
+                .map(|part| part.range)
+                .collect::<Vec<_>>(),
+            preview
+        );
+        assert_eq!(
+            engine
+                .requests
+                .lock()
+                .unwrap()
+                .iter()
+                .map(|r| (r.first_page, r.last_page))
+                .collect::<Vec<_>>(),
+            expected
+        );
+    }
+}
+
+#[test]
+fn preview_rejects_unknown_size_ranges_and_invalid_editing_states() {
+    assert!(
+        plan_split_pdf_ranges(
+            10,
+            &SplitPdfMode::MaximumFileSize {
+                maximum_size_mb: 10
+            }
+        )
+        .is_err()
+    );
+    assert!(plan_split_pdf_ranges(1, &SplitPdfMode::EveryPage).is_err());
+    for text in ["", "3,", "7,3", "10", "0", "1,1"] {
+        assert!(
+            plan_split_pdf_ranges(
+                10,
+                &SplitPdfMode::SplitAfterPages {
+                    split_after_pages: text.to_owned()
+                }
+            )
+            .is_err()
+        );
+    }
+}
+
+#[test]
 fn every_page_derives_complete_ordered_ranges_and_names() {
     let directory = tempfile::tempdir().unwrap();
     let source = source_file(directory.path(), "report.pdf", 4, 100);
@@ -168,7 +250,7 @@ fn every_page_derives_complete_ordered_ranges_and_names() {
 #[test]
 fn every_n_keeps_the_short_final_range_and_rejects_non_splits() {
     assert_eq!(
-        plan_deterministic_ranges(10, &SplitPdfMode::EveryNPages { pages_per_part: 3 }).unwrap(),
+        plan_split_pdf_ranges(10, &SplitPdfMode::EveryNPages { pages_per_part: 3 }).unwrap(),
         [
             SplitPdfPageRange {
                 first_page: 1,
@@ -189,22 +271,20 @@ fn every_n_keeps_the_short_final_range_and_rejects_non_splits() {
         ]
     );
     assert_eq!(
-        plan_deterministic_ranges(10, &SplitPdfMode::EveryNPages { pages_per_part: 1 })
+        plan_split_pdf_ranges(10, &SplitPdfMode::EveryNPages { pages_per_part: 1 })
             .unwrap()
             .len(),
         10
     );
     for pages_per_part in [0, 10, 11] {
-        assert!(
-            plan_deterministic_ranges(10, &SplitPdfMode::EveryNPages { pages_per_part }).is_err()
-        );
+        assert!(plan_split_pdf_ranges(10, &SplitPdfMode::EveryNPages { pages_per_part }).is_err());
     }
 }
 
 #[test]
 fn split_after_parser_preserves_user_order_and_rejects_bad_syntax() {
     assert_eq!(
-        plan_deterministic_ranges(
+        plan_split_pdf_ranges(
             20,
             &SplitPdfMode::SplitAfterPages {
                 split_after_pages: " 3, 7, 15 ".to_owned(),

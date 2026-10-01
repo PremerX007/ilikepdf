@@ -292,6 +292,27 @@ QpdfCliEngine
 shared QpdfProcessRunner
 ```
 
+Split's visual workspace obtains typed inclusive ranges through
+`preview_split_pdf_ranges`, which calls the same pure core
+`plan_split_pdf_ranges` policy as execution. Flutter owns raw editing text and
+layout only. Each edit invalidates the prior preview and disables execution
+until the current request succeeds; revision checks discard stale responses.
+Invalid nonempty split-point text must be corrected before boundary clicks can
+edit it. An empty field allows starting a boundary selection. Final-page
+boundaries remain disabled, while page 1 is valid.
+
+The workspace virtualizes fixed-height rows inside output parts as well as
+between parts. A prefix row index maps the visible rows to typed ranges;
+continued rows repeat the part label and share a dashed outline. Every-page
+outputs use compact per-card labels. A small independent `PageThumbnailCache`
+uses PDFium previews at width 360, two concurrent renders, viewport-demanded
+queues, and 32 retained entries (including failures). Source replacement waits
+for prior in-flight renders, evictions remove temporary files and decoded-image
+cache entries, and disposal discards late results. Group changes reuse page
+identity and cached previews. No Organize workflow state is shared or changed.
+Size mode shows ungrouped pages until execution supplies actual ranges and
+sizes; preview never generates candidate PDFs.
+
 In particular, size grouping is not a qpdf engine capability. The application
 uses a deterministic greedy search and accepts or rejects each candidate from
 the actual generated PDF byte size. The UI uses decimal megabytes (1 MB =

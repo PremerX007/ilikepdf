@@ -9,7 +9,21 @@ import 'error.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
 // These functions are ignored because they are not marked as `pub`: `failed_update`, `to_core_mode`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`
+
+/// Derive the same ranges as execution, without opening a PDF or running qpdf.
+/// None explicitly means size-based discovery, never estimated ranges.
+Future<List<SplitPdfPageRange>?> previewSplitPdfRanges({
+  required int pageCount,
+  required SplitPdfMode mode,
+  int? everyNPages,
+  String? splitAfterPages,
+}) => RustLib.instance.api.crateApiSplitPdfPreviewSplitPdfRanges(
+  pageCount: pageCount,
+  mode: mode,
+  everyNPages: everyNPages,
+  splitAfterPages: splitAfterPages,
+);
 
 Future<SplitPdfSourceInfo> inspectSplitPdfSource({
   required String sourcePath,
@@ -21,6 +35,24 @@ Stream<SplitPdfUpdate> splitPdf({required SplitPdfRequest request}) =>
     RustLib.instance.api.crateApiSplitPdfSplitPdf(request: request);
 
 enum SplitPdfMode { everyPage, everyNPages, splitAfterPages, maximumFileSize }
+
+class SplitPdfPageRange {
+  final int firstPage;
+  final int lastPage;
+
+  const SplitPdfPageRange({required this.firstPage, required this.lastPage});
+
+  @override
+  int get hashCode => firstPage.hashCode ^ lastPage.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SplitPdfPageRange &&
+          runtimeType == other.runtimeType &&
+          firstPage == other.firstPage &&
+          lastPage == other.lastPage;
+}
 
 class SplitPdfPart {
   final String outputPath;
