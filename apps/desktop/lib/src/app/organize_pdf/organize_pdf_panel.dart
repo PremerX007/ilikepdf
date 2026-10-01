@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:ilikepdf/src/app/organize_pdf/organize_pdf_workflow.dart';
+import 'package:ilikepdf/src/app/organize_pdf/organize_source_identity.dart';
 import 'package:ilikepdf/src/app/shared/destination_picker.dart';
 import 'package:ilikepdf/src/app/shared/file_drop_zone.dart';
 import 'package:ilikepdf/src/app/shared/reorderable_item_grid.dart';
@@ -18,10 +19,15 @@ class OrganizePdfPanel extends StatefulWidget {
 }
 
 class _OrganizeSourceItem {
-  const _OrganizeSourceItem({required this.id, required this.pdf});
+  const _OrganizeSourceItem({
+    required this.id,
+    required this.pdf,
+    required this.accent,
+  });
 
   final int id;
   final SelectedOrganizePdf pdf;
+  final OrganizeSourceAccent accent;
 }
 
 class _OrganizePageItem {
@@ -139,7 +145,13 @@ class _OrganizePdfPanelState extends State<OrganizePdfPanel> {
     setState(() {
       for (final pdf in additions) {
         final sourceId = _nextSourceId++;
-        _sources.add(_OrganizeSourceItem(id: sourceId, pdf: pdf));
+        _sources.add(
+          _OrganizeSourceItem(
+            id: sourceId,
+            pdf: pdf,
+            accent: OrganizeSourceAccent(sourceId),
+          ),
+        );
         for (
           var sourcePageIndex = 0;
           sourcePageIndex < pdf.pageCount;
@@ -510,19 +522,17 @@ class _OrganizePdfPanelState extends State<OrganizePdfPanel> {
               items: _pages,
               enabled: !_isBusy,
               onReorder: _reorderPage,
-              itemBuilder: (context, page, index, reorderHandle) {
+              itemBuilder: (context, page, index, dragSurface) {
                 final source = _sourceById(page.sourceId)!;
                 return _OrganizePageCard(
                   key: ValueKey('organize-page-card-${page.id}'),
                   page: page,
                   sourceName: source.pdf.displayName,
+                  sourceAccent: source.accent,
                   thumbnail: _thumbnails[page.id],
                   previewFailed: _thumbnailFailures.contains(page.id),
                   enabled: !_isBusy,
-                  reorderHandle: KeyedSubtree(
-                    key: ValueKey('reorder-organize-page-$index'),
-                    child: reorderHandle,
-                  ),
+                  dragSurface: dragSurface,
                   onThumbnailNeeded: () => _requestThumbnail(page.id),
                   onRotateLeft: () => _rotatePage(page.id, clockwise: false),
                   onRotateRight: () => _rotatePage(page.id, clockwise: true),
@@ -573,11 +583,16 @@ class _OrganizePdfPanelState extends State<OrganizePdfPanel> {
                   color: Theme.of(context).colorScheme.surfaceContainerLow,
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                    color: Theme.of(context).colorScheme.outlineVariant,
+                    color: source.accent.primaryColor.withValues(alpha: 0.65),
                   ),
                 ),
                 child: ListTile(
                   dense: true,
+                  leading: OrganizeSourceIdentity(
+                    key: ValueKey('organize-source-identity-${source.id}'),
+                    accent: source.accent,
+                    sourceName: source.pdf.displayName,
+                  ),
                   title: Text(
                     source.pdf.displayName,
                     maxLines: 1,
@@ -693,10 +708,11 @@ class _OrganizePageCard extends StatefulWidget {
   const _OrganizePageCard({
     required this.page,
     required this.sourceName,
+    required this.sourceAccent,
     required this.thumbnail,
     required this.previewFailed,
     required this.enabled,
-    required this.reorderHandle,
+    required this.dragSurface,
     required this.onThumbnailNeeded,
     required this.onRotateLeft,
     required this.onRotateRight,
@@ -706,10 +722,11 @@ class _OrganizePageCard extends StatefulWidget {
 
   final _OrganizePageItem page;
   final String sourceName;
+  final OrganizeSourceAccent sourceAccent;
   final RenderedOrganizePdfPage? thumbnail;
   final bool previewFailed;
   final bool enabled;
-  final Widget reorderHandle;
+  final ReorderableDragBuilder dragSurface;
   final VoidCallback onThumbnailNeeded;
   final VoidCallback onRotateLeft;
   final VoidCallback onRotateRight;
@@ -742,12 +759,33 @@ class _OrganizePageCardState extends State<_OrganizePageCard> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        widget.dragSurface(
+          child: _buildCard(context, colors),
+          feedback: Stack(
+            fit: StackFit.expand,
+            children: [_buildCard(context, colors), _buildActions()],
+          ),
+        ),
+        // Siblings above the draggable are excluded by Stack hit testing,
+        // including pointer movement beginning on an action button.
+        _buildActions(),
+      ],
+    );
+  }
+
+  Widget _buildCard(BuildContext context, ColorScheme colors) {
     return Card(
       margin: EdgeInsets.zero,
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
-        side: BorderSide(color: colors.outlineVariant),
+        side: BorderSide(
+          color: widget.sourceAccent.primaryColor.withValues(alpha: 0.65),
+          width: 1.5,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -766,43 +804,36 @@ class _OrganizePageCardState extends State<_OrganizePageCard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(
-                  widget.sourceName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.labelLarge,
+                Row(
+                  children: [
+                    OrganizeSourceIdentity(
+                      key: ValueKey('organize-page-identity-${widget.page.id}'),
+                      accent: widget.sourceAccent,
+                      sourceName: widget.sourceName,
+                    ),
+                    const SizedBox(width: 7),
+                    Expanded(
+                      child: Tooltip(
+                        message: widget.sourceName,
+                        child: Text(
+                          widget.sourceName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.labelLarge,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 2),
                 Text(
+                  key: ValueKey('organize-page-label-${widget.page.id}'),
                   'Page ${widget.page.sourcePageIndex + 1}',
                   style: Theme.of(context).textTheme.bodySmall
                       ?.copyWith(color: colors.onSurfaceVariant),
                 ),
                 const SizedBox(height: 6),
-                Row(
-                  children: [
-                    widget.reorderHandle,
-                    const Spacer(),
-                    _PageAction(
-                      key: ValueKey('rotate-left-${widget.page.id}'),
-                      tooltip: 'Rotate left',
-                      icon: Icons.rotate_left_rounded,
-                      onPressed: widget.enabled ? widget.onRotateLeft : null,
-                    ),
-                    _PageAction(
-                      key: ValueKey('rotate-right-${widget.page.id}'),
-                      tooltip: 'Rotate right',
-                      icon: Icons.rotate_right_rounded,
-                      onPressed: widget.enabled ? widget.onRotateRight : null,
-                    ),
-                    _PageAction(
-                      key: ValueKey('delete-organize-page-${widget.page.id}'),
-                      tooltip: 'Delete page',
-                      icon: Icons.delete_outline_rounded,
-                      onPressed: widget.enabled ? widget.onDelete : null,
-                    ),
-                  ],
-                ),
+                const SizedBox(height: 32),
               ],
             ),
           ),
@@ -810,6 +841,34 @@ class _OrganizePageCardState extends State<_OrganizePageCard> {
       ),
     );
   }
+
+  Widget _buildActions() => Positioned(
+    right: 8,
+    bottom: 8,
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _PageAction(
+          key: ValueKey('rotate-left-${widget.page.id}'),
+          tooltip: 'Rotate left',
+          icon: Icons.rotate_left_rounded,
+          onPressed: widget.enabled ? widget.onRotateLeft : null,
+        ),
+        _PageAction(
+          key: ValueKey('rotate-right-${widget.page.id}'),
+          tooltip: 'Rotate right',
+          icon: Icons.rotate_right_rounded,
+          onPressed: widget.enabled ? widget.onRotateRight : null,
+        ),
+        _PageAction(
+          key: ValueKey('delete-organize-page-${widget.page.id}'),
+          tooltip: 'Delete page',
+          icon: Icons.delete_outline_rounded,
+          onPressed: widget.enabled ? widget.onDelete : null,
+        ),
+      ],
+    ),
+  );
 
   Widget _buildThumbnail(ColorScheme colors) {
     final thumbnail = widget.thumbnail;

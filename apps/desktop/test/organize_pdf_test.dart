@@ -2,10 +2,12 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ilikepdf/src/app/organize_pdf/organize_pdf_panel.dart';
 import 'package:ilikepdf/src/app/organize_pdf/organize_pdf_workflow.dart';
+import 'package:ilikepdf/src/app/organize_pdf/organize_source_identity.dart';
 import 'package:ilikepdf/src/app/shared/file_drop_zone.dart';
 import 'package:ilikepdf/src/app/shared/tool_workspace.dart';
 import 'package:ilikepdf/src/rust/api/error.dart';
@@ -27,6 +29,13 @@ const secondPdf = SelectedOrganizePdf(
 const thirdPdf = SelectedOrganizePdf(
   displayName: 'C.pdf',
   sourcePath: r'E:\later\C.pdf',
+  sourceDirectory: r'E:\later',
+  pageCount: 1,
+  hasWarnings: false,
+);
+const fourthPdf = SelectedOrganizePdf(
+  displayName: 'D.pdf',
+  sourcePath: r'E:\later\D.pdf',
   sourceDirectory: r'E:\later',
   pageCount: 1,
   hasWarnings: false,
@@ -185,6 +194,273 @@ void main() {
     expect(normalizeOrganizeOutputName('NUL.pdf'), isNull);
   });
 
+  test(
+    'large sessions extend the palette with distinct accent combinations',
+    () {
+      final identities = List.generate(
+        180,
+        (index) => OrganizeSourceAccent(index).colors,
+      );
+      for (var index = 0; index < identities.length; index++) {
+        for (var other = 0; other < index; other++) {
+          expect(identities[index], isNot(orderedEquals(identities[other])));
+        }
+        expect(identities[index], OrganizeSourceAccent(index).colors);
+      }
+    },
+  );
+
+  testWidgets('source identities match cards and survive session edits', (
+    tester,
+  ) async {
+    final workflow = FakeOrganizePdfWorkflow(previewPath: previewPath)
+      ..selections.addAll([
+        [firstPdf, secondPdf, thirdPdf],
+        [fourthPdf],
+        [secondPdf],
+      ]);
+    await _pumpPanel(tester, workflow);
+    await tester.tap(find.text('Select PDFs'));
+    await tester.pumpAndSettle();
+
+    final first = _identity(tester, 'organize-source-identity-0').accent;
+    final second = _identity(tester, 'organize-source-identity-1').accent;
+    final third = _identity(tester, 'organize-source-identity-2').accent;
+    expect([first.index, second.index, third.index], [0, 1, 2]);
+    expect({
+      first.primaryColor,
+      second.primaryColor,
+      third.primaryColor,
+    }, hasLength(3));
+    expect(_identity(tester, 'organize-page-identity-0').accent, same(first));
+    expect(_identity(tester, 'organize-page-identity-1').accent, same(first));
+    expect(_identity(tester, 'organize-page-identity-2').accent, same(second));
+    expect(_identity(tester, 'organize-page-identity-3').accent, same(third));
+
+    await tester.tap(find.byKey(const ValueKey('add-organize-pdfs')));
+    await tester.pumpAndSettle();
+    expect(_identity(tester, 'organize-page-identity-0').accent, same(first));
+    expect(_identity(tester, 'organize-page-identity-2').accent, same(second));
+    expect(_identity(tester, 'organize-page-identity-3').accent, same(third));
+    final fourth = _identity(tester, 'organize-source-identity-3').accent;
+    expect(fourth.index, 3);
+    expect(_identity(tester, 'organize-page-identity-4').accent, same(fourth));
+
+    await tester.tap(find.byKey(const ValueKey('remove-organize-source-1')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('organize-page-card-2')), findsNothing);
+    expect(_identity(tester, 'organize-source-identity-0').accent, same(first));
+    expect(_identity(tester, 'organize-page-identity-3').accent, same(third));
+    expect(_identity(tester, 'organize-page-identity-4').accent, same(fourth));
+
+    await tester.tap(find.byKey(const ValueKey('rotate-right-0')));
+    await tester.tap(find.byKey(const ValueKey('delete-organize-page-1')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('reset-organize-all')));
+    await tester.pumpAndSettle();
+    expect(_cardOrder(tester), [0, 1, 3, 4]);
+    expect(_identity(tester, 'organize-page-identity-0').accent, same(first));
+    expect(_identity(tester, 'organize-page-identity-1').accent, same(first));
+    expect(_identity(tester, 'organize-page-identity-3').accent, same(third));
+    expect(_identity(tester, 'organize-page-identity-4').accent, same(fourth));
+    expect(_rotation(tester, 0), 0);
+
+    await tester.tap(find.byKey(const ValueKey('add-organize-pdfs')));
+    await tester.pumpAndSettle();
+    expect(_identity(tester, 'organize-source-identity-4').accent.index, 4);
+    expect(_identity(tester, 'organize-page-identity-5').accent.index, 4);
+    expect(_identity(tester, 'organize-page-identity-3').accent, same(third));
+  });
+
+  testWidgets('source filename is available in tooltips and semantics', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    try {
+      final workflow = FakeOrganizePdfWorkflow(previewPath: previewPath)
+        ..selections.add([firstPdf, secondPdf]);
+      await _pumpPanel(tester, workflow);
+      await tester.tap(find.text('Select PDFs'));
+      await tester.pumpAndSettle();
+      expect(find.bySemanticsLabel(RegExp(r'Source 1: A\.pdf')), findsWidgets);
+      expect(find.bySemanticsLabel(RegExp(r'Source 2: B\.pdf')), findsWidgets);
+      expect(find.byTooltip('Source 1: A.pdf'), findsWidgets);
+      expect(find.byTooltip('Source 2: B.pdf'), findsWidgets);
+    } finally {
+      semantics.dispose();
+    }
+  });
+
+  testWidgets(
+    'forward drag shows insertion after the target and Reset restores order',
+    (tester) async {
+      final workflow = FakeOrganizePdfWorkflow(previewPath: previewPath)
+        ..selections.add([firstPdf, secondPdf]);
+      await _pumpPanel(tester, workflow);
+      await tester.tap(find.text('Select PDFs'));
+      await tester.pumpAndSettle();
+      final gesture = await tester.startGesture(
+        tester.getCenter(
+          find.byKey(const ValueKey('organize-page-thumbnail-0')),
+        ),
+        kind: PointerDeviceKind.mouse,
+      );
+      await gesture.moveBy(const Offset(24, 0));
+      await tester.pump();
+      await gesture.moveTo(
+        tester.getCenter(find.byKey(const ValueKey('lazy-reorder-target-2'))),
+      );
+      await tester.pump();
+      final marker = tester.widget<Positioned>(
+        find.byKey(const ValueKey('reorder-insertion-2')),
+      );
+      expect(marker.left, isNull);
+      expect(marker.right, isNotNull);
+      await gesture.up();
+      await tester.pumpAndSettle();
+      expect(_cardOrder(tester), [1, 2, 0]);
+      await tester.tap(find.byKey(const ValueKey('reset-organize-all')));
+      await tester.pumpAndSettle();
+      expect(_cardOrder(tester), [0, 1, 2]);
+    },
+  );
+
+  for (final surface in ['thumbnail', 'label', 'empty area']) {
+    testWidgets('mouse drag from $surface reorders across sources', (
+      tester,
+    ) async {
+      final workflow = FakeOrganizePdfWorkflow(previewPath: previewPath)
+        ..selections.add([firstPdf, secondPdf]);
+      await _pumpPanel(tester, workflow);
+      await tester.tap(find.text('Select PDFs'));
+      await tester.pumpAndSettle();
+      final card = find.byKey(const ValueKey('organize-page-card-2'));
+      final start = switch (surface) {
+        'thumbnail' => tester.getCenter(
+          find.byKey(const ValueKey('organize-page-thumbnail-2')),
+        ),
+        'label' => tester.getCenter(
+          find.byKey(const ValueKey('organize-page-label-2')),
+        ),
+        _ => tester.getBottomLeft(card) + const Offset(14, -24),
+      };
+      final sourceAccent = _identity(tester, 'organize-page-identity-2').accent;
+      final gesture = await tester.startGesture(
+        start,
+        kind: PointerDeviceKind.mouse,
+      );
+      await gesture.moveBy(const Offset(24, 0));
+      await tester.pump();
+      final proxy = find.byKey(const ValueKey('reorder-card-proxy'));
+      expect(proxy, findsOne);
+      expect(
+        tester
+            .widget<OrganizeSourceIdentity>(
+              find.descendant(
+                of: proxy,
+                matching: find.byType(OrganizeSourceIdentity),
+              ),
+            )
+            .accent,
+        same(sourceAccent),
+      );
+      await gesture.moveTo(
+        tester.getCenter(find.byKey(const ValueKey('lazy-reorder-target-0'))),
+      );
+      await tester.pump();
+      expect(find.byKey(const ValueKey('reorder-insertion-0')), findsOne);
+      await gesture.up();
+      await tester.pumpAndSettle();
+      expect(_cardOrder(tester), [2, 0, 1]);
+      expect(
+        _identity(tester, 'organize-page-identity-2').accent,
+        same(sourceAccent),
+      );
+
+      await tester.tap(find.byKey(const ValueKey('organize-pdf-action')));
+      await tester.pumpAndSettle();
+      expect(workflow.submittedPages.map((page) => page.pageItemId), [2, 0, 1]);
+      expect(workflow.submittedPages.map((page) => page.sourceId), [1, 0, 0]);
+    });
+  }
+
+  testWidgets('card clicks and secondary mouse drags do not reorder', (
+    tester,
+  ) async {
+    final workflow = FakeOrganizePdfWorkflow(previewPath: previewPath)
+      ..selections.add([firstPdf, secondPdf]);
+    await _pumpPanel(tester, workflow);
+    await tester.tap(find.text('Select PDFs'));
+    await tester.pumpAndSettle();
+    final start = tester.getCenter(
+      find.byKey(const ValueKey('organize-page-thumbnail-2')),
+    );
+    final click = await tester.startGesture(
+      start,
+      kind: PointerDeviceKind.mouse,
+    );
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.byKey(const ValueKey('reorder-card-proxy')), findsNothing);
+    await click.up();
+    await tester.pumpAndSettle();
+    expect(_cardOrder(tester), [0, 1, 2]);
+
+    final secondary = await tester.startGesture(
+      start,
+      kind: PointerDeviceKind.mouse,
+      buttons: kSecondaryButton,
+    );
+    await secondary.moveTo(
+      tester.getCenter(find.byKey(const ValueKey('lazy-reorder-target-0'))),
+    );
+    await tester.pump();
+    expect(find.byKey(const ValueKey('reorder-card-proxy')), findsNothing);
+    await secondary.up();
+    await tester.pumpAndSettle();
+    expect(_cardOrder(tester), [0, 1, 2]);
+  });
+
+  for (final action in [
+    'rotate-left-2',
+    'rotate-right-2',
+    'delete-organize-page-2',
+  ]) {
+    testWidgets('$action clicks act once and drags cannot reorder', (
+      tester,
+    ) async {
+      final workflow = FakeOrganizePdfWorkflow(previewPath: previewPath)
+        ..selections.add([firstPdf, secondPdf]);
+      await _pumpPanel(tester, workflow);
+      await tester.tap(find.text('Select PDFs'));
+      await tester.pumpAndSettle();
+      final button = find.byKey(ValueKey(action));
+      final gesture = await tester.startGesture(
+        tester.getCenter(button),
+        kind: PointerDeviceKind.mouse,
+      );
+      await gesture.moveTo(
+        tester.getCenter(find.byKey(const ValueKey('lazy-reorder-target-0'))),
+      );
+      await tester.pump();
+      expect(find.byKey(const ValueKey('reorder-card-proxy')), findsNothing);
+      expect(find.byKey(const ValueKey('reorder-insertion-0')), findsNothing);
+      await gesture.up();
+      await tester.pumpAndSettle();
+      expect(_cardOrder(tester), [0, 1, 2]);
+      expect(_rotation(tester, 2), 0);
+
+      await tester.tap(button);
+      await tester.pumpAndSettle();
+      if (action.startsWith('delete')) {
+        expect(_cardOrder(tester), [0, 1]);
+        expect(find.text('B.pdf'), findsOne);
+      } else {
+        expect(_cardOrder(tester), [0, 1, 2]);
+        expect(_rotation(tester, 2), action.startsWith('rotate-left') ? 3 : 1);
+      }
+    });
+  }
+
   testWidgets('empty state loads multiple PDFs and appends later files', (
     tester,
   ) async {
@@ -273,8 +549,10 @@ void main() {
     );
 
     final gesture = await tester.startGesture(
-      tester.getCenter(find.byKey(const ValueKey('reorder-organize-page-2'))),
+      tester.getCenter(find.byKey(const ValueKey('organize-page-thumbnail-2'))),
+      kind: PointerDeviceKind.mouse,
     );
+    await gesture.moveBy(const Offset(24, 0));
     await tester.pump();
     await gesture.moveTo(
       tester.getCenter(find.byKey(const ValueKey('lazy-reorder-target-0'))),
@@ -282,6 +560,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
     await gesture.up();
     await tester.pumpAndSettle();
+    expect(_cardOrder(tester), [2, 0, 1]);
 
     await tester.tap(find.byKey(const ValueKey('delete-organize-page-1')));
     await tester.pumpAndSettle();
@@ -395,6 +674,27 @@ void main() {
     expect(find.textContaining('source PDF changed'), findsOne);
   });
 }
+
+OrganizeSourceIdentity _identity(WidgetTester tester, String key) =>
+    tester.widget<OrganizeSourceIdentity>(find.byKey(ValueKey(key)));
+
+int _rotation(WidgetTester tester, int pageId) => tester
+    .widget<RotatedBox>(find.byKey(ValueKey('organize-page-rotation-$pageId')))
+    .quarterTurns;
+
+List<int> _cardOrder(WidgetTester tester) => tester
+    .widgetList(
+      find.byWidgetPredicate((widget) {
+        final key = widget.key;
+        return key is ValueKey<String> &&
+            key.value.startsWith('organize-page-card-');
+      }),
+    )
+    .map(
+      (widget) =>
+          int.parse((widget.key! as ValueKey<String>).value.split('-').last),
+    )
+    .toList();
 
 Future<void> _pumpPanel(
   WidgetTester tester,

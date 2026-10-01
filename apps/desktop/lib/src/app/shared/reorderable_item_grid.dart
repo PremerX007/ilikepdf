@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:flutter/gestures.dart' show kPrimaryButton;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show ScrollCacheExtent;
 
@@ -8,6 +9,20 @@ typedef OrderedItemBuilder<T> = Widget Function(
   T item,
   int index,
   Widget reorderHandle,
+);
+
+/// Wrap only the non-interactive surface. Place action controls above it as
+/// siblings so a pointer beginning on a control cannot enter the drag recognizer.
+typedef ReorderableDragBuilder = Widget Function({
+  required Widget child,
+  required Widget feedback,
+});
+
+typedef LazyOrderedItemBuilder<T> = Widget Function(
+  BuildContext context,
+  T item,
+  int index,
+  ReorderableDragBuilder dragSurface,
 );
 
 class ReorderableItemGrid<T> extends StatelessWidget {
@@ -89,7 +104,7 @@ class LazyReorderableItemGrid<T> extends StatefulWidget {
   });
 
   final List<T> items;
-  final OrderedItemBuilder<T> itemBuilder;
+  final LazyOrderedItemBuilder<T> itemBuilder;
   final void Function(int oldIndex, int newIndex) onReorder;
   final bool enabled;
   final double maximumItemWidth;
@@ -128,21 +143,25 @@ class _LazyReorderableItemGridState<T>
         crossAxisSpacing: widget.spacing,
       ),
       itemCount: widget.items.length,
-      itemBuilder: (context, index) => _ReorderTarget<T>(
-        key: ValueKey('lazy-reorder-target-$index'),
-        index: index,
-        enabled: widget.enabled,
-        onAccept: (oldIndex) => widget.onReorder(oldIndex, index),
-        onDragMove: _autoScrollForDrag,
-        childBuilder: (_) => widget.itemBuilder(
-          context,
-          widget.items[index],
-          index,
-          _ReorderHandle(
-            index: index,
-            enabled: widget.enabled,
-            previewWidth: widget.maximumItemWidth,
-            previewHeight: widget.itemHeight,
+      itemBuilder: (context, index) => LayoutBuilder(
+        builder: (context, constraints) => _ReorderTarget<T>(
+          key: ValueKey('lazy-reorder-target-$index'),
+          index: index,
+          enabled: widget.enabled,
+          showInsertionMarker: true,
+          onAccept: (oldIndex) => widget.onReorder(oldIndex, index),
+          childBuilder: (_) => widget.itemBuilder(
+            context,
+            widget.items[index],
+            index,
+            ({required child, required feedback}) => _ReorderSurface(
+              index: index,
+              enabled: widget.enabled,
+              size: constraints.biggest,
+              feedback: feedback,
+              onDragMove: _autoScrollForDrag,
+              child: child,
+            ),
           ),
         ),
       ),
@@ -174,7 +193,7 @@ class _ReorderTarget<T> extends StatelessWidget {
     required this.enabled,
     required this.onAccept,
     required this.childBuilder,
-    this.onDragMove,
+    this.showInsertionMarker = false,
     super.key,
   });
 
@@ -182,19 +201,98 @@ class _ReorderTarget<T> extends StatelessWidget {
   final bool enabled;
   final ValueChanged<int> onAccept;
   final Widget Function(bool isTargeted) childBuilder;
-  final ValueChanged<Offset>? onDragMove;
+  final bool showInsertionMarker;
 
   @override
   Widget build(BuildContext context) {
     return DragTarget<int>(
       key: ValueKey('reorder-target-$index'),
       onWillAcceptWithDetails: (details) => enabled && details.data != index,
-      onMove: enabled ? (details) => onDragMove?.call(details.offset) : null,
       onAcceptWithDetails: (details) => onAccept(details.data),
-      builder: (context, candidateData, rejectedData) => AnimatedScale(
-        duration: const Duration(milliseconds: 100),
-        scale: candidateData.isEmpty ? 1 : 0.97,
-        child: childBuilder(candidateData.isNotEmpty),
+      builder: (context, candidateData, rejectedData) {
+        final targeted = candidateData.isNotEmpty;
+        if (showInsertionMarker) {
+          return Stack(
+            fit: StackFit.expand,
+            clipBehavior: Clip.none,
+            children: [
+              childBuilder(targeted),
+              if (targeted)
+                Positioned(
+                  key: ValueKey('reorder-insertion-$index'),
+                  // Existing move-to-index semantics insert before a target
+                  // when moving backwards, and after it when moving forwards.
+                  left: candidateData.first! > index ? -6 : null,
+                  right: candidateData.first! < index ? -6 : null,
+                  top: 4,
+                  bottom: 4,
+                  child: IgnorePointer(
+                    child: Container(
+                      width: 3,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primary,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          );
+        }
+        return AnimatedScale(
+          duration: const Duration(milliseconds: 100),
+          scale: targeted ? 0.97 : 1,
+          child: childBuilder(targeted),
+        );
+      },
+    );
+  }
+}
+
+class _ReorderSurface extends StatelessWidget {
+  const _ReorderSurface({
+    required this.index,
+    required this.enabled,
+    required this.size,
+    required this.child,
+    required this.feedback,
+    required this.onDragMove,
+  });
+
+  final int index;
+  final bool enabled;
+  final Size size;
+  final Widget child;
+  final Widget feedback;
+  final ValueChanged<Offset> onDragMove;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!enabled) return child;
+    return MouseRegion(
+      cursor: SystemMouseCursors.grab,
+      child: Draggable<int>(
+        data: index,
+        maxSimultaneousDrags: 1,
+        allowedButtonsFilter: (buttons) => buttons == kPrimaryButton,
+        hitTestBehavior: HitTestBehavior.opaque,
+        onDragUpdate: (details) => onDragMove(details.globalPosition),
+        feedback: Material(
+          key: const ValueKey('reorder-card-proxy'),
+          color: Colors.transparent,
+          elevation: 6,
+          borderRadius: BorderRadius.circular(14),
+          child: SizedBox.fromSize(size: size, child: feedback),
+        ),
+        childWhenDragging: Opacity(opacity: 0.35, child: child),
+        // A tap recognizer keeps the gesture arena open until movement exceeds
+        // Flutter's drag threshold. Without it, an otherwise uncontested
+        // Draggable can win on pointer-down, even for an ordinary mouse click.
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () {},
+          child: child,
+        ),
       ),
     );
   }
