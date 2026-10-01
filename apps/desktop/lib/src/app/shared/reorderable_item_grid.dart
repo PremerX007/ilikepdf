@@ -1,33 +1,27 @@
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/gestures.dart' show kPrimaryButton;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show ScrollCacheExtent;
 
-typedef OrderedItemBuilder<T> = Widget Function(
-  BuildContext context,
-  T item,
-  int index,
-  Widget reorderHandle,
-);
-
-/// Wrap only the non-interactive surface. Place action controls above it as
-/// siblings so a pointer beginning on a control cannot enter the drag recognizer.
+/// Wrap the non-interactive surface; keep action controls above it as siblings.
 typedef ReorderableDragBuilder = Widget Function({
   required Widget child,
   required Widget feedback,
 });
 
-typedef LazyOrderedItemBuilder<T> = Widget Function(
+typedef OrderedItemBuilder<T> = Widget Function(
   BuildContext context,
   T item,
   int index,
   ReorderableDragBuilder dragSurface,
 );
 
-class ReorderableItemGrid<T> extends StatelessWidget {
+class ReorderableItemGrid<T> extends StatefulWidget {
   const ReorderableItemGrid({
     required this.items,
+    required this.itemKey,
     required this.itemBuilder,
     required this.onReorder,
     this.enabled = true,
@@ -38,6 +32,7 @@ class ReorderableItemGrid<T> extends StatelessWidget {
   });
 
   final List<T> items;
+  final Key Function(T item) itemKey;
   final OrderedItemBuilder<T> itemBuilder;
   final void Function(int oldIndex, int newIndex) onReorder;
   final bool enabled;
@@ -46,53 +41,57 @@ class ReorderableItemGrid<T> extends StatelessWidget {
   final double spacing;
 
   @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final columns = math.max(
-          1,
-          ((constraints.maxWidth + spacing) / (minimumItemWidth + spacing))
-              .floor(),
-        );
-        final width =
-            (constraints.maxWidth - spacing * (columns - 1)) / columns;
-        return Wrap(
-          key: const ValueKey('reorderable-item-grid'),
-          spacing: spacing,
-          runSpacing: spacing,
-          children: List.generate(items.length, (index) {
-            return SizedBox(
-              width: width,
-              height: itemHeight,
-              child: _ReorderTarget<T>(
-                index: index,
-                enabled: enabled,
-                onAccept: (oldIndex) => onReorder(oldIndex, index),
-                childBuilder: (isTargeted) => itemBuilder(
-                  context,
-                  items[index],
-                  index,
-                  _ReorderHandle(
-                    index: index,
-                    enabled: enabled,
-                    previewWidth: width,
-                    previewHeight: itemHeight,
-                  ),
-                ),
-              ),
-            );
-          }),
-        );
-      },
-    );
-  }
+  State<ReorderableItemGrid<T>> createState() => _ReorderableItemGridState<T>();
 }
 
-/// Lazily builds a reorderable page grid so large workspaces only instantiate
-/// cards near the viewport. Thumbnail ownership remains with the calling tool.
+class _ReorderableItemGridState<T>
+    extends _ReorderGridState<T, ReorderableItemGrid<T>> {
+  @override
+  List<T> get items => widget.items;
+  @override
+  Key Function(T) get itemKey => widget.itemKey;
+  @override
+  OrderedItemBuilder<T> get itemBuilder => widget.itemBuilder;
+  @override
+  bool get enabled => widget.enabled;
+  @override
+  void Function(int, int) get onReorder => widget.onReorder;
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) {
+      final columns = math.max(
+        1,
+        ((constraints.maxWidth + widget.spacing) /
+                (widget.minimumItemWidth + widget.spacing))
+            .floor(),
+      );
+      geometry = _GridGeometry(
+        columns: columns,
+        width:
+            (constraints.maxWidth - widget.spacing * (columns - 1)) / columns,
+        height: widget.itemHeight,
+        spacing: widget.spacing,
+        direction: Directionality.of(context),
+      );
+      return buildDragTarget(
+        Wrap(
+          key: const ValueKey('reorderable-item-grid'),
+          spacing: widget.spacing,
+          runSpacing: widget.spacing,
+          children: List.generate(items.length, (index) => buildItem(index)),
+        ),
+      );
+    },
+  );
+}
+
+/// Keeps original grid slots during drag. Only near-visible cards are built;
+/// small translations preview the pending order without eager thumbnail work.
 class LazyReorderableItemGrid<T> extends StatefulWidget {
   const LazyReorderableItemGrid({
     required this.items,
+    required this.itemKey,
     required this.itemBuilder,
     required this.onReorder,
     this.enabled = true,
@@ -104,7 +103,8 @@ class LazyReorderableItemGrid<T> extends StatefulWidget {
   });
 
   final List<T> items;
-  final LazyOrderedItemBuilder<T> itemBuilder;
+  final Key Function(T item) itemKey;
+  final OrderedItemBuilder<T> itemBuilder;
   final void Function(int oldIndex, int newIndex) onReorder;
   final bool enabled;
   final double maximumItemWidth;
@@ -118,10 +118,26 @@ class LazyReorderableItemGrid<T> extends StatefulWidget {
 }
 
 class _LazyReorderableItemGridState<T>
-    extends State<LazyReorderableItemGrid<T>> {
-  static const _autoScrollEdge = 72.0;
-  static const _autoScrollStep = 36.0;
+    extends _ReorderGridState<T, LazyReorderableItemGrid<T>> {
   final ScrollController _scrollController = ScrollController();
+  EdgeInsets _padding = EdgeInsets.zero;
+
+  @override
+  List<T> get items => widget.items;
+  @override
+  Key Function(T) get itemKey => widget.itemKey;
+  @override
+  OrderedItemBuilder<T> get itemBuilder => widget.itemBuilder;
+  @override
+  bool get enabled => widget.enabled;
+  @override
+  void Function(int, int) get onReorder => widget.onReorder;
+  @override
+  Offset get contentOffset => Offset(
+    -_padding.left,
+    (_scrollController.hasClients ? _scrollController.offset : 0) -
+        _padding.top,
+  );
 
   @override
   void dispose() {
@@ -130,229 +146,321 @@ class _LazyReorderableItemGridState<T>
   }
 
   @override
-  Widget build(BuildContext context) {
-    return GridView.builder(
-      key: const ValueKey('lazy-reorderable-item-grid'),
-      controller: _scrollController,
-      padding: widget.padding,
-      scrollCacheExtent: ScrollCacheExtent.pixels(widget.itemHeight),
-      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: widget.maximumItemWidth,
-        mainAxisExtent: widget.itemHeight,
-        mainAxisSpacing: widget.spacing,
-        crossAxisSpacing: widget.spacing,
-      ),
-      itemCount: widget.items.length,
-      itemBuilder: (context, index) => LayoutBuilder(
-        builder: (context, constraints) => _ReorderTarget<T>(
-          key: ValueKey('lazy-reorder-target-$index'),
-          index: index,
-          enabled: widget.enabled,
-          showInsertionMarker: true,
-          onAccept: (oldIndex) => widget.onReorder(oldIndex, index),
-          childBuilder: (_) => widget.itemBuilder(
-            context,
-            widget.items[index],
-            index,
-            ({required child, required feedback}) => _ReorderSurface(
-              index: index,
-              enabled: widget.enabled,
-              size: constraints.biggest,
-              feedback: feedback,
-              onDragMove: _autoScrollForDrag,
-              child: child,
-            ),
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) {
+      final direction = Directionality.of(context);
+      _padding = widget.padding.resolve(direction);
+      final width = constraints.maxWidth - _padding.horizontal;
+      final columns = math.max(
+        1,
+        (width / (widget.maximumItemWidth + widget.spacing)).ceil(),
+      );
+      geometry = _GridGeometry(
+        columns: columns,
+        width: (width - widget.spacing * (columns - 1)) / columns,
+        height: widget.itemHeight,
+        spacing: widget.spacing,
+        direction: direction,
+      );
+      return buildDragTarget(
+        GridView.builder(
+          key: const ValueKey('lazy-reorderable-item-grid'),
+          controller: _scrollController,
+          padding: widget.padding,
+          scrollCacheExtent: ScrollCacheExtent.pixels(widget.itemHeight),
+          gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+            maxCrossAxisExtent: widget.maximumItemWidth,
+            mainAxisExtent: widget.itemHeight,
+            mainAxisSpacing: widget.spacing,
+            crossAxisSpacing: widget.spacing,
           ),
+          itemCount: items.length,
+          findChildIndexCallback: (key) {
+            final index = items.indexWhere((item) => itemKey(item) == key);
+            return index < 0 ? null : index;
+          },
+          itemBuilder: (context, index) => buildItem(index, lazy: true),
         ),
-      ),
-    );
-  }
+      );
+    },
+  );
 
-  void _autoScrollForDrag(Offset globalPosition) {
-    if (!_scrollController.hasClients) return;
-    final renderObject = context.findRenderObject();
-    if (renderObject is! RenderBox || !renderObject.hasSize) return;
-    final localPosition = renderObject.globalToLocal(globalPosition);
-    final distance = localPosition.dy < _autoScrollEdge
-        ? -_autoScrollStep
-        : localPosition.dy > renderObject.size.height - _autoScrollEdge
-        ? _autoScrollStep
-        : 0.0;
-    if (distance == 0) return;
-    final position = _scrollController.position;
-    final target = (position.pixels + distance)
-        .clamp(position.minScrollExtent, position.maxScrollExtent)
-        .toDouble();
-    if (target != position.pixels) _scrollController.jumpTo(target);
+  @override
+  void onDragMove(Offset globalPosition) {
+    if (!_validDrag) return;
+    if (_scrollController.hasClients) {
+      final box = context.findRenderObject()! as RenderBox;
+      final local = box.globalToLocal(globalPosition);
+      if (local.dx >= 0 && local.dx <= box.size.width) {
+        final step = local.dy < 72
+            ? -36.0
+            : local.dy > box.size.height - 72
+            ? 36.0
+            : 0.0;
+        final position = _scrollController.position;
+        final target = (position.pixels + step)
+            .clamp(position.minScrollExtent, position.maxScrollExtent)
+            .toDouble();
+        if (target != position.pixels) _scrollController.jumpTo(target);
+      }
+    }
+    super.onDragMove(globalPosition);
   }
 }
 
-class _ReorderTarget<T> extends StatelessWidget {
-  const _ReorderTarget({
-    required this.index,
-    required this.enabled,
-    required this.onAccept,
-    required this.childBuilder,
-    this.showInsertionMarker = false,
-    super.key,
-  });
+/// Preview state is local to the grid. The tool owns the committed order.
+abstract class _ReorderGridState<T, W extends StatefulWidget> extends State<W> {
+  List<T> get items;
+  Key Function(T) get itemKey;
+  OrderedItemBuilder<T> get itemBuilder;
+  bool get enabled;
+  void Function(int, int) get onReorder;
+  Offset get contentOffset => Offset.zero;
 
-  final int index;
-  final bool enabled;
-  final ValueChanged<int> onAccept;
-  final Widget Function(bool isTargeted) childBuilder;
-  final bool showInsertionMarker;
+  final Object _owner = Object();
+  late _GridGeometry geometry;
+  int? _draggedIndex;
+  int? _targetIndex;
+  List<Key>? _dragKeys;
+  bool _snapToLayout = false;
+
+  bool get _validDrag =>
+      enabled &&
+      _draggedIndex != null &&
+      items.isNotEmpty &&
+      _dragKeys?.length == items.length;
+
+  // Validate on tool updates and drop, rather than scanning a large page list
+  // for every pointer movement.
+  bool get _sameItems =>
+      listEquals(_dragKeys, items.map(itemKey).toList(growable: false));
 
   @override
-  Widget build(BuildContext context) {
-    return DragTarget<int>(
-      key: ValueKey('reorder-target-$index'),
-      onWillAcceptWithDetails: (details) => enabled && details.data != index,
-      onAcceptWithDetails: (details) => onAccept(details.data),
-      builder: (context, candidateData, rejectedData) {
-        final targeted = candidateData.isNotEmpty;
-        if (showInsertionMarker) {
-          return Stack(
-            fit: StackFit.expand,
-            clipBehavior: Clip.none,
-            children: [
-              childBuilder(targeted),
-              if (targeted)
-                Positioned(
-                  key: ValueKey('reorder-insertion-$index'),
-                  // Existing move-to-index semantics insert before a target
-                  // when moving backwards, and after it when moving forwards.
-                  left: candidateData.first! > index ? -6 : null,
-                  right: candidateData.first! < index ? -6 : null,
-                  top: 4,
-                  bottom: 4,
-                  child: IgnorePointer(
-                    child: Container(
-                      width: 3,
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primary,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
+  void didUpdateWidget(covariant W oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (_draggedIndex != null && (!_validDrag || !_sameItems)) {
+      _clearDrag(snap: true);
+    }
+  }
+
+  void _clearDrag({bool snap = false}) {
+    _draggedIndex = null;
+    _targetIndex = null;
+    _dragKeys = null;
+    _snapToLayout = snap;
+  }
+
+  void onDragMove(Offset globalPosition) {
+    _updateTarget(globalPosition);
+  }
+
+  void _updateTarget(Offset globalPosition) {
+    if (!_validDrag) return;
+    final box = context.findRenderObject()! as RenderBox;
+    final local = box.globalToLocal(globalPosition);
+    if (!(Offset.zero & box.size).contains(local)) return;
+    final target = geometry.indexAt(local + contentOffset, items.length);
+    if (target != _targetIndex) setState(() => _targetIndex = target);
+  }
+
+  Widget buildDragTarget(Widget child) => DragTarget<_GridDrag>(
+    onWillAcceptWithDetails: (details) =>
+        // Flutter enters the target before calling onDragStarted. Validate the
+        // owner here, then validate the saved item set again when dropping.
+        identical(details.data.owner, _owner) && enabled,
+    onMove: (details) => onDragMove(details.data.pointerAt(details.offset)),
+    onLeave: (_) {
+      if (_draggedIndex != null) setState(() => _targetIndex = _draggedIndex);
+    },
+    onAcceptWithDetails: (details) {
+      if (!identical(details.data.owner, _owner) ||
+          !_validDrag ||
+          !_sameItems) {
+        return;
+      }
+      _updateTarget(details.data.pointerAt(details.offset));
+      final oldIndex = _draggedIndex!;
+      final newIndex = _targetIndex!;
+      setState(() => _clearDrag(snap: true));
+      if (oldIndex != newIndex) onReorder(oldIndex, newIndex);
+    },
+    builder: (context, candidates, rejected) => child,
+  );
+
+  int _visualIndex(int index) {
+    final from = _draggedIndex;
+    final to = _targetIndex;
+    if (from == null || to == null) return index;
+    if (index == from) return to;
+    if (from < to && index > from && index <= to) return index - 1;
+    if (from > to && index >= to && index < from) return index + 1;
+    return index;
+  }
+
+  Widget buildItem(int index, {bool lazy = false}) {
+    final dragged = _draggedIndex == index;
+    final offset =
+        geometry.position(_visualIndex(index)) - geometry.position(index);
+    return SizedBox(
+      key: itemKey(items[index]),
+      width: geometry.width,
+      height: geometry.height,
+      child: Stack(
+        clipBehavior: Clip.none,
+        fit: StackFit.expand,
+        children: [
+          IgnorePointer(
+            child: SizedBox.expand(
+              key: ValueKey('${lazy ? 'lazy-' : ''}reorder-target-$index'),
+            ),
+          ),
+          if (_targetIndex == index)
+            DecoratedBox(
+              key: const ValueKey('reorder-placeholder'),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary
+                    .withValues(alpha: 0.06),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.outline,
+                ),
+              ),
+            ),
+          AnimatedSlide(
+            key: const ValueKey('reorder-card-slide'),
+            duration: _snapToLayout
+                ? Duration.zero
+                : const Duration(milliseconds: 160),
+            curve: Curves.easeOutCubic,
+            offset: Offset(
+              offset.dx / geometry.width,
+              offset.dy / geometry.height,
+            ),
+            child: IgnorePointer(
+              ignoring: dragged,
+              child: Opacity(
+                opacity: dragged ? 0 : 1,
+                child: itemBuilder(
+                  context,
+                  items[index],
+                  index,
+                  ({required child, required feedback}) => _ReorderSurface(
+                    data: _GridDrag(_owner),
+                    enabled: enabled && _draggedIndex == null,
+                    size: Size(geometry.width, geometry.height),
+                    onDragStarted: () => setState(() {
+                      _draggedIndex = index;
+                      _targetIndex = index;
+                      _dragKeys = items.map(itemKey).toList(growable: false);
+                      _snapToLayout = false;
+                    }),
+                    onDragEnd: () {
+                      if (mounted && _draggedIndex != null) {
+                        setState(_clearDrag);
+                      }
+                    },
+                    feedback: feedback,
+                    child: child,
                   ),
                 ),
-            ],
-          );
-        }
-        return AnimatedScale(
-          duration: const Duration(milliseconds: 100),
-          scale: targeted ? 0.97 : 1,
-          child: childBuilder(targeted),
-        );
-      },
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
+}
+
+class _GridGeometry {
+  const _GridGeometry({
+    required this.columns,
+    required this.width,
+    required this.height,
+    required this.spacing,
+    required this.direction,
+  });
+  final int columns;
+  final double width;
+  final double height;
+  final double spacing;
+  final TextDirection direction;
+
+  Offset position(int index) => Offset(
+    (direction == TextDirection.ltr
+            ? index % columns
+            : columns - 1 - index % columns) *
+        (width + spacing),
+    (index ~/ columns) * (height + spacing),
+  );
+
+  int indexAt(Offset position, int itemCount) {
+    var column = (position.dx / (width + spacing)).floor().clamp(
+      0,
+      columns - 1,
+    );
+    if (direction == TextDirection.rtl) column = columns - 1 - column;
+    final row = math.max(0, (position.dy / (height + spacing)).floor());
+    return (row * columns + column).clamp(0, itemCount - 1);
+  }
+}
+
+class _GridDrag {
+  _GridDrag(this.owner);
+  final Object owner;
+  Offset anchor = Offset.zero;
+
+  // DragTargetDetails.offset is the feedback's top-left, not the pointer.
+  Offset pointerAt(Offset feedbackOffset) => feedbackOffset + anchor;
 }
 
 class _ReorderSurface extends StatelessWidget {
   const _ReorderSurface({
-    required this.index,
+    required this.data,
     required this.enabled,
     required this.size,
     required this.child,
     required this.feedback,
-    required this.onDragMove,
+    required this.onDragStarted,
+    required this.onDragEnd,
   });
-
-  final int index;
+  final _GridDrag data;
   final bool enabled;
   final Size size;
   final Widget child;
   final Widget feedback;
-  final ValueChanged<Offset> onDragMove;
+  final VoidCallback onDragStarted;
+  final VoidCallback onDragEnd;
 
   @override
-  Widget build(BuildContext context) {
-    if (!enabled) return child;
-    return MouseRegion(
-      cursor: SystemMouseCursors.grab,
-      child: Draggable<int>(
-        data: index,
-        maxSimultaneousDrags: 1,
-        allowedButtonsFilter: (buttons) => buttons == kPrimaryButton,
-        hitTestBehavior: HitTestBehavior.opaque,
-        onDragUpdate: (details) => onDragMove(details.globalPosition),
-        feedback: Material(
-          key: const ValueKey('reorder-card-proxy'),
-          color: Colors.transparent,
-          elevation: 6,
-          borderRadius: BorderRadius.circular(14),
-          child: SizedBox.fromSize(size: size, child: feedback),
-        ),
-        childWhenDragging: Opacity(opacity: 0.35, child: child),
-        // A tap recognizer keeps the gesture arena open until movement exceeds
-        // Flutter's drag threshold. Without it, an otherwise uncontested
-        // Draggable can win on pointer-down, even for an ordinary mouse click.
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: () {},
-          child: child,
-        ),
-      ),
-    );
-  }
-}
-
-class _ReorderHandle extends StatelessWidget {
-  const _ReorderHandle({
-    required this.index,
-    required this.enabled,
-    required this.previewWidth,
-    required this.previewHeight,
-  });
-
-  final int index;
-  final bool enabled;
-  final double previewWidth;
-  final double previewHeight;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    final handle = Tooltip(
-      message: 'Drag to reorder',
-      child: Icon(
-        Icons.drag_indicator_rounded,
-        size: 20,
-        color: enabled ? colors.onSurfaceVariant : colors.outline,
-      ),
-    );
-    if (!enabled) {
-      return handle;
-    }
-    return Draggable<int>(
-      key: ValueKey('reorder-item-$index'),
-      data: index,
+  Widget build(BuildContext context) => MouseRegion(
+    cursor: enabled ? SystemMouseCursors.grab : MouseCursor.defer,
+    child: Draggable<_GridDrag>(
+      data: data,
+      maxSimultaneousDrags: enabled ? 1 : 0,
+      allowedButtonsFilter: (buttons) => buttons == kPrimaryButton,
+      hitTestBehavior: HitTestBehavior.opaque,
+      dragAnchorStrategy: (draggable, context, position) {
+        data.anchor = childDragAnchorStrategy(draggable, context, position);
+        return data.anchor;
+      },
+      onDragStarted: onDragStarted,
+      // These callbacks also run after a lazy source card leaves the viewport.
+      onDraggableCanceled: (_, _) => onDragEnd(),
+      onDragCompleted: onDragEnd,
       feedback: Material(
+        key: const ValueKey('reorder-card-proxy'),
         color: Colors.transparent,
-        child: Opacity(
-          opacity: 0.86,
-          child: Container(
-            width: previewWidth,
-            height: previewHeight,
-            decoration: BoxDecoration(
-              color: colors.surface,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: colors.primary, width: 2),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x33000000),
-                  blurRadius: 20,
-                  offset: Offset(0, 10),
-                ),
-              ],
-            ),
-            child: const Center(child: Icon(Icons.drag_indicator_rounded)),
-          ),
-        ),
+        elevation: 6,
+        borderRadius: BorderRadius.circular(14),
+        child: SizedBox.fromSize(size: size, child: feedback),
       ),
-      childWhenDragging: Opacity(opacity: 0.35, child: handle),
-      child: handle,
-    );
-  }
+      // Competing with a tap keeps mouse-down alone from starting a drag.
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () {},
+        child: child,
+      ),
+    ),
+  );
 }

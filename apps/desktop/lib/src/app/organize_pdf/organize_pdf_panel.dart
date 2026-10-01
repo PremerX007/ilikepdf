@@ -520,6 +520,7 @@ class _OrganizePdfPanelState extends State<OrganizePdfPanel> {
           Expanded(
             child: LazyReorderableItemGrid<_OrganizePageItem>(
               items: _pages,
+              itemKey: (page) => ValueKey(page.id),
               enabled: !_isBusy,
               onReorder: _reorderPage,
               itemBuilder: (context, page, index, dragSurface) {

@@ -367,39 +367,36 @@ void main() {
     }
   });
 
-  testWidgets(
-    'forward drag shows insertion after the target and Reset restores order',
-    (tester) async {
-      final workflow = FakeOrganizePdfWorkflow(previewPath: previewPath)
-        ..selections.add([firstPdf, secondPdf]);
-      await _pumpPanel(tester, workflow);
-      await tester.tap(find.text('Select PDFs'));
-      await tester.pumpAndSettle();
-      final gesture = await tester.startGesture(
-        tester.getCenter(
-          find.byKey(const ValueKey('organize-page-thumbnail-0')),
-        ),
-        kind: PointerDeviceKind.mouse,
-      );
-      await gesture.moveBy(const Offset(24, 0));
-      await tester.pump();
-      await gesture.moveTo(
-        tester.getCenter(find.byKey(const ValueKey('lazy-reorder-target-2'))),
-      );
-      await tester.pump();
-      final marker = tester.widget<Positioned>(
-        find.byKey(const ValueKey('reorder-insertion-2')),
-      );
-      expect(marker.left, isNull);
-      expect(marker.right, isNotNull);
-      await gesture.up();
-      await tester.pumpAndSettle();
-      expect(_cardOrder(tester), [1, 2, 0]);
-      await tester.tap(find.byKey(const ValueKey('reset-organize-all')));
-      await tester.pumpAndSettle();
-      expect(_cardOrder(tester), [0, 1, 2]);
-    },
-  );
+  testWidgets('forward drag opens a card slot and Reset restores order', (
+    tester,
+  ) async {
+    final workflow = FakeOrganizePdfWorkflow(previewPath: previewPath)
+      ..selections.add([firstPdf, secondPdf]);
+    await _pumpPanel(tester, workflow);
+    await tester.tap(find.text('Select PDFs'));
+    await tester.pumpAndSettle();
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.byKey(const ValueKey('organize-page-thumbnail-0'))),
+      kind: PointerDeviceKind.mouse,
+    );
+    await gesture.moveBy(const Offset(24, 0));
+    await tester.pump();
+    await gesture.moveTo(
+      tester.getCenter(find.byKey(const ValueKey('lazy-reorder-target-2'))),
+    );
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(find.byKey(const ValueKey('reorder-placeholder')), findsOne);
+    expect(
+      tester.getCenter(find.byKey(const ValueKey('reorder-placeholder'))),
+      tester.getCenter(find.byKey(const ValueKey('lazy-reorder-target-2'))),
+    );
+    await gesture.up();
+    await tester.pumpAndSettle();
+    expect(_cardOrder(tester), [1, 2, 0]);
+    await tester.tap(find.byKey(const ValueKey('reset-organize-all')));
+    await tester.pumpAndSettle();
+    expect(_cardOrder(tester), [0, 1, 2]);
+  });
 
   for (final surface in ['thumbnail', 'label', 'empty area']) {
     testWidgets('mouse drag from $surface reorders across sources', (
@@ -444,7 +441,7 @@ void main() {
         tester.getCenter(find.byKey(const ValueKey('lazy-reorder-target-0'))),
       );
       await tester.pump();
-      expect(find.byKey(const ValueKey('reorder-insertion-0')), findsOne);
+      expect(find.byKey(const ValueKey('reorder-placeholder')), findsOne);
       await gesture.up();
       await tester.pumpAndSettle();
       expect(_cardOrder(tester), [2, 0, 1]);
@@ -519,7 +516,7 @@ void main() {
       );
       await tester.pump();
       expect(find.byKey(const ValueKey('reorder-card-proxy')), findsNothing);
-      expect(find.byKey(const ValueKey('reorder-insertion-0')), findsNothing);
+      expect(find.byKey(const ValueKey('reorder-placeholder')), findsNothing);
       await gesture.up();
       await tester.pumpAndSettle();
       expect(_cardOrder(tester), [0, 1, 2]);

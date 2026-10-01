@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:desktop_drop/desktop_drop.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ilikepdf/src/app/app.dart';
@@ -248,8 +249,10 @@ void main() {
       expect(find.text(r'C:\docs'), findsOne);
 
       final initialGesture = await tester.startGesture(
-        tester.getCenter(find.byKey(const ValueKey('reorder-merge-pdf-0'))),
+        tester.getCenter(find.byKey(const ValueKey('merge-pdf-card-0'))),
+        kind: PointerDeviceKind.mouse,
       );
+      await initialGesture.moveBy(const Offset(24, 0));
       await tester.pump();
       await initialGesture.moveTo(
         tester.getCenter(find.byKey(const ValueKey('reorder-target-1'))),
@@ -267,8 +270,10 @@ void main() {
       await tester.pumpAndSettle();
 
       final gesture = await tester.startGesture(
-        tester.getCenter(find.byKey(const ValueKey('reorder-merge-pdf-0'))),
+        tester.getCenter(find.byKey(const ValueKey('merge-pdf-card-0'))),
+        kind: PointerDeviceKind.mouse,
       );
+      await gesture.moveBy(const Offset(24, 0));
       await tester.pump();
       await gesture.moveTo(
         tester.getCenter(find.byKey(const ValueKey('reorder-target-1'))),

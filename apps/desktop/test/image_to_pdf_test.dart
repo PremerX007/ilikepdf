@@ -1,4 +1,5 @@
 import 'package:desktop_drop/desktop_drop.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ilikepdf/src/app/app.dart';
@@ -441,9 +442,13 @@ void main() {
     await tester.tap(find.text('Choose folder'));
     await tester.pumpAndSettle();
 
-    final handle = find.byKey(const ValueKey('reorder-image-0'));
-    await tester.ensureVisible(handle);
-    final gesture = await tester.startGesture(tester.getCenter(handle));
+    final card = find.byKey(ValueKey('selected-image-${first.sourcePath}'));
+    await tester.ensureVisible(card);
+    final gesture = await tester.startGesture(
+      tester.getCenter(card),
+      kind: PointerDeviceKind.mouse,
+    );
+    await gesture.moveBy(const Offset(24, 0));
     await tester.pump();
     await gesture.moveTo(
       tester.getCenter(find.byKey(const ValueKey('reorder-target-2'))),

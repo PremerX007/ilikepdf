@@ -304,9 +304,10 @@ class _ImageToPdfPanelState extends State<ImageToPdfPanel> {
             padding: const EdgeInsets.all(16),
             child: ReorderableItemGrid<SelectedImage>(
               items: _images,
+              itemKey: (image) => ValueKey(image.sourcePath),
               enabled: !_isBusy,
               onReorder: _reorder,
-              itemBuilder: (context, image, index, reorderHandle) {
+              itemBuilder: (context, image, index, dragSurface) {
                 return FilePreviewCard(
                   key: ValueKey('selected-image-${image.sourcePath}'),
                   thumbnail: Image.file(
@@ -320,10 +321,7 @@ class _ImageToPdfPanelState extends State<ImageToPdfPanel> {
                   ),
                   filename: image.displayName,
                   positionLabel: 'Page ${index + 1}',
-                  reorderHandle: KeyedSubtree(
-                    key: ValueKey('reorder-image-$index'),
-                    child: reorderHandle,
-                  ),
+                  dragSurface: dragSurface,
                   removeButtonKey: ValueKey('remove-image-$index'),
                   onRemove: _isBusy ? null : () => _removeImage(index),
                 );

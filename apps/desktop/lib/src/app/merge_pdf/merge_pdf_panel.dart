@@ -309,10 +309,11 @@ class _MergePdfPanelState extends State<MergePdfPanel> {
             padding: const EdgeInsets.all(16),
             child: ReorderableItemGrid<_MergePdfItem>(
               items: _pdfs,
+              itemKey: (item) => ValueKey(item.id),
               itemHeight: 238,
               enabled: !_isBusy,
               onReorder: _reorder,
-              itemBuilder: (context, item, index, reorderHandle) =>
+              itemBuilder: (context, item, index, dragSurface) =>
                   FilePreviewCard(
                     key: ValueKey('merge-pdf-card-${item.id}'),
                     thumbnail: _MergePdfThumbnail(
@@ -324,10 +325,7 @@ class _MergePdfPanelState extends State<MergePdfPanel> {
                     filename: item.pdf.displayName,
                     positionLabel:
                         'PDF ${index + 1} · ${_pageCountLabel(item.pdf)}',
-                    reorderHandle: KeyedSubtree(
-                      key: ValueKey('reorder-merge-pdf-$index'),
-                      child: reorderHandle,
-                    ),
+                    dragSurface: dragSurface,
                     removeButtonKey: ValueKey('remove-merge-pdf-$index'),
                     onRemove: _isBusy ? null : () => _removePdf(index),
                   ),

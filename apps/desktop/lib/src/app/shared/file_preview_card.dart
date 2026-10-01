@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:ilikepdf/src/app/shared/reorderable_item_grid.dart';
 
 class FilePreviewCard extends StatefulWidget {
   const FilePreviewCard({
     required this.thumbnail,
     required this.filename,
     required this.positionLabel,
-    this.reorderHandle,
+    this.dragSurface,
     required this.onRemove,
     this.removeButtonKey,
     this.isDropTarget = false,
@@ -15,7 +16,7 @@ class FilePreviewCard extends StatefulWidget {
   final Widget thumbnail;
   final String filename;
   final String positionLabel;
-  final Widget? reorderHandle;
+  final ReorderableDragBuilder? dragSurface;
   final VoidCallback? onRemove;
   final Key? removeButtonKey;
   final bool isDropTarget;
@@ -29,89 +30,105 @@ class _FilePreviewCardState extends State<FilePreviewCard> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
     final emphasized = _hovered || widget.isDropTarget;
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 120),
-        curve: Curves.easeOut,
-        decoration: BoxDecoration(
-          color: colors.surface,
-          borderRadius: BorderRadius.circular(15),
-          border: Border.all(
-            color: emphasized ? colors.primary : colors.outlineVariant,
-            width: emphasized ? 1.5 : 1,
-          ),
-          boxShadow: emphasized
-              ? [
-                  BoxShadow(
-                    color: colors.shadow.withValues(alpha: 0.08),
-                    blurRadius: 14,
-                    offset: const Offset(0, 5),
-                  ),
-                ]
-              : null,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          if (widget.dragSurface case final dragSurface?)
+            dragSurface(
+              child: _buildBody(context, emphasized),
+              feedback: Stack(
+                fit: StackFit.expand,
+                children: [_buildBody(context, true), _buildRemoveControl()],
+              ),
+            )
+          else
+            _buildBody(context, emphasized),
+          _buildRemoveControl(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBody(BuildContext context, bool emphasized) {
+    final colors = Theme.of(context).colorScheme;
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 120),
+      curve: Curves.easeOut,
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(
+          color: emphasized ? colors.primary : colors.outlineVariant,
+          width: emphasized ? 1.5 : 1,
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(10),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(
-                child: Stack(
-                  children: [
-                    Positioned.fill(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: ColoredBox(
-                          color: colors.surfaceContainerHighest,
-                          child: widget.thumbnail,
-                        ),
-                      ),
-                    ),
-                    if (widget.reorderHandle case final reorderHandle?)
-                      Positioned(
-                        top: 6,
-                        left: 6,
-                        child: _CardControl(child: reorderHandle),
-                      ),
-                    Positioned(
-                      top: 6,
-                      right: 6,
-                      child: _CardControl(
-                        child: IconButton(
-                          key: widget.removeButtonKey,
-                          tooltip: 'Remove ${widget.filename}',
-                          visualDensity: VisualDensity.compact,
-                          onPressed: widget.onRemove,
-                          icon: const Icon(Icons.close_rounded, size: 18),
-                        ),
-                      ),
-                    ),
-                  ],
+        boxShadow: emphasized
+            ? [
+                BoxShadow(
+                  color: colors.shadow.withValues(alpha: 0.08),
+                  blurRadius: 14,
+                  offset: const Offset(0, 5),
                 ),
+              ]
+            : null,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: ColoredBox(
+                        color: colors.surfaceContainerHighest,
+                        child: widget.thumbnail,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 9),
-              Text(
-                widget.filename,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.labelLarge,
-              ),
-              const SizedBox(height: 2),
-              Text(
-                widget.positionLabel,
-                style: Theme.of(context).textTheme.bodySmall
-                    ?.copyWith(color: colors.onSurfaceVariant),
-              ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 9),
+            Text(
+              widget.filename,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.labelLarge,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              widget.positionLabel,
+              style: Theme.of(context).textTheme.bodySmall
+                  ?.copyWith(color: colors.onSurfaceVariant),
+            ),
+          ],
         ),
       ),
     );
   }
+
+  // The control is a sibling above the draggable body, so neither clicking it
+  // nor dragging from it can enter the card's reorder recognizer.
+  Widget _buildRemoveControl() => Positioned(
+    top: 16,
+    right: 16,
+    child: _CardControl(
+      child: IconButton(
+        key: widget.removeButtonKey,
+        tooltip: 'Remove ${widget.filename}',
+        visualDensity: VisualDensity.compact,
+        onPressed: widget.onRemove,
+        icon: const Icon(Icons.close_rounded, size: 18),
+      ),
+    ),
+  );
 }
 
 class _CardControl extends StatelessWidget {

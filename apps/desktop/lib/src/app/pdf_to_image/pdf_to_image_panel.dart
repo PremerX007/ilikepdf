@@ -316,10 +316,11 @@ class _PdfToImagePanelState extends State<PdfToImagePanel> {
             padding: const EdgeInsets.all(16),
             child: ReorderableItemGrid<SelectedPdf>(
               items: _pdfs,
+              itemKey: (pdf) => ValueKey(pdf.sourcePath),
               itemHeight: 238,
               enabled: !_isBusy,
               onReorder: _reorder,
-              itemBuilder: (context, pdf, index, reorderHandle) {
+              itemBuilder: (context, pdf, index, dragSurface) {
                 return FilePreviewCard(
                   key: ValueKey('selected-pdf-${pdf.sourcePath}'),
                   thumbnail: _PdfCardThumbnail(
@@ -335,10 +336,7 @@ class _PdfToImagePanelState extends State<PdfToImagePanel> {
                   ),
                   filename: pdf.displayName,
                   positionLabel: 'PDF ${index + 1} · ${_pageCountLabel(pdf)}',
-                  reorderHandle: KeyedSubtree(
-                    key: ValueKey('reorder-pdf-$index'),
-                    child: reorderHandle,
-                  ),
+                  dragSurface: dragSurface,
                   removeButtonKey: ValueKey('remove-pdf-$index'),
                   onRemove: _isBusy ? null : () => _removePdf(index),
                 );
