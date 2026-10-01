@@ -173,7 +173,7 @@ void main() {
       find.byKey(const ValueKey('tool-card-images-to-pdf')),
       findsOneWidget,
     );
-    expect(find.text('Coming soon'), findsNWidgets(2));
+    expect(find.text('Coming soon'), findsNothing);
   });
 
   testWidgets('implemented cards navigate and back returns Home', (
@@ -193,6 +193,30 @@ void main() {
     expect(find.text('Images to PDF'), findsOneWidget);
     expect(
       find.byKey(const ValueKey('tool-workspace-surface')),
+      findsOneWidget,
+    );
+    await tester.tap(find.byKey(const ValueKey('back-home-button')));
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('tool-card-protect-pdf')),
+    );
+    await tester.tap(find.byKey(const ValueKey('tool-card-protect-pdf')));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('empty-protect-pdf-drop-zone')),
+      findsOneWidget,
+    );
+    await tester.tap(find.byKey(const ValueKey('back-home-button')));
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('tool-card-unlock-pdf')),
+    );
+    await tester.tap(find.byKey(const ValueKey('tool-card-unlock-pdf')));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('empty-unlock-pdf-drop-zone')),
       findsOneWidget,
     );
     await tester.tap(find.byKey(const ValueKey('back-home-button')));
@@ -359,28 +383,6 @@ void main() {
       );
     },
   );
-
-  testWidgets('coming-soon cards cannot open unfinished tools', (
-    WidgetTester tester,
-  ) async {
-    await tester.pumpWidget(
-      IlikepdfApp(
-        applicationName: 'iLikePDF',
-        coreVersion: '0.1.0',
-        localOnly: true,
-        pdfToImageWorkflow: FakePdfToImageWorkflow(previewPath: previewPath),
-      ),
-    );
-
-    await tester.ensureVisible(
-      find.byKey(const ValueKey('tool-card-protect-pdf')),
-    );
-    await tester.tap(find.byKey(const ValueKey('tool-card-protect-pdf')));
-    await tester.pumpAndSettle();
-
-    expect(find.text('PDF tools'), findsOneWidget);
-    expect(find.byKey(const ValueKey('back-home-button')), findsNothing);
-  });
 
   testWidgets('tool workspace uses columns wide and stacks when narrow', (
     WidgetTester tester,

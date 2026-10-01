@@ -4,8 +4,18 @@ ilikepdf is an open-source, privacy-first Windows PDF toolkit. Flutter provides
 the desktop presentation layer while Rust owns application logic and native PDF
 integration. Documents and images are processed locally and are never uploaded.
 
-Current production workflows include Organize PDF, Split PDF, Merge PDF, batch
-PDF-to-PNG/JPG export, and Image-to-PDF creation. Organize PDF loads one or more
+Current production workflows include Protect PDF, Unlock PDF, Organize PDF,
+Split PDF, Merge PDF, batch PDF-to-PNG/JPG export, and Image-to-PDF creation.
+Protect PDF accepts one unencrypted source, applies AES-256 encryption with a
+user password and a random application-generated owner password, validates the
+private result with qpdf and a password-aware PDFium reopen, then publishes a
+collision-safe `<source>-protected.pdf`. Unlock PDF distinguishes unencrypted,
+encrypted-without-an-open-password, and password-required inputs; it requests a
+password only when necessary and publishes a validated
+`<source>-unlocked.pdf`. Passwords are piped directly to qpdf over standard
+input, are never placed in process arguments or logs, and are retained by the
+UI only for the active operation or an immediate wrong-password correction.
+Organize PDF loads one or more
 source PDFs into one page workspace and produces one structural output PDF. It
 supports adding files later, cross-file page reordering, page deletion,
 quarter-turn rotation, whole-source removal, and resetting the current source
@@ -70,6 +80,7 @@ flutter test integration_test/image_to_pdf_test.dart -d windows
 flutter test integration_test/merge_pdf_test.dart -d windows
 flutter test integration_test/split_pdf_test.dart -d windows
 flutter test integration_test/organize_pdf_test.dart -d windows
+flutter test integration_test/pdf_security_test.dart -d windows
 ```
 
 See [docs/architecture.md](docs/architecture.md) for boundaries and privacy

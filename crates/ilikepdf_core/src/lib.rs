@@ -6,6 +6,7 @@
 
 mod application;
 mod error;
+mod secret;
 
 pub use application::app_info::{ApplicationInfo, get_application_info};
 pub use application::image_to_pdf::{
@@ -23,18 +24,25 @@ pub use application::structural_pdf::{
     MergePdfFailure, MergePdfProgress, MergePdfRequest, MergePdfResult, MergePdfStage,
     OrganizePdfFailure, OrganizePdfPageItem, OrganizePdfPageRotation, OrganizePdfProgress,
     OrganizePdfRequest, OrganizePdfResult, OrganizePdfSession, OrganizePdfSource,
-    OrganizePdfSourceInfo, OrganizePdfStage, PageRotationDirection, RewriteStructuralPdfRequest,
-    SplitPdfFailure, SplitPdfMode, SplitPdfPageRange, SplitPdfPart, SplitPdfProgress,
-    SplitPdfRequest, SplitPdfResult, SplitPdfSourceInfo, SplitPdfStage, StructuralPdfEngine,
+    OrganizePdfSourceInfo, OrganizePdfStage, PageRotationDirection, PdfEncryptionState,
+    ProtectPdfFailure, ProtectPdfProgress, ProtectPdfRequest, ProtectPdfResult,
+    ProtectPdfSourceInfo, ProtectPdfStage, RewriteStructuralPdfRequest, SplitPdfFailure,
+    SplitPdfMode, SplitPdfPageRange, SplitPdfPart, SplitPdfProgress, SplitPdfRequest,
+    SplitPdfResult, SplitPdfSourceInfo, SplitPdfStage, StructuralPdfEngine,
     StructuralPdfEngineFamily, StructuralPdfEngineInfo, StructuralPdfError,
     StructuralPdfMergeRequest, StructuralPdfOperationResult, StructuralPdfPagePlanItem,
     StructuralPdfPagePlanRequest, StructuralPdfPageRangeRequest, StructuralPdfPageRotation,
-    StructuralPdfRewriteResult, StructuralPdfValidation, StructuralPdfVersion,
-    inspect_organize_pdf_sources, inspect_split_pdf_source, merge_pdf,
-    normalize_organize_pdf_output_name, organize_pdf, probe_structural_pdf_engine,
-    rewrite_structural_pdf, split_pdf, validate_structural_pdf,
+    StructuralPdfProtectRequest, StructuralPdfRewriteResult, StructuralPdfUnlockRequest,
+    StructuralPdfValidation, StructuralPdfVersion, UnlockPdfFailure, UnlockPdfProgress,
+    UnlockPdfRequest, UnlockPdfResult, UnlockPdfSourceInfo, UnlockPdfStage,
+    default_protect_pdf_output_name, default_unlock_pdf_output_name, inspect_organize_pdf_sources,
+    inspect_protect_pdf_source, inspect_split_pdf_source, inspect_unlock_pdf_source, merge_pdf,
+    normalize_organize_pdf_output_name, normalize_secure_pdf_output_name, organize_pdf,
+    probe_structural_pdf_engine, protect_pdf, rewrite_structural_pdf, split_pdf, unlock_pdf,
+    validate_structural_pdf,
 };
 pub use error::{ApplicationError, ApplicationErrorCode, ApplicationResult};
+pub use secret::SecretString;
 
 #[cfg(test)]
 mod test_support;

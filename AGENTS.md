@@ -21,8 +21,12 @@ qpdf executable names, command switches, process output, or exit codes. Keep all
 process-specific concepts and platform-specific runtime layout inside qpdf
 infrastructure. Invoke bundled qpdf directly without a shell and never resolve it
 from system `PATH`. Never log passwords, full qpdf command lines, document paths,
-or raw diagnostics; future secret input belongs in the Rust infrastructure
-boundary and must avoid unnecessary command-line exposure.
+or raw diagnostics. Passwords and generated owner secrets must use redacted
+secret-bearing types, must never appear in qpdf process arguments, and must be
+sent through the dedicated standard-input argument channel. Reject line breaks
+and NUL bytes before constructing that input. Clear owned secret buffers on
+drop where practical, and do not derive or add debug/string representations to
+secret-bearing bridge request DTOs.
 Product-level structural policies such as split-by-size must remain in
 application/core workflows and must not be encoded into `QpdfCliEngine`.
 Organize-style page-plan policy also belongs in core; page-workspace thumbnails
@@ -44,7 +48,8 @@ all generated changes. Before a pull request, run:
 - `flutter analyze`, `flutter test`, and `flutter build windows --release`
 - Windows integration tests in `integration_test/`, including `app_info_test.dart`,
   `pdf_preview_test.dart`, `image_to_pdf_test.dart`, `merge_pdf_test.dart`,
-  `split_pdf_test.dart`, and `organize_pdf_test.dart`
+  `split_pdf_test.dart`, `organize_pdf_test.dart`, and
+  `pdf_security_test.dart`
 
 Codex and the interactive Windows user can have isolated views of the user-wide
 Pub cache even when both paths display as `%LOCALAPPDATA%\Pub\Cache`. After Codex

@@ -18,6 +18,7 @@ pub enum ApplicationErrorCode {
     StructuralPdfRuntimeIncompatible,
     StructuralPdfLaunchFailed,
     PasswordRequired,
+    IncorrectPassword,
     StructuralPdfOperationFailed,
     StructuralPdfOutputValidationFailed,
     InvalidOutputDirectory,
@@ -84,6 +85,9 @@ impl From<ilikepdf_core::ApplicationError> for ApplicationError {
             }
             ilikepdf_core::ApplicationErrorCode::PasswordRequired => {
                 ApplicationErrorCode::PasswordRequired
+            }
+            ilikepdf_core::ApplicationErrorCode::IncorrectPassword => {
+                ApplicationErrorCode::IncorrectPassword
             }
             ilikepdf_core::ApplicationErrorCode::StructuralPdfOperationFailed => {
                 ApplicationErrorCode::StructuralPdfOperationFailed

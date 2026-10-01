@@ -9,9 +9,13 @@ import 'package:ilikepdf/src/app/organize_pdf/organize_pdf_panel.dart';
 import 'package:ilikepdf/src/app/organize_pdf/organize_pdf_workflow.dart';
 import 'package:ilikepdf/src/app/pdf_to_image/pdf_to_image_panel.dart';
 import 'package:ilikepdf/src/app/pdf_to_image/pdf_to_image_workflow.dart';
+import 'package:ilikepdf/src/app/protect_pdf/protect_pdf_panel.dart';
+import 'package:ilikepdf/src/app/protect_pdf/protect_pdf_workflow.dart';
 import 'package:ilikepdf/src/app/shared/application_shell.dart';
 import 'package:ilikepdf/src/app/split_pdf/split_pdf_panel.dart';
 import 'package:ilikepdf/src/app/split_pdf/split_pdf_workflow.dart';
+import 'package:ilikepdf/src/app/unlock_pdf/unlock_pdf_panel.dart';
+import 'package:ilikepdf/src/app/unlock_pdf/unlock_pdf_workflow.dart';
 
 class IlikepdfApp extends StatelessWidget {
   const IlikepdfApp({
@@ -22,7 +26,9 @@ class IlikepdfApp extends StatelessWidget {
     this.imageToPdfWorkflow = const LocalImageToPdfWorkflow(),
     this.mergePdfWorkflow = const LocalMergePdfWorkflow(),
     this.organizePdfWorkflow = const LocalOrganizePdfWorkflow(),
+    this.protectPdfWorkflow = const LocalProtectPdfWorkflow(),
     this.splitPdfWorkflow = const LocalSplitPdfWorkflow(),
+    this.unlockPdfWorkflow = const LocalUnlockPdfWorkflow(),
     super.key,
   });
 
@@ -33,7 +39,9 @@ class IlikepdfApp extends StatelessWidget {
   final ImageToPdfWorkflow imageToPdfWorkflow;
   final MergePdfWorkflow mergePdfWorkflow;
   final OrganizePdfWorkflow organizePdfWorkflow;
+  final ProtectPdfWorkflow protectPdfWorkflow;
   final SplitPdfWorkflow splitPdfWorkflow;
+  final UnlockPdfWorkflow unlockPdfWorkflow;
 
   @override
   Widget build(BuildContext context) {
@@ -78,7 +86,9 @@ class IlikepdfApp extends StatelessWidget {
         imageToPdfWorkflow: imageToPdfWorkflow,
         mergePdfWorkflow: mergePdfWorkflow,
         organizePdfWorkflow: organizePdfWorkflow,
+        protectPdfWorkflow: protectPdfWorkflow,
         splitPdfWorkflow: splitPdfWorkflow,
+        unlockPdfWorkflow: unlockPdfWorkflow,
       ),
     );
   }
@@ -91,6 +101,8 @@ enum _ActiveTool {
   mergePdf,
   splitPdf,
   organizePdf,
+  protectPdf,
+  unlockPdf,
 }
 
 class _ApplicationWorkspace extends StatefulWidget {
@@ -101,7 +113,9 @@ class _ApplicationWorkspace extends StatefulWidget {
     required this.imageToPdfWorkflow,
     required this.mergePdfWorkflow,
     required this.organizePdfWorkflow,
+    required this.protectPdfWorkflow,
     required this.splitPdfWorkflow,
+    required this.unlockPdfWorkflow,
   });
 
   final String applicationName;
@@ -110,7 +124,9 @@ class _ApplicationWorkspace extends StatefulWidget {
   final ImageToPdfWorkflow imageToPdfWorkflow;
   final MergePdfWorkflow mergePdfWorkflow;
   final OrganizePdfWorkflow organizePdfWorkflow;
+  final ProtectPdfWorkflow protectPdfWorkflow;
   final SplitPdfWorkflow splitPdfWorkflow;
+  final UnlockPdfWorkflow unlockPdfWorkflow;
 
   @override
   State<_ApplicationWorkspace> createState() => _ApplicationWorkspaceState();
@@ -165,6 +181,8 @@ class _ApplicationWorkspaceState extends State<_ApplicationWorkspace> {
         onOpenMergePdf: () => _show(_ActiveTool.mergePdf),
         onOpenSplitPdf: () => _show(_ActiveTool.splitPdf),
         onOpenOrganizePdf: () => _show(_ActiveTool.organizePdf),
+        onOpenProtectPdf: () => _show(_ActiveTool.protectPdf),
+        onOpenUnlockPdf: () => _show(_ActiveTool.unlockPdf),
       ),
       _ActiveTool.pdfToImages => PdfToImagePanel(
         key: const ValueKey('pdf-to-images-content'),
@@ -185,6 +203,14 @@ class _ApplicationWorkspaceState extends State<_ApplicationWorkspace> {
       _ActiveTool.organizePdf => OrganizePdfPanel(
         key: const ValueKey('organize-pdf-content'),
         workflow: widget.organizePdfWorkflow,
+      ),
+      _ActiveTool.protectPdf => ProtectPdfPanel(
+        key: const ValueKey('protect-pdf-content'),
+        workflow: widget.protectPdfWorkflow,
+      ),
+      _ActiveTool.unlockPdf => UnlockPdfPanel(
+        key: const ValueKey('unlock-pdf-content'),
+        workflow: widget.unlockPdfWorkflow,
       ),
     };
   }

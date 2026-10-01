@@ -2,7 +2,7 @@ use std::fs;
 use std::io::{Seek, Write};
 use std::path::Path;
 
-use pdfium_render::prelude::{PdfRenderConfig, Pdfium};
+use pdfium_render::prelude::{PdfRenderConfig, Pdfium, PdfiumError, PdfiumInternalError};
 
 use crate::{
     PdfDocumentInfo, PdfDpiRenderRequest, PdfError, PdfErrorKind, PdfImageFormat, PdfPageSize,
@@ -18,7 +18,16 @@ pub(crate) fn inspect_document(
     source_path: &Path,
 ) -> Result<PdfDocumentInfo, PdfError> {
     validate_source(source_path)?;
-    inspect_with_pdfium(pdfium, source_path)
+    inspect_with_pdfium(pdfium, source_path, None)
+}
+
+pub(crate) fn inspect_document_with_password(
+    pdfium: &Pdfium,
+    source_path: &Path,
+    password: &str,
+) -> Result<PdfDocumentInfo, PdfError> {
+    validate_source(source_path)?;
+    inspect_with_pdfium(pdfium, source_path, Some(password))
 }
 
 pub(crate) fn render_page_to_png(
@@ -122,10 +131,14 @@ fn render_page_with_config(
     })
 }
 
-fn inspect_with_pdfium(pdfium: &Pdfium, source_path: &Path) -> Result<PdfDocumentInfo, PdfError> {
+fn inspect_with_pdfium(
+    pdfium: &Pdfium,
+    source_path: &Path,
+    password: Option<&str>,
+) -> Result<PdfDocumentInfo, PdfError> {
     let document = pdfium
-        .load_pdf_from_file(source_path, None)
-        .map_err(|_| PdfError::new(PdfErrorKind::InvalidDocument))?;
+        .load_pdf_from_file(source_path, password)
+        .map_err(map_document_load_error)?;
     let page_count = u32::try_from(document.pages().len())
         .map_err(|_| PdfError::new(PdfErrorKind::InvalidDocument))?;
     let first_page_size = if page_count == 0 {
@@ -145,6 +158,15 @@ fn inspect_with_pdfium(pdfium: &Pdfium, source_path: &Path) -> Result<PdfDocumen
         page_count,
         first_page_size,
     })
+}
+
+fn map_document_load_error(error: PdfiumError) -> PdfError {
+    match error {
+        PdfiumError::PdfiumLibraryInternalError(PdfiumInternalError::PasswordError) => {
+            PdfError::new(PdfErrorKind::PasswordRequired)
+        }
+        _ => PdfError::new(PdfErrorKind::InvalidDocument),
+    }
 }
 
 fn validate_source(source_path: &Path) -> Result<(), PdfError> {

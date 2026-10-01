@@ -764,6 +764,10 @@ fn map_organize_engine_error(error: super::StructuralPdfError) -> ApplicationErr
             ApplicationErrorCode::PasswordRequired,
             "This PDF is password protected. Unlock it before organizing",
         ),
+        StructuralPdfError::IncorrectPassword => ApplicationError::new(
+            ApplicationErrorCode::IncorrectPassword,
+            "The PDF password is incorrect",
+        ),
         StructuralPdfError::InvalidDocument => ApplicationError::new(
             ApplicationErrorCode::InvalidPdf,
             "The selected file is not a structurally valid PDF",

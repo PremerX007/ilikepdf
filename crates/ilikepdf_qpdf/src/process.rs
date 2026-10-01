@@ -1,4 +1,5 @@
-use std::ffi::OsString;
+use std::ffi::{OsStr, OsString};
+use std::fmt::{self, Debug, Formatter};
 use std::io::{self, Read, Write};
 use std::path::Path;
 use std::process::{Child, Command, Stdio};
@@ -16,6 +17,92 @@ pub(crate) trait QpdfRunner: Send + Sync {
         arguments: &[OsString],
         stdin_data: Option<&[u8]>,
     ) -> Result<QpdfProcessOutput, QpdfProcessError>;
+
+    fn run_with_sensitive_stdin(
+        &self,
+        executable: &Path,
+        arguments: &[OsString],
+        sensitive_input: SensitiveQpdfInput,
+    ) -> Result<QpdfProcessOutput, QpdfProcessError> {
+        self.run(executable, arguments, Some(sensitive_input.as_bytes()))
+    }
+}
+
+pub(crate) struct SensitiveQpdfInput {
+    bytes: Vec<u8>,
+}
+
+pub(crate) enum SensitiveQpdfArgument<'a> {
+    Os(&'a OsStr),
+    Utf8(&'a str),
+    SecretOption {
+        prefix: &'static str,
+        value: &'a str,
+    },
+}
+
+impl SensitiveQpdfInput {
+    #[cfg(test)]
+    pub(crate) fn from_arguments(
+        arguments: impl IntoIterator<Item = impl AsRef<OsStr>>,
+    ) -> Result<Self, QpdfProcessError> {
+        let mut bytes = Vec::new();
+        for argument in arguments {
+            append_utf8(
+                &mut bytes,
+                argument.as_ref().to_str().ok_or(QpdfProcessError::Stdin)?,
+            )?;
+            bytes.push(b'\n');
+        }
+        Ok(Self { bytes })
+    }
+
+    pub(crate) fn from_sensitive_arguments(
+        arguments: &[SensitiveQpdfArgument<'_>],
+    ) -> Result<Self, QpdfProcessError> {
+        let mut bytes = Vec::new();
+        for argument in arguments {
+            match argument {
+                SensitiveQpdfArgument::Os(value) => {
+                    append_utf8(&mut bytes, value.to_str().ok_or(QpdfProcessError::Stdin)?)?;
+                }
+                SensitiveQpdfArgument::Utf8(value) => append_utf8(&mut bytes, value)?,
+                SensitiveQpdfArgument::SecretOption { prefix, value } => {
+                    append_utf8(&mut bytes, prefix)?;
+                    append_utf8(&mut bytes, value)?;
+                }
+            }
+            bytes.push(b'\n');
+        }
+        Ok(Self { bytes })
+    }
+
+    pub(crate) fn as_bytes(&self) -> &[u8] {
+        &self.bytes
+    }
+}
+
+fn append_utf8(bytes: &mut Vec<u8>, value: &str) -> Result<(), QpdfProcessError> {
+    if value
+        .chars()
+        .any(|character| matches!(character, '\0' | '\r' | '\n'))
+    {
+        return Err(QpdfProcessError::Stdin);
+    }
+    bytes.extend_from_slice(value.as_bytes());
+    Ok(())
+}
+
+impl Debug for SensitiveQpdfInput {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> fmt::Result {
+        formatter.write_str("SensitiveQpdfInput([REDACTED])")
+    }
+}
+
+impl Drop for SensitiveQpdfInput {
+    fn drop(&mut self) {
+        self.bytes.fill(0);
+    }
 }
 
 pub(crate) struct QpdfProcessRunner;

@@ -30,3 +30,17 @@ fn an_unlaunchable_runtime_is_reported_without_shell_fallback() {
 
     assert_eq!(error, QpdfProcessError::Launch);
 }
+
+#[test]
+fn sensitive_stdin_debug_is_redacted_and_line_unsafe_values_are_rejected() {
+    let input = SensitiveQpdfInput::from_arguments([
+        OsString::from("--password=private-test-value"),
+        OsString::from("--check"),
+    ])
+    .unwrap();
+    let formatted = format!("{input:?}");
+
+    assert_eq!(formatted, "SensitiveQpdfInput([REDACTED])");
+    assert!(!formatted.contains("private-test-value"));
+    assert!(SensitiveQpdfInput::from_arguments([OsString::from("bad\nargument")]).is_err());
+}

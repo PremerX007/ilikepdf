@@ -578,6 +578,7 @@ dependencies = [
 name = "ilikepdf_qpdf"
 version = "0.1.0"
 dependencies = [
+ "getrandom",
  "ilikepdf_core",
  "ilikepdf_pdf",
  "tempfile",

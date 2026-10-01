@@ -9,6 +9,7 @@ publish.workspace = true
 path = "src/lib.rs"
 
 [dependencies]
+getrandom.workspace = true
 ilikepdf_core = { path = "../ilikepdf_core" }
 
 [dev-dependencies]

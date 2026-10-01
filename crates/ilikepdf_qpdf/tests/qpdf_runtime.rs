@@ -5,12 +5,17 @@ use std::path::{Path, PathBuf};
 
 use ilikepdf_core::{
     ApplicationErrorCode, MergePdfRequest, OrganizePdfPageItem, OrganizePdfPageRotation,
-    OrganizePdfRequest, OrganizePdfSource, RewriteStructuralPdfRequest, SplitPdfMode,
-    SplitPdfRequest, StructuralPdfEngine, StructuralPdfEngineFamily, StructuralPdfError,
-    StructuralPdfMergeRequest, StructuralPdfVersion, merge_pdf, organize_pdf,
-    probe_structural_pdf_engine, rewrite_structural_pdf, split_pdf, validate_structural_pdf,
+    OrganizePdfRequest, OrganizePdfSource, PdfEncryptionState, ProtectPdfRequest,
+    RewriteStructuralPdfRequest, SecretString, SplitPdfMode, SplitPdfRequest, StructuralPdfEngine,
+    StructuralPdfEngineFamily, StructuralPdfError, StructuralPdfMergeRequest,
+    StructuralPdfProtectRequest, StructuralPdfVersion, UnlockPdfRequest,
+    inspect_protect_pdf_source, inspect_unlock_pdf_source, merge_pdf, organize_pdf,
+    probe_structural_pdf_engine, protect_pdf, rewrite_structural_pdf, split_pdf, unlock_pdf,
+    validate_structural_pdf,
 };
-use ilikepdf_pdf::{PdfRenderRequest, inspect_document, render_page_to_png};
+use ilikepdf_pdf::{
+    PdfRenderRequest, inspect_document, inspect_document_with_password, render_page_to_png,
+};
 use ilikepdf_qpdf::QpdfCliEngine;
 
 fn repository_root() -> PathBuf {
@@ -529,6 +534,170 @@ fn real_organize_preserves_cross_source_order_rotation_sources_and_collision_saf
         b"occupied"
     );
     assert_eq!(private_working_file_count(&destination_directory), 0);
+}
+
+#[test]
+fn real_protect_uses_aes256_unicode_password_validation_and_no_clobber_publication() {
+    install_pdfium_beside_test_executable();
+    let directory = tempfile::tempdir().unwrap();
+    let source_directory = directory.path().join("แหล่ง protect with spaces");
+    let destination = directory.path().join("ผลลัพธ์ secure");
+    fs::create_dir(&source_directory).unwrap();
+    fs::create_dir(&destination).unwrap();
+    let source = source_directory.join("เอกสาร รายงาน.pdf");
+    fs::copy(fixture("two_page.pdf"), &source).unwrap();
+    let source_before = fs::read(&source).unwrap();
+    fs::write(destination.join("เอกสาร รายงาน-protected.PDF"), b"occupied").unwrap();
+    let engine = QpdfCliEngine::from_runtime_root(qpdf_runtime_root());
+    let inspected = inspect_protect_pdf_source(&engine, &source).unwrap();
+    assert_eq!(inspected.encryption_state, PdfEncryptionState::Unencrypted);
+    assert_eq!(inspected.page_count, Some(2));
+
+    let result = protect_pdf(
+        &engine,
+        ProtectPdfRequest {
+            source_path: source.clone(),
+            destination_directory: destination.clone(),
+            output_name: "เอกสาร รายงาน-protected.pdf".to_owned(),
+            password: SecretString::new("รหัสผ่าน-ทดสอบ".to_owned()),
+            confirmation: SecretString::new("รหัสผ่าน-ทดสอบ".to_owned()),
+        },
+        |_| {},
+    )
+    .unwrap();
+
+    assert_eq!(
+        result.output_path,
+        destination.join("เอกสาร รายงาน-protected (1).pdf")
+    );
+    assert_eq!(result.page_count, 2);
+    assert_eq!(
+        engine.inspect_encryption(&result.output_path).unwrap(),
+        PdfEncryptionState::EncryptedPasswordRequired
+    );
+    assert_eq!(
+        engine.validate(&result.output_path),
+        Err(StructuralPdfError::PasswordRequired)
+    );
+    let wrong = SecretString::new("wrong".to_owned());
+    assert_eq!(
+        engine.validate_with_password(&result.output_path, &wrong),
+        Err(StructuralPdfError::IncorrectPassword)
+    );
+    assert_eq!(
+        inspect_document_with_password(&result.output_path, "รหัสผ่าน-ทดสอบ")
+            .unwrap()
+            .page_count,
+        2
+    );
+    assert_eq!(fs::read(source).unwrap(), source_before);
+    assert_eq!(
+        fs::read(destination.join("เอกสาร รายงาน-protected.PDF")).unwrap(),
+        b"occupied"
+    );
+    assert_eq!(private_working_file_count(&destination), 0);
+}
+
+#[test]
+fn real_unlock_required_password_rejects_wrong_and_publishes_unencrypted_output() {
+    install_pdfium_beside_test_executable();
+    let directory = tempfile::tempdir().unwrap();
+    let source = directory.path().join("protected source.pdf");
+    let engine = QpdfCliEngine::from_runtime_root(qpdf_runtime_root());
+    let password = SecretString::new("correct-unlock-value".to_owned());
+    engine
+        .protect(&StructuralPdfProtectRequest {
+            source_path: fixture("two_page.pdf"),
+            working_output_path: source.clone(),
+            open_password: &password,
+        })
+        .unwrap();
+    let source_before = fs::read(&source).unwrap();
+    let inspected = inspect_unlock_pdf_source(&engine, &source).unwrap();
+    assert_eq!(
+        inspected.encryption_state,
+        PdfEncryptionState::EncryptedPasswordRequired
+    );
+    assert_eq!(inspected.page_count, None);
+
+    let wrong_failure = unlock_pdf(
+        &engine,
+        UnlockPdfRequest {
+            source_path: source.clone(),
+            destination_directory: directory.path().to_path_buf(),
+            output_name: "wrong-output.pdf".to_owned(),
+            password: Some(SecretString::new("incorrect-unlock-value".to_owned())),
+        },
+        |_| {},
+    )
+    .unwrap_err();
+    assert_eq!(
+        wrong_failure.error.code,
+        ApplicationErrorCode::IncorrectPassword
+    );
+    assert!(!directory.path().join("wrong-output.pdf").exists());
+
+    let result = unlock_pdf(
+        &engine,
+        UnlockPdfRequest {
+            source_path: source.clone(),
+            destination_directory: directory.path().to_path_buf(),
+            output_name: "protected source-unlocked.pdf".to_owned(),
+            password: Some(SecretString::new("correct-unlock-value".to_owned())),
+        },
+        |_| {},
+    )
+    .unwrap();
+    assert_eq!(
+        engine.inspect_encryption(&result.output_path).unwrap(),
+        PdfEncryptionState::Unencrypted
+    );
+    assert_eq!(inspect_document(&result.output_path).unwrap().page_count, 2);
+    assert_eq!(fs::read(source).unwrap(), source_before);
+    assert_eq!(private_working_file_count(directory.path()), 0);
+}
+
+#[test]
+fn real_unlock_empty_open_password_requires_no_ui_password() {
+    install_pdfium_beside_test_executable();
+    let directory = tempfile::tempdir().unwrap();
+    let source = directory.path().join("permission encrypted.pdf");
+    let engine = QpdfCliEngine::from_runtime_root(qpdf_runtime_root());
+    let empty_password = SecretString::new(String::new());
+    engine
+        .protect(&StructuralPdfProtectRequest {
+            source_path: fixture("one_page.pdf"),
+            working_output_path: source.clone(),
+            open_password: &empty_password,
+        })
+        .unwrap();
+    let source_before = fs::read(&source).unwrap();
+    let inspected = inspect_unlock_pdf_source(&engine, &source).unwrap();
+    assert_eq!(
+        inspected.encryption_state,
+        PdfEncryptionState::EncryptedNoPasswordRequired
+    );
+    assert_eq!(inspected.page_count, Some(1));
+
+    let result = unlock_pdf(
+        &engine,
+        UnlockPdfRequest {
+            source_path: source.clone(),
+            destination_directory: directory.path().to_path_buf(),
+            output_name: "permission encrypted-unlocked.pdf".to_owned(),
+            password: None,
+        },
+        |_| {},
+    )
+    .unwrap();
+
+    assert_eq!(
+        engine.inspect_encryption(&result.output_path).unwrap(),
+        PdfEncryptionState::Unencrypted
+    );
+    assert_eq!(inspect_document(&result.output_path).unwrap().page_count, 1);
+    assert_eq!(fs::read(source).unwrap(), source_before);
+    assert_eq!(private_working_file_count(directory.path()), 0);
 }
 
 #[test]

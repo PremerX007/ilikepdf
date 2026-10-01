@@ -10,6 +10,7 @@ import 'api/merge_pdf.dart';
 import 'api/organize_pdf.dart';
 import 'api/pdf_export.dart';
 import 'api/pdf_preview.dart';
+import 'api/pdf_security.dart';
 import 'api/split_pdf.dart';
 
 import 'dart:async';
@@ -76,7 +77,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.13.0';
 
   @override
-  int get rustContentHash => 1054267701;
+  int get rustContentHash => -336962832;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -110,7 +111,15 @@ abstract class RustLibApi extends BaseApi {
     required List<String> candidateSourcePaths,
   });
 
+  Future<ProtectPdfSourceInfo> crateApiPdfSecurityInspectProtectPdfSource({
+    required String sourcePath,
+  });
+
   Future<SplitPdfSourceInfo> crateApiSplitPdfInspectSplitPdfSource({
+    required String sourcePath,
+  });
+
+  Future<UnlockPdfSourceInfo> crateApiPdfSecurityInspectUnlockPdfSource({
     required String sourcePath,
   });
 
@@ -126,12 +135,20 @@ abstract class RustLibApi extends BaseApi {
     required OrganizePdfRequest request,
   });
 
+  Stream<ProtectPdfUpdate> crateApiPdfSecurityProtectPdf({
+    required ProtectPdfRequest request,
+  });
+
   Future<RenderPdfPageResult> crateApiPdfPreviewRenderPdfPage({
     required RenderPdfPageRequest request,
   });
 
   Stream<SplitPdfUpdate> crateApiSplitPdfSplitPdf({
     required SplitPdfRequest request,
+  });
+
+  Stream<UnlockPdfUpdate> crateApiPdfSecurityUnlockPdf({
+    required UnlockPdfRequest request,
   });
 }
 
@@ -366,7 +383,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<SplitPdfSourceInfo> crateApiSplitPdfInspectSplitPdfSource({
+  Future<ProtectPdfSourceInfo> crateApiPdfSecurityInspectProtectPdfSource({
     required String sourcePath,
   }) {
     return handler.executeNormal(
@@ -378,6 +395,39 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             generalizedFrbRustBinding,
             serializer,
             funcId: 7,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_protect_pdf_source_info,
+          decodeErrorData: sse_decode_application_error,
+        ),
+        constMeta: kCrateApiPdfSecurityInspectProtectPdfSourceConstMeta,
+        argValues: [sourcePath],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiPdfSecurityInspectProtectPdfSourceConstMeta =>
+      const TaskConstMeta(
+        debugName: "inspect_protect_pdf_source",
+        argNames: ["sourcePath"],
+      );
+
+  @override
+  Future<SplitPdfSourceInfo> crateApiSplitPdfInspectSplitPdfSource({
+    required String sourcePath,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(sourcePath, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 8,
             port: port_,
           );
         },
@@ -399,6 +449,39 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
+  Future<UnlockPdfSourceInfo> crateApiPdfSecurityInspectUnlockPdfSource({
+    required String sourcePath,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(sourcePath, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 9,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unlock_pdf_source_info,
+          decodeErrorData: sse_decode_application_error,
+        ),
+        constMeta: kCrateApiPdfSecurityInspectUnlockPdfSourceConstMeta,
+        argValues: [sourcePath],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiPdfSecurityInspectUnlockPdfSourceConstMeta =>
+      const TaskConstMeta(
+        debugName: "inspect_unlock_pdf_source",
+        argNames: ["sourcePath"],
+      );
+
+  @override
   Stream<MergePdfUpdate> crateApiMergePdfMergePdf({
     required MergePdfRequest request,
   }) {
@@ -416,7 +499,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             pdeCallFfi(
               generalizedFrbRustBinding,
               serializer,
-              funcId: 8,
+              funcId: 10,
               port: port_,
             );
           },
@@ -450,7 +533,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 9,
+            funcId: 11,
             port: port_,
           );
         },
@@ -489,7 +572,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             pdeCallFfi(
               generalizedFrbRustBinding,
               serializer,
-              funcId: 10,
+              funcId: 12,
               port: port_,
             );
           },
@@ -513,6 +596,47 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
+  Stream<ProtectPdfUpdate> crateApiPdfSecurityProtectPdf({
+    required ProtectPdfRequest request,
+  }) {
+    final progressSink = RustStreamSink<ProtectPdfUpdate>();
+    unawaited(
+      handler.executeNormal(
+        NormalTask(
+          callFfi: (port_) {
+            final serializer = SseSerializer(generalizedFrbRustBinding);
+            sse_encode_box_autoadd_protect_pdf_request(request, serializer);
+            sse_encode_StreamSink_protect_pdf_update_Sse(
+              progressSink,
+              serializer,
+            );
+            pdeCallFfi(
+              generalizedFrbRustBinding,
+              serializer,
+              funcId: 13,
+              port: port_,
+            );
+          },
+          codec: SseCodec(
+            decodeSuccessData: sse_decode_unit,
+            decodeErrorData: null,
+          ),
+          constMeta: kCrateApiPdfSecurityProtectPdfConstMeta,
+          argValues: [request, progressSink],
+          apiImpl: this,
+        ),
+      ),
+    );
+    return progressSink.stream;
+  }
+
+  TaskConstMeta get kCrateApiPdfSecurityProtectPdfConstMeta =>
+      const TaskConstMeta(
+        debugName: "protect_pdf",
+        argNames: ["request", "progressSink"],
+      );
+
+  @override
   Future<RenderPdfPageResult> crateApiPdfPreviewRenderPdfPage({
     required RenderPdfPageRequest request,
   }) {
@@ -524,7 +648,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 11,
+            funcId: 14,
             port: port_,
           );
         },
@@ -560,7 +684,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             pdeCallFfi(
               generalizedFrbRustBinding,
               serializer,
-              funcId: 12,
+              funcId: 15,
               port: port_,
             );
           },
@@ -581,6 +705,47 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     debugName: "split_pdf",
     argNames: ["request", "progressSink"],
   );
+
+  @override
+  Stream<UnlockPdfUpdate> crateApiPdfSecurityUnlockPdf({
+    required UnlockPdfRequest request,
+  }) {
+    final progressSink = RustStreamSink<UnlockPdfUpdate>();
+    unawaited(
+      handler.executeNormal(
+        NormalTask(
+          callFfi: (port_) {
+            final serializer = SseSerializer(generalizedFrbRustBinding);
+            sse_encode_box_autoadd_unlock_pdf_request(request, serializer);
+            sse_encode_StreamSink_unlock_pdf_update_Sse(
+              progressSink,
+              serializer,
+            );
+            pdeCallFfi(
+              generalizedFrbRustBinding,
+              serializer,
+              funcId: 16,
+              port: port_,
+            );
+          },
+          codec: SseCodec(
+            decodeSuccessData: sse_decode_unit,
+            decodeErrorData: null,
+          ),
+          constMeta: kCrateApiPdfSecurityUnlockPdfConstMeta,
+          argValues: [request, progressSink],
+          apiImpl: this,
+        ),
+      ),
+    );
+    return progressSink.stream;
+  }
+
+  TaskConstMeta get kCrateApiPdfSecurityUnlockPdfConstMeta =>
+      const TaskConstMeta(
+        debugName: "unlock_pdf",
+        argNames: ["request", "progressSink"],
+      );
 
   @protected
   AnyhowException dco_decode_AnyhowException(dynamic raw) {
@@ -627,7 +792,23 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  RustStreamSink<ProtectPdfUpdate> dco_decode_StreamSink_protect_pdf_update_Sse(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    throw UnimplementedError();
+  }
+
+  @protected
   RustStreamSink<SplitPdfUpdate> dco_decode_StreamSink_split_pdf_update_Sse(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    throw UnimplementedError();
+  }
+
+  @protected
+  RustStreamSink<UnlockPdfUpdate> dco_decode_StreamSink_unlock_pdf_update_Sse(
     dynamic raw,
   ) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
@@ -726,6 +907,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  ProtectPdfRequest dco_decode_box_autoadd_protect_pdf_request(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_protect_pdf_request(raw);
+  }
+
+  @protected
   RenderPdfPageRequest dco_decode_box_autoadd_render_pdf_page_request(
     dynamic raw,
   ) {
@@ -749,6 +936,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   BigInt dco_decode_box_autoadd_u_64(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_u_64(raw);
+  }
+
+  @protected
+  UnlockPdfRequest dco_decode_box_autoadd_unlock_pdf_request(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_unlock_pdf_request(raw);
   }
 
   @protected
@@ -1136,6 +1329,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  PdfEncryptionState dco_decode_pdf_encryption_state(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return PdfEncryptionState.values[raw as int];
+  }
+
+  @protected
   PdfExportFormat dco_decode_pdf_export_format(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return PdfExportFormat.values[raw as int];
@@ -1178,6 +1377,65 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     return PdfPageSize(
       widthPoints: dco_decode_f_64(arr[0]),
       heightPoints: dco_decode_f_64(arr[1]),
+    );
+  }
+
+  @protected
+  PdfSecurityStatus dco_decode_pdf_security_status(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return PdfSecurityStatus.values[raw as int];
+  }
+
+  @protected
+  ProtectPdfRequest dco_decode_protect_pdf_request(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    return ProtectPdfRequest(
+      sourcePath: dco_decode_String(arr[0]),
+      destinationDirectory: dco_decode_String(arr[1]),
+      outputName: dco_decode_String(arr[2]),
+      password: dco_decode_String(arr[3]),
+      confirmation: dco_decode_String(arr[4]),
+    );
+  }
+
+  @protected
+  ProtectPdfSourceInfo dco_decode_protect_pdf_source_info(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 6)
+      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    return ProtectPdfSourceInfo(
+      sourcePath: dco_decode_String(arr[0]),
+      pageCount: dco_decode_opt_box_autoadd_u_32(arr[1]),
+      sizeBytes: dco_decode_u_64(arr[2]),
+      encryptionState: dco_decode_pdf_encryption_state(arr[3]),
+      hasWarnings: dco_decode_bool(arr[4]),
+      defaultOutputName: dco_decode_String(arr[5]),
+    );
+  }
+
+  @protected
+  ProtectPdfStage dco_decode_protect_pdf_stage(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return ProtectPdfStage.values[raw as int];
+  }
+
+  @protected
+  ProtectPdfUpdate dco_decode_protect_pdf_update(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 6)
+      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    return ProtectPdfUpdate(
+      status: dco_decode_pdf_security_status(arr[0]),
+      stage: dco_decode_protect_pdf_stage(arr[1]),
+      pageCount: dco_decode_u_32(arr[2]),
+      outputPath: dco_decode_opt_String(arr[3]),
+      hasWarnings: dco_decode_bool(arr[4]),
+      error: dco_decode_opt_box_autoadd_application_error(arr[5]),
     );
   }
 
@@ -1316,6 +1574,58 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  UnlockPdfRequest dco_decode_unlock_pdf_request(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    return UnlockPdfRequest(
+      sourcePath: dco_decode_String(arr[0]),
+      destinationDirectory: dco_decode_String(arr[1]),
+      outputName: dco_decode_String(arr[2]),
+      password: dco_decode_opt_String(arr[3]),
+    );
+  }
+
+  @protected
+  UnlockPdfSourceInfo dco_decode_unlock_pdf_source_info(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 6)
+      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    return UnlockPdfSourceInfo(
+      sourcePath: dco_decode_String(arr[0]),
+      pageCount: dco_decode_opt_box_autoadd_u_32(arr[1]),
+      sizeBytes: dco_decode_u_64(arr[2]),
+      encryptionState: dco_decode_pdf_encryption_state(arr[3]),
+      hasWarnings: dco_decode_bool(arr[4]),
+      defaultOutputName: dco_decode_String(arr[5]),
+    );
+  }
+
+  @protected
+  UnlockPdfStage dco_decode_unlock_pdf_stage(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return UnlockPdfStage.values[raw as int];
+  }
+
+  @protected
+  UnlockPdfUpdate dco_decode_unlock_pdf_update(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 6)
+      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    return UnlockPdfUpdate(
+      status: dco_decode_pdf_security_status(arr[0]),
+      stage: dco_decode_unlock_pdf_stage(arr[1]),
+      pageCount: dco_decode_u_32(arr[2]),
+      outputPath: dco_decode_opt_String(arr[3]),
+      hasWarnings: dco_decode_bool(arr[4]),
+      error: dco_decode_opt_box_autoadd_application_error(arr[5]),
+    );
+  }
+
+  @protected
   AnyhowException sse_decode_AnyhowException(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var inner = sse_decode_String(deserializer);
@@ -1363,7 +1673,23 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  RustStreamSink<ProtectPdfUpdate> sse_decode_StreamSink_protect_pdf_update_Sse(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    throw UnimplementedError('Unreachable ()');
+  }
+
+  @protected
   RustStreamSink<SplitPdfUpdate> sse_decode_StreamSink_split_pdf_update_Sse(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    throw UnimplementedError('Unreachable ()');
+  }
+
+  @protected
+  RustStreamSink<UnlockPdfUpdate> sse_decode_StreamSink_unlock_pdf_update_Sse(
     SseDeserializer deserializer,
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
@@ -1470,6 +1796,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  ProtectPdfRequest sse_decode_box_autoadd_protect_pdf_request(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_protect_pdf_request(deserializer));
+  }
+
+  @protected
   RenderPdfPageRequest sse_decode_box_autoadd_render_pdf_page_request(
     SseDeserializer deserializer,
   ) {
@@ -1495,6 +1829,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   BigInt sse_decode_box_autoadd_u_64(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return (sse_decode_u_64(deserializer));
+  }
+
+  @protected
+  UnlockPdfRequest sse_decode_box_autoadd_unlock_pdf_request(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_unlock_pdf_request(deserializer));
   }
 
   @protected
@@ -2031,6 +2373,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  PdfEncryptionState sse_decode_pdf_encryption_state(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var inner = sse_decode_i_32(deserializer);
+    return PdfEncryptionState.values[inner];
+  }
+
+  @protected
   PdfExportFormat sse_decode_pdf_export_format(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var inner = sse_decode_i_32(deserializer);
@@ -2078,6 +2429,81 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     return PdfPageSize(
       widthPoints: var_widthPoints,
       heightPoints: var_heightPoints,
+    );
+  }
+
+  @protected
+  PdfSecurityStatus sse_decode_pdf_security_status(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var inner = sse_decode_i_32(deserializer);
+    return PdfSecurityStatus.values[inner];
+  }
+
+  @protected
+  ProtectPdfRequest sse_decode_protect_pdf_request(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_sourcePath = sse_decode_String(deserializer);
+    var var_destinationDirectory = sse_decode_String(deserializer);
+    var var_outputName = sse_decode_String(deserializer);
+    var var_password = sse_decode_String(deserializer);
+    var var_confirmation = sse_decode_String(deserializer);
+    return ProtectPdfRequest(
+      sourcePath: var_sourcePath,
+      destinationDirectory: var_destinationDirectory,
+      outputName: var_outputName,
+      password: var_password,
+      confirmation: var_confirmation,
+    );
+  }
+
+  @protected
+  ProtectPdfSourceInfo sse_decode_protect_pdf_source_info(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_sourcePath = sse_decode_String(deserializer);
+    var var_pageCount = sse_decode_opt_box_autoadd_u_32(deserializer);
+    var var_sizeBytes = sse_decode_u_64(deserializer);
+    var var_encryptionState = sse_decode_pdf_encryption_state(deserializer);
+    var var_hasWarnings = sse_decode_bool(deserializer);
+    var var_defaultOutputName = sse_decode_String(deserializer);
+    return ProtectPdfSourceInfo(
+      sourcePath: var_sourcePath,
+      pageCount: var_pageCount,
+      sizeBytes: var_sizeBytes,
+      encryptionState: var_encryptionState,
+      hasWarnings: var_hasWarnings,
+      defaultOutputName: var_defaultOutputName,
+    );
+  }
+
+  @protected
+  ProtectPdfStage sse_decode_protect_pdf_stage(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var inner = sse_decode_i_32(deserializer);
+    return ProtectPdfStage.values[inner];
+  }
+
+  @protected
+  ProtectPdfUpdate sse_decode_protect_pdf_update(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_status = sse_decode_pdf_security_status(deserializer);
+    var var_stage = sse_decode_protect_pdf_stage(deserializer);
+    var var_pageCount = sse_decode_u_32(deserializer);
+    var var_outputPath = sse_decode_opt_String(deserializer);
+    var var_hasWarnings = sse_decode_bool(deserializer);
+    var var_error = sse_decode_opt_box_autoadd_application_error(deserializer);
+    return ProtectPdfUpdate(
+      status: var_status,
+      stage: var_stage,
+      pageCount: var_pageCount,
+      outputPath: var_outputPath,
+      hasWarnings: var_hasWarnings,
+      error: var_error,
     );
   }
 
@@ -2238,6 +2664,68 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  UnlockPdfRequest sse_decode_unlock_pdf_request(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_sourcePath = sse_decode_String(deserializer);
+    var var_destinationDirectory = sse_decode_String(deserializer);
+    var var_outputName = sse_decode_String(deserializer);
+    var var_password = sse_decode_opt_String(deserializer);
+    return UnlockPdfRequest(
+      sourcePath: var_sourcePath,
+      destinationDirectory: var_destinationDirectory,
+      outputName: var_outputName,
+      password: var_password,
+    );
+  }
+
+  @protected
+  UnlockPdfSourceInfo sse_decode_unlock_pdf_source_info(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_sourcePath = sse_decode_String(deserializer);
+    var var_pageCount = sse_decode_opt_box_autoadd_u_32(deserializer);
+    var var_sizeBytes = sse_decode_u_64(deserializer);
+    var var_encryptionState = sse_decode_pdf_encryption_state(deserializer);
+    var var_hasWarnings = sse_decode_bool(deserializer);
+    var var_defaultOutputName = sse_decode_String(deserializer);
+    return UnlockPdfSourceInfo(
+      sourcePath: var_sourcePath,
+      pageCount: var_pageCount,
+      sizeBytes: var_sizeBytes,
+      encryptionState: var_encryptionState,
+      hasWarnings: var_hasWarnings,
+      defaultOutputName: var_defaultOutputName,
+    );
+  }
+
+  @protected
+  UnlockPdfStage sse_decode_unlock_pdf_stage(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var inner = sse_decode_i_32(deserializer);
+    return UnlockPdfStage.values[inner];
+  }
+
+  @protected
+  UnlockPdfUpdate sse_decode_unlock_pdf_update(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_status = sse_decode_pdf_security_status(deserializer);
+    var var_stage = sse_decode_unlock_pdf_stage(deserializer);
+    var var_pageCount = sse_decode_u_32(deserializer);
+    var var_outputPath = sse_decode_opt_String(deserializer);
+    var var_hasWarnings = sse_decode_bool(deserializer);
+    var var_error = sse_decode_opt_box_autoadd_application_error(deserializer);
+    return UnlockPdfUpdate(
+      status: var_status,
+      stage: var_stage,
+      pageCount: var_pageCount,
+      outputPath: var_outputPath,
+      hasWarnings: var_hasWarnings,
+      error: var_error,
+    );
+  }
+
+  @protected
   void sse_encode_AnyhowException(
     AnyhowException self,
     SseSerializer serializer,
@@ -2332,6 +2820,23 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_StreamSink_protect_pdf_update_Sse(
+    RustStreamSink<ProtectPdfUpdate> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(
+      self.setupAndSerialize(
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_protect_pdf_update,
+          decodeErrorData: sse_decode_AnyhowException,
+        ),
+      ),
+      serializer,
+    );
+  }
+
+  @protected
   void sse_encode_StreamSink_split_pdf_update_Sse(
     RustStreamSink<SplitPdfUpdate> self,
     SseSerializer serializer,
@@ -2341,6 +2846,23 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       self.setupAndSerialize(
         codec: SseCodec(
           decodeSuccessData: sse_decode_split_pdf_update,
+          decodeErrorData: sse_decode_AnyhowException,
+        ),
+      ),
+      serializer,
+    );
+  }
+
+  @protected
+  void sse_encode_StreamSink_unlock_pdf_update_Sse(
+    RustStreamSink<UnlockPdfUpdate> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(
+      self.setupAndSerialize(
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unlock_pdf_update,
           decodeErrorData: sse_decode_AnyhowException,
         ),
       ),
@@ -2454,6 +2976,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_box_autoadd_protect_pdf_request(
+    ProtectPdfRequest self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_protect_pdf_request(self, serializer);
+  }
+
+  @protected
   void sse_encode_box_autoadd_render_pdf_page_request(
     RenderPdfPageRequest self,
     SseSerializer serializer,
@@ -2481,6 +3012,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   void sse_encode_box_autoadd_u_64(BigInt self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_u_64(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_unlock_pdf_request(
+    UnlockPdfRequest self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_unlock_pdf_request(self, serializer);
   }
 
   @protected
@@ -2922,6 +3462,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_pdf_encryption_state(
+    PdfEncryptionState self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
   void sse_encode_pdf_export_format(
     PdfExportFormat self,
     SseSerializer serializer,
@@ -2967,6 +3516,65 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_f_64(self.widthPoints, serializer);
     sse_encode_f_64(self.heightPoints, serializer);
+  }
+
+  @protected
+  void sse_encode_pdf_security_status(
+    PdfSecurityStatus self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
+  void sse_encode_protect_pdf_request(
+    ProtectPdfRequest self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.sourcePath, serializer);
+    sse_encode_String(self.destinationDirectory, serializer);
+    sse_encode_String(self.outputName, serializer);
+    sse_encode_String(self.password, serializer);
+    sse_encode_String(self.confirmation, serializer);
+  }
+
+  @protected
+  void sse_encode_protect_pdf_source_info(
+    ProtectPdfSourceInfo self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.sourcePath, serializer);
+    sse_encode_opt_box_autoadd_u_32(self.pageCount, serializer);
+    sse_encode_u_64(self.sizeBytes, serializer);
+    sse_encode_pdf_encryption_state(self.encryptionState, serializer);
+    sse_encode_bool(self.hasWarnings, serializer);
+    sse_encode_String(self.defaultOutputName, serializer);
+  }
+
+  @protected
+  void sse_encode_protect_pdf_stage(
+    ProtectPdfStage self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
+  void sse_encode_protect_pdf_update(
+    ProtectPdfUpdate self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_pdf_security_status(self.status, serializer);
+    sse_encode_protect_pdf_stage(self.stage, serializer);
+    sse_encode_u_32(self.pageCount, serializer);
+    sse_encode_opt_String(self.outputPath, serializer);
+    sse_encode_bool(self.hasWarnings, serializer);
+    sse_encode_opt_box_autoadd_application_error(self.error, serializer);
   }
 
   @protected
@@ -3091,5 +3699,54 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @protected
   void sse_encode_unit(void self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
+  }
+
+  @protected
+  void sse_encode_unlock_pdf_request(
+    UnlockPdfRequest self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.sourcePath, serializer);
+    sse_encode_String(self.destinationDirectory, serializer);
+    sse_encode_String(self.outputName, serializer);
+    sse_encode_opt_String(self.password, serializer);
+  }
+
+  @protected
+  void sse_encode_unlock_pdf_source_info(
+    UnlockPdfSourceInfo self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.sourcePath, serializer);
+    sse_encode_opt_box_autoadd_u_32(self.pageCount, serializer);
+    sse_encode_u_64(self.sizeBytes, serializer);
+    sse_encode_pdf_encryption_state(self.encryptionState, serializer);
+    sse_encode_bool(self.hasWarnings, serializer);
+    sse_encode_String(self.defaultOutputName, serializer);
+  }
+
+  @protected
+  void sse_encode_unlock_pdf_stage(
+    UnlockPdfStage self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
+  void sse_encode_unlock_pdf_update(
+    UnlockPdfUpdate self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_pdf_security_status(self.status, serializer);
+    sse_encode_unlock_pdf_stage(self.stage, serializer);
+    sse_encode_u_32(self.pageCount, serializer);
+    sse_encode_opt_String(self.outputPath, serializer);
+    sse_encode_bool(self.hasWarnings, serializer);
+    sse_encode_opt_box_autoadd_application_error(self.error, serializer);
   }
 }

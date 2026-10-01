@@ -7,6 +7,8 @@ class ToolHome extends StatelessWidget {
     required this.onOpenMergePdf,
     required this.onOpenSplitPdf,
     required this.onOpenOrganizePdf,
+    required this.onOpenProtectPdf,
+    required this.onOpenUnlockPdf,
     super.key,
   });
 
@@ -15,6 +17,8 @@ class ToolHome extends StatelessWidget {
   final VoidCallback onOpenMergePdf;
   final VoidCallback onOpenSplitPdf;
   final VoidCallback onOpenOrganizePdf;
+  final VoidCallback onOpenProtectPdf;
+  final VoidCallback onOpenUnlockPdf;
 
   @override
   Widget build(BuildContext context) {
@@ -82,18 +86,20 @@ class ToolHome extends StatelessWidget {
                         'Reorder, rotate, and remove pages across PDFs.',
                     onTap: onOpenOrganizePdf,
                   ),
-                  const _ToolCardData(
+                  _ToolCardData(
                     key: ValueKey('tool-card-protect-pdf'),
                     icon: Icons.lock_outline_rounded,
                     title: 'Protect PDF',
                     description: 'Add password protection to a document.',
+                    onTap: onOpenProtectPdf,
                   ),
-                  const _ToolCardData(
+                  _ToolCardData(
                     key: ValueKey('tool-card-unlock-pdf'),
                     icon: Icons.lock_open_rounded,
                     title: 'Unlock PDF',
                     description:
                         'Remove protection when you know the password.',
+                    onTap: onOpenUnlockPdf,
                   ),
                 ],
               ),

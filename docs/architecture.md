@@ -221,13 +221,14 @@ changed assets, and installs the self-contained layout automatically. The exact
 upstream checksum manifest and Sigstore bundle are packaged for audit; no runtime
 download or expensive launch-time hashing is performed.
 
-Future Protect/Unlock work must keep passwords inside the application and qpdf
-infrastructure boundary. qpdf 12.4.1 supports `--password-file=-`, allowing the
-runner to pipe a password through the child's stdin rather than placing it in a
-shell string, process command line, log, or diagnostic. A tightly permissioned,
-short-lived password file is a fallback only if an operation cannot use stdin.
-The qpdf-specific runner already has a private stdin seam, but password behavior
-and UI are intentionally not implemented in Phase 1B.1.
+Protect and Unlock keep passwords inside the application and qpdf infrastructure
+boundary. The qpdf runner launches a child whose only public argument is `@-`;
+the complete qpdf argument list, including any user password and generated owner
+password, is delivered through standard input. This avoids process-command-line
+exposure without creating a password file. Secret-bearing Rust values redact
+their debug output and clear owned byte buffers on drop where practical. Bridge
+password request types deliberately expose no debug or string representation,
+and logging remains limited to allow-listed event names.
 
 The rewrite spike never targets the source. Core creates a private destination-
 directory working path, closes its initial handle so the external process can
@@ -371,6 +372,51 @@ session-owned temporary thumbnail files are removed on a best-effort basis.
 This bounds eager work
 and retained page bitmaps for large multi-file sessions while leaving room for a
 future shared thumbnail scheduler if more page-centric tools need one.
+
+Protect PDF and Unlock PDF are single-source structural workflows:
+
+```text
+Protect/Unlock presentation
+        |
+typed bridge request with no secret string representation
+        |
+core security workflow -> StructuralPdfEngine
+                              |
+                         QpdfCliEngine
+                              |
+                    sensitive stdin argument channel
+```
+
+Encryption inspection has three typed states: unencrypted, encrypted but
+openable without a password, and encrypted with a password required. Protect
+accepts only the first state and rejects empty, mismatched, multiline, or NUL-
+containing passwords before execution. It uses qpdf AES-256 encryption with the
+user password plus a fresh 256-bit cryptographically random owner password. The
+owner password is internal and is never returned to Flutter or persisted.
+
+Unlock treats an unencrypted source as an already-unlocked invalid request,
+decrypts an encrypted source with no open password directly, and requires a
+password only for the password-required state. A wrong password maps to the
+typed `IncorrectPassword` error and publishes nothing. The UI keeps that value
+only so the user can correct and retry it; successful execution, clearing the
+workspace, and widget disposal clear the password controllers.
+
+Both operations keep the source read-only and write to a private same-filesystem
+output. Protect requires the private file to inspect as password-required, pass
+qpdf's password-aware validation, reopen in PDFium with the password, and retain
+the source page count. Unlock requires the private file to inspect as
+unencrypted, pass qpdf validation, reopen in PDFium without a password, and
+retain the source page count. Only then does core flush and atomically publish a
+case-insensitive, non-clobbering output name. The defaults are
+`<source>-protected.pdf` and `<source>-unlocked.pdf`; an explicit destination
+persists across valid source replacement within the current session.
+
+Encryption changes can invalidate existing digital signatures, and qpdf's
+structural rewrite does not promise preservation of every document-level PDF
+feature. Protect/Unlock do not offer permission presets, certificate security,
+password recovery, or in-place replacement. Future secret-bearing operations
+must reuse the sensitive runner path rather than adding command-line or
+temporary-file password transport.
 
 ## Privacy and file safety
 

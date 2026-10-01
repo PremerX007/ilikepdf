@@ -4,13 +4,17 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, OnceLock};
 
 use ilikepdf_core::{
-    StructuralPdfEngine, StructuralPdfEngineFamily, StructuralPdfEngineInfo, StructuralPdfError,
-    StructuralPdfMergeRequest, StructuralPdfOperationResult, StructuralPdfPagePlanRequest,
-    StructuralPdfPageRangeRequest, StructuralPdfPageRotation, StructuralPdfValidation,
-    StructuralPdfVersion,
+    PdfEncryptionState, SecretString, StructuralPdfEngine, StructuralPdfEngineFamily,
+    StructuralPdfEngineInfo, StructuralPdfError, StructuralPdfMergeRequest,
+    StructuralPdfOperationResult, StructuralPdfPagePlanRequest, StructuralPdfPageRangeRequest,
+    StructuralPdfPageRotation, StructuralPdfProtectRequest, StructuralPdfUnlockRequest,
+    StructuralPdfValidation, StructuralPdfVersion,
 };
 
-use crate::process::{QpdfProcessError, QpdfProcessOutput, QpdfProcessRunner, QpdfRunner};
+use crate::process::{
+    QpdfProcessError, QpdfProcessOutput, QpdfProcessRunner, QpdfRunner, SensitiveQpdfArgument,
+    SensitiveQpdfInput,
+};
 use crate::runtime::QpdfRuntimeResolver;
 
 pub struct QpdfCliEngine {
@@ -56,6 +60,18 @@ impl QpdfCliEngine {
             .map_err(map_process_error)
     }
 
+    fn run_sensitive(
+        &self,
+        arguments: &[SensitiveQpdfArgument<'_>],
+    ) -> Result<QpdfProcessOutput, StructuralPdfError> {
+        let runtime = self.resolver.resolve()?;
+        let input =
+            SensitiveQpdfInput::from_sensitive_arguments(arguments).map_err(map_process_error)?;
+        self.runner
+            .run_with_sensitive_stdin(&runtime.executable, &[OsString::from("@-")], input)
+            .map_err(map_process_error)
+    }
+
     fn probe_uncached(&self) -> Result<StructuralPdfEngineInfo, StructuralPdfError> {
         let runtime = self.resolver.resolve()?;
         let output = self
@@ -97,6 +113,50 @@ impl StructuralPdfEngine for QpdfCliEngine {
         let output = self.run(vec![
             OsString::from("--check"),
             source_path.argument.as_os_str().to_owned(),
+        ])?;
+        match output.exit_code {
+            Some(0) => Ok(StructuralPdfValidation {
+                has_warnings: false,
+            }),
+            Some(3) => Ok(StructuralPdfValidation { has_warnings: true }),
+            Some(2) => Err(StructuralPdfError::InvalidDocument),
+            _ => Err(StructuralPdfError::OperationFailed),
+        }
+    }
+
+    fn inspect_encryption(
+        &self,
+        source_path: &Path,
+    ) -> Result<PdfEncryptionState, StructuralPdfError> {
+        let source_path = validated_source(source_path)?;
+        self.probe()?;
+        let output = self.run(vec![
+            OsString::from("--requires-password"),
+            source_path.argument.into_os_string(),
+        ])?;
+        match output.exit_code {
+            Some(0) => Ok(PdfEncryptionState::EncryptedPasswordRequired),
+            Some(2) => Ok(PdfEncryptionState::Unencrypted),
+            Some(3) => Ok(PdfEncryptionState::EncryptedNoPasswordRequired),
+            _ => Err(StructuralPdfError::InvalidDocument),
+        }
+    }
+
+    fn validate_with_password(
+        &self,
+        source_path: &Path,
+        password: &SecretString,
+    ) -> Result<StructuralPdfValidation, StructuralPdfError> {
+        let source_path = validated_source(source_path)?;
+        self.probe()?;
+        verify_password(self, &source_path.argument, password)?;
+        let output = self.run_sensitive(&[
+            SensitiveQpdfArgument::SecretOption {
+                prefix: "--password=",
+                value: password.expose_secret(),
+            },
+            SensitiveQpdfArgument::Utf8("--check"),
+            SensitiveQpdfArgument::Os(source_path.argument.as_os_str()),
         ])?;
         match output.exit_code {
             Some(0) => Ok(StructuralPdfValidation {
@@ -261,6 +321,122 @@ impl StructuralPdfEngine for QpdfCliEngine {
             }
             _ => Err(StructuralPdfError::OutputWriteFailed),
         }
+    }
+
+    fn protect(
+        &self,
+        request: &StructuralPdfProtectRequest<'_>,
+    ) -> Result<StructuralPdfOperationResult, StructuralPdfError> {
+        let source = validated_source(&request.source_path)?;
+        let working_output_path =
+            validated_working_output(std::slice::from_ref(&source), &request.working_output_path)?;
+        self.probe()?;
+        if self.inspect_encryption(&source.argument)? != PdfEncryptionState::Unencrypted {
+            return Err(StructuralPdfError::OperationFailed);
+        }
+        let owner_password = generate_owner_password()?;
+        let output = self.run_sensitive(&[
+            SensitiveQpdfArgument::Os(source.argument.as_os_str()),
+            SensitiveQpdfArgument::Utf8("--encrypt"),
+            SensitiveQpdfArgument::SecretOption {
+                prefix: "--user-password=",
+                value: request.open_password.expose_secret(),
+            },
+            SensitiveQpdfArgument::SecretOption {
+                prefix: "--owner-password=",
+                value: owner_password.expose_secret(),
+            },
+            SensitiveQpdfArgument::Utf8("--bits=256"),
+            SensitiveQpdfArgument::Utf8("--"),
+            SensitiveQpdfArgument::Os(working_output_path.as_os_str()),
+        ])?;
+        operation_result(output, &working_output_path)
+    }
+
+    fn unlock(
+        &self,
+        request: &StructuralPdfUnlockRequest<'_>,
+    ) -> Result<StructuralPdfOperationResult, StructuralPdfError> {
+        let source = validated_source(&request.source_path)?;
+        let working_output_path =
+            validated_working_output(std::slice::from_ref(&source), &request.working_output_path)?;
+        self.probe()?;
+        let state = self.inspect_encryption(&source.argument)?;
+        if state == PdfEncryptionState::Unencrypted {
+            return Err(StructuralPdfError::OperationFailed);
+        }
+        let output = match request.password {
+            Some(password) => {
+                verify_password(self, &source.argument, password)?;
+                self.run_sensitive(&[
+                    SensitiveQpdfArgument::SecretOption {
+                        prefix: "--password=",
+                        value: password.expose_secret(),
+                    },
+                    SensitiveQpdfArgument::Os(source.argument.as_os_str()),
+                    SensitiveQpdfArgument::Utf8("--decrypt"),
+                    SensitiveQpdfArgument::Os(working_output_path.as_os_str()),
+                ])?
+            }
+            None if state == PdfEncryptionState::EncryptedNoPasswordRequired => self.run(vec![
+                source.argument.into_os_string(),
+                OsString::from("--decrypt"),
+                working_output_path.as_os_str().to_owned(),
+            ])?,
+            None => return Err(StructuralPdfError::PasswordRequired),
+        };
+        operation_result(output, &working_output_path)
+    }
+}
+
+fn verify_password(
+    engine: &QpdfCliEngine,
+    source_path: &Path,
+    password: &SecretString,
+) -> Result<(), StructuralPdfError> {
+    let output = engine.run_sensitive(&[
+        SensitiveQpdfArgument::SecretOption {
+            prefix: "--password=",
+            value: password.expose_secret(),
+        },
+        SensitiveQpdfArgument::Utf8("--requires-password"),
+        SensitiveQpdfArgument::Os(source_path.as_os_str()),
+    ])?;
+    match output.exit_code {
+        Some(2 | 3) => Ok(()),
+        Some(0) => Err(StructuralPdfError::IncorrectPassword),
+        _ => Err(StructuralPdfError::OperationFailed),
+    }
+}
+
+fn generate_owner_password() -> Result<SecretString, StructuralPdfError> {
+    const HEX: &[u8; 16] = b"0123456789abcdef";
+    let mut random = [0_u8; 32];
+    getrandom::fill(&mut random).map_err(|_| StructuralPdfError::OperationFailed)?;
+    let mut encoded = Vec::with_capacity(random.len() * 2);
+    for &byte in &random {
+        encoded.push(HEX[usize::from(byte >> 4)]);
+        encoded.push(HEX[usize::from(byte & 0x0f)]);
+    }
+    random.fill(0);
+    let value = String::from_utf8(encoded).map_err(|_| StructuralPdfError::OperationFailed)?;
+    Ok(SecretString::new(value))
+}
+
+fn operation_result(
+    output: QpdfProcessOutput,
+    working_output_path: &Path,
+) -> Result<StructuralPdfOperationResult, StructuralPdfError> {
+    let has_warnings = match output.exit_code {
+        Some(0) => false,
+        Some(3) => true,
+        _ => return Err(StructuralPdfError::OperationFailed),
+    };
+    match fs::metadata(working_output_path) {
+        Ok(metadata) if metadata.is_file() && metadata.len() > 0 => {
+            Ok(StructuralPdfOperationResult { has_warnings })
+        }
+        _ => Err(StructuralPdfError::OutputWriteFailed),
     }
 }
 

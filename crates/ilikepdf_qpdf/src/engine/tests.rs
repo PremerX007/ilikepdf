@@ -15,6 +15,12 @@ struct RecordingMergeRunner {
     calls: Mutex<Vec<Vec<OsString>>>,
 }
 
+type RecordedSecurityCall = (Vec<OsString>, Option<Vec<u8>>);
+
+struct RecordingSecurityRunner {
+    calls: Mutex<Vec<RecordedSecurityCall>>,
+}
+
 impl QpdfRunner for RecordingMergeRunner {
     fn run(
         &self,
@@ -51,6 +57,58 @@ impl QpdfRunner for FakeRunner {
             .unwrap()
             .pop_front()
             .expect("a fake result should be configured")
+    }
+}
+
+impl QpdfRunner for RecordingSecurityRunner {
+    fn run(
+        &self,
+        _executable: &Path,
+        arguments: &[OsString],
+        stdin_data: Option<&[u8]>,
+    ) -> Result<QpdfProcessOutput, QpdfProcessError> {
+        self.calls
+            .lock()
+            .unwrap()
+            .push((arguments.to_vec(), stdin_data.map(<[u8]>::to_vec)));
+        if arguments == [OsString::from("--version")] {
+            return Ok(QpdfProcessOutput {
+                exit_code: Some(0),
+                stdout: diagnostic(b"qpdf version 12.4.1\n"),
+                stderr: diagnostic(b""),
+            });
+        }
+        if arguments.first() == Some(&OsString::from("--requires-password")) {
+            let source = PathBuf::from(arguments.last().unwrap());
+            let name = source.file_name().unwrap().to_string_lossy();
+            return Ok(QpdfProcessOutput {
+                exit_code: Some(if name.contains("required") { 0 } else { 2 }),
+                stdout: diagnostic(b""),
+                stderr: diagnostic(b""),
+            });
+        }
+        let sensitive = stdin_data.expect("security call should use sensitive stdin");
+        let lines = String::from_utf8(sensitive.to_vec()).unwrap();
+        let exit_code = if lines.contains("--password=wrong-test-value")
+            && lines.contains("--requires-password")
+        {
+            0
+        } else {
+            0.max(if lines.contains("--requires-password") {
+                3
+            } else {
+                0
+            })
+        };
+        if !lines.contains("--requires-password") && !lines.contains("--check") {
+            let output = PathBuf::from(lines.lines().last().unwrap());
+            fs::write(output, b"secured output").unwrap();
+        }
+        Ok(QpdfProcessOutput {
+            exit_code: Some(exit_code),
+            stdout: diagnostic(b""),
+            stderr: diagnostic(b""),
+        })
     }
 }
 
@@ -212,7 +270,6 @@ fn real_password_protected_fixture_is_created_and_classified_in_test_setup() {
         .join("qpdf")
         .join("windows")
         .join("x64");
-    let executable = runtime_root.join("bin").join("qpdf.exe");
     let source = repository_root
         .join("crates")
         .join("ilikepdf_pdf")
@@ -221,23 +278,15 @@ fn real_password_protected_fixture_is_created_and_classified_in_test_setup() {
         .join("one_page.pdf");
     let directory = tempfile::tempdir().unwrap();
     let protected = directory.path().join("password protected.pdf");
-    let creation = QpdfProcessRunner
-        .run(
-            &executable,
-            &[
-                source.into_os_string(),
-                OsString::from("--encrypt"),
-                OsString::from("--user-password=merge-test-password"),
-                OsString::from("--owner-password=merge-test-owner"),
-                OsString::from("--bits=256"),
-                OsString::from("--"),
-                protected.clone().into_os_string(),
-            ],
-            None,
-        )
-        .expect("test fixture encryption should launch");
-    assert_eq!(creation.exit_code, Some(0));
     let engine = QpdfCliEngine::from_runtime_root(runtime_root);
+    let password = SecretString::new("merge-test-password".to_owned());
+    engine
+        .protect(&StructuralPdfProtectRequest {
+            source_path: source,
+            working_output_path: protected.clone(),
+            open_password: &password,
+        })
+        .expect("test fixture encryption should succeed through secure stdin");
 
     assert_eq!(
         engine.validate(&protected),
@@ -481,6 +530,121 @@ fn page_plan_rejects_empty_or_zero_page_items_before_launch() {
         );
     }
     assert!(runner.calls.lock().unwrap().is_empty());
+}
+
+#[test]
+fn protect_places_both_passwords_only_in_sensitive_stdin() {
+    let runtime_root = fixture_runtime_root();
+    let source = runtime_root.path().join("source.pdf");
+    let output = runtime_root.path().join("protected.pdf");
+    fs::write(&source, b"source").unwrap();
+    let runner = Arc::new(RecordingSecurityRunner {
+        calls: Mutex::new(Vec::new()),
+    });
+    let engine = QpdfCliEngine::with_runner(
+        QpdfRuntimeResolver::from_root(runtime_root.path()),
+        runner.clone(),
+    );
+    let password = SecretString::new("รหัส-test-value".to_owned());
+
+    engine
+        .protect(&StructuralPdfProtectRequest {
+            source_path: source,
+            working_output_path: output,
+            open_password: &password,
+        })
+        .unwrap();
+
+    let calls = runner.calls.lock().unwrap();
+    assert!(calls.iter().all(|(arguments, _)| {
+        !arguments.iter().any(|argument| {
+            argument
+                .to_string_lossy()
+                .contains(password.expose_secret())
+        })
+    }));
+    let (arguments, input) = calls.last().unwrap();
+    assert_eq!(arguments, &[OsString::from("@-")]);
+    let input = String::from_utf8(input.clone().unwrap()).unwrap();
+    assert!(input.contains(&format!("--user-password={}", password.expose_secret())));
+    let owner = input
+        .lines()
+        .find_map(|line| line.strip_prefix("--owner-password="))
+        .unwrap();
+    assert_eq!(owner.len(), 64);
+    assert_ne!(owner, password.expose_secret());
+    assert!(input.contains("--bits=256"));
+    assert!(!input.contains("--allow-weak-crypto"));
+}
+
+#[test]
+fn password_unlock_uses_at_stdin_and_wrong_password_is_typed() {
+    let runtime_root = fixture_runtime_root();
+    let source = runtime_root.path().join("password-required.pdf");
+    fs::write(&source, b"source").unwrap();
+    let runner = Arc::new(RecordingSecurityRunner {
+        calls: Mutex::new(Vec::new()),
+    });
+    let engine = QpdfCliEngine::with_runner(
+        QpdfRuntimeResolver::from_root(runtime_root.path()),
+        runner.clone(),
+    );
+    let correct = SecretString::new("correct-test-value".to_owned());
+    engine
+        .unlock(&StructuralPdfUnlockRequest {
+            source_path: source.clone(),
+            working_output_path: runtime_root.path().join("unlocked.pdf"),
+            password: Some(&correct),
+        })
+        .unwrap();
+
+    let wrong = SecretString::new("wrong-test-value".to_owned());
+    let error = engine
+        .unlock(&StructuralPdfUnlockRequest {
+            source_path: source,
+            working_output_path: runtime_root.path().join("must-not-exist.pdf"),
+            password: Some(&wrong),
+        })
+        .unwrap_err();
+    assert_eq!(error, StructuralPdfError::IncorrectPassword);
+    assert!(!format!("{error:?}").contains(wrong.expose_secret()));
+    assert!(!runtime_root.path().join("must-not-exist.pdf").exists());
+
+    let calls = runner.calls.lock().unwrap();
+    assert!(calls.iter().all(|(arguments, _)| {
+        !arguments.iter().any(|argument| {
+            let argument = argument.to_string_lossy();
+            argument.contains(correct.expose_secret()) || argument.contains(wrong.expose_secret())
+        })
+    }));
+    assert!(
+        calls
+            .iter()
+            .filter(|(arguments, input)| arguments == &[OsString::from("@-")] && input.is_some())
+            .count()
+            >= 3
+    );
+}
+
+#[test]
+fn secret_bearing_domain_requests_have_redacted_debug_output() {
+    let secret = SecretString::new("request-secret-value".to_owned());
+    let protect = StructuralPdfProtectRequest {
+        source_path: PathBuf::from("private-source.pdf"),
+        working_output_path: PathBuf::from("private-output.pdf"),
+        open_password: &secret,
+    };
+    let unlock = StructuralPdfUnlockRequest {
+        source_path: PathBuf::from("private-source.pdf"),
+        working_output_path: PathBuf::from("private-output.pdf"),
+        password: Some(&secret),
+    };
+
+    for debug in [format!("{protect:?}"), format!("{unlock:?}")] {
+        assert!(!debug.contains(secret.expose_secret()));
+        assert!(!debug.contains("private-source.pdf"));
+        assert!(debug.contains("[REDACTED]"));
+    }
 }
 
 #[test]

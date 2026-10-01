@@ -9,4 +9,5 @@ pub mod merge_pdf;
 pub mod organize_pdf;
 pub mod pdf_export;
 pub mod pdf_preview;
+pub mod pdf_security;
 pub mod split_pdf;

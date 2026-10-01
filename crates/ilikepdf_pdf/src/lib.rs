@@ -74,6 +74,14 @@ impl PdfRenderer {
         pdfium_engine::inspect_document(&self.pdfium, source_path)
     }
 
+    pub fn inspect_document_with_password(
+        &self,
+        source_path: &Path,
+        password: &str,
+    ) -> Result<PdfDocumentInfo, PdfError> {
+        pdfium_engine::inspect_document_with_password(&self.pdfium, source_path, password)
+    }
+
     pub fn render_page_to_png(
         &self,
         request: PdfRenderRequest,
@@ -115,6 +123,13 @@ impl PdfRenderer {
 
 pub fn inspect_document(source_path: &Path) -> Result<PdfDocumentInfo, PdfError> {
     pdfium_engine::inspect_document(runtime::pdfium()?, source_path)
+}
+
+pub fn inspect_document_with_password(
+    source_path: &Path,
+    password: &str,
+) -> Result<PdfDocumentInfo, PdfError> {
+    pdfium_engine::inspect_document_with_password(runtime::pdfium()?, source_path, password)
 }
 
 pub fn render_page_to_png(

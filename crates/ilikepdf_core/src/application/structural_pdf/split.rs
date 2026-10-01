@@ -652,6 +652,10 @@ fn map_split_engine_error(error: StructuralPdfError) -> ApplicationError {
             ApplicationErrorCode::PasswordRequired,
             "This PDF is password protected. Unlock it before splitting",
         ),
+        StructuralPdfError::IncorrectPassword => (
+            ApplicationErrorCode::IncorrectPassword,
+            "The PDF password is incorrect",
+        ),
         StructuralPdfError::InvalidDocument => (
             ApplicationErrorCode::InvalidPdf,
             "The selected file is not a structurally valid PDF",

@@ -3,6 +3,7 @@
 use std::path::{Path, PathBuf};
 
 mod organize;
+mod security;
 mod split;
 mod workflow;
 
@@ -11,6 +12,13 @@ pub use organize::{
     OrganizePdfRequest, OrganizePdfResult, OrganizePdfSession, OrganizePdfSource,
     OrganizePdfSourceInfo, OrganizePdfStage, PageRotationDirection, inspect_organize_pdf_sources,
     normalize_organize_pdf_output_name, organize_pdf,
+};
+pub use security::{
+    ProtectPdfFailure, ProtectPdfProgress, ProtectPdfRequest, ProtectPdfResult,
+    ProtectPdfSourceInfo, ProtectPdfStage, UnlockPdfFailure, UnlockPdfProgress, UnlockPdfRequest,
+    UnlockPdfResult, UnlockPdfSourceInfo, UnlockPdfStage, default_protect_pdf_output_name,
+    default_unlock_pdf_output_name, inspect_protect_pdf_source, inspect_unlock_pdf_source,
+    normalize_secure_pdf_output_name, protect_pdf, unlock_pdf,
 };
 pub use split::{
     SplitPdfFailure, SplitPdfMode, SplitPdfPageRange, SplitPdfPart, SplitPdfProgress,
@@ -70,6 +78,7 @@ pub enum StructuralPdfError {
     SourceNotFile,
     SourceUnreadable,
     PasswordRequired,
+    IncorrectPassword,
     InvalidDocument,
     OutputWriteFailed,
     OperationFailed,
@@ -83,6 +92,23 @@ pub trait StructuralPdfEngine: Send + Sync {
     fn probe(&self) -> Result<StructuralPdfEngineInfo, StructuralPdfError>;
 
     fn validate(&self, source_path: &Path) -> Result<StructuralPdfValidation, StructuralPdfError>;
+
+    /// Reports encryption access requirements without exposing implementation diagnostics.
+    fn inspect_encryption(
+        &self,
+        _source_path: &Path,
+    ) -> Result<PdfEncryptionState, StructuralPdfError> {
+        Err(StructuralPdfError::OperationFailed)
+    }
+
+    /// Validates an encrypted document using a short-lived password secret.
+    fn validate_with_password(
+        &self,
+        _source_path: &Path,
+        _password: &crate::SecretString,
+    ) -> Result<StructuralPdfValidation, StructuralPdfError> {
+        Err(StructuralPdfError::OperationFailed)
+    }
 
     /// Writes a content-preserving structural rewrite to `working_output_path`.
     /// The caller owns publication and must never pass the source path as output.
@@ -113,6 +139,65 @@ pub trait StructuralPdfEngine: Send + Sync {
         _request: &StructuralPdfPagePlanRequest,
     ) -> Result<StructuralPdfOperationResult, StructuralPdfError> {
         Err(StructuralPdfError::OperationFailed)
+    }
+
+    /// Creates an AES-256 encrypted private output. Permission and owner-secret
+    /// details remain implementation concerns.
+    fn protect(
+        &self,
+        _request: &StructuralPdfProtectRequest<'_>,
+    ) -> Result<StructuralPdfOperationResult, StructuralPdfError> {
+        Err(StructuralPdfError::OperationFailed)
+    }
+
+    /// Creates an unencrypted private output using the supplied password only
+    /// when the source requires one.
+    fn unlock(
+        &self,
+        _request: &StructuralPdfUnlockRequest<'_>,
+    ) -> Result<StructuralPdfOperationResult, StructuralPdfError> {
+        Err(StructuralPdfError::OperationFailed)
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PdfEncryptionState {
+    Unencrypted,
+    EncryptedNoPasswordRequired,
+    EncryptedPasswordRequired,
+}
+
+pub struct StructuralPdfProtectRequest<'a> {
+    pub source_path: PathBuf,
+    pub working_output_path: PathBuf,
+    pub open_password: &'a crate::SecretString,
+}
+
+impl std::fmt::Debug for StructuralPdfProtectRequest<'_> {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter
+            .debug_struct("StructuralPdfProtectRequest")
+            .field("source_path", &"[PATH]")
+            .field("working_output_path", &"[PATH]")
+            .field("open_password", &"[REDACTED]")
+            .finish()
+    }
+}
+
+pub struct StructuralPdfUnlockRequest<'a> {
+    pub source_path: PathBuf,
+    pub working_output_path: PathBuf,
+    pub password: Option<&'a crate::SecretString>,
+}
+
+impl std::fmt::Debug for StructuralPdfUnlockRequest<'_> {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter
+            .debug_struct("StructuralPdfUnlockRequest")
+            .field("source_path", &"[PATH]")
+            .field("working_output_path", &"[PATH]")
+            .field("password", &self.password.map(|_| "[REDACTED]"))
+            .finish()
     }
 }
 

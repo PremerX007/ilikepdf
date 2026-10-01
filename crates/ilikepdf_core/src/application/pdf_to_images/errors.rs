@@ -21,6 +21,10 @@ impl From<PdfError> for ApplicationError {
                 ApplicationErrorCode::InvalidPdf,
                 "The selected file is not a valid readable PDF",
             ),
+            PdfErrorKind::PasswordRequired => (
+                ApplicationErrorCode::PasswordRequired,
+                "This PDF is password protected",
+            ),
             PdfErrorKind::PageOutOfBounds => (
                 ApplicationErrorCode::PageOutOfBounds,
                 "The requested page does not exist",

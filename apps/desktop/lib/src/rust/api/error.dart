@@ -40,6 +40,7 @@ enum ApplicationErrorCode {
   structuralPdfRuntimeIncompatible,
   structuralPdfLaunchFailed,
   passwordRequired,
+  incorrectPassword,
   structuralPdfOperationFailed,
   structuralPdfOutputValidationFailed,
   invalidOutputDirectory,
