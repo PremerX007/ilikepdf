@@ -16,6 +16,11 @@ Flutter must never manipulate PDFs, start subprocesses, or invoke PDFium, qpdf,
 or native libraries directly. Use operation-focused Rust modules; do not create
 catch-all `utils`, `helpers`, `pdf.rs`, or `service.rs` files.
 
+PDF editor coordinates are canonical unrotated source PDF points. Future editor
+tools must use core's `PageTransform` for all PDF/viewport conversion and the
+resolved visible page box for render alignment; do not introduce tool-specific
+coordinate math in Flutter. PDFium types and handles stay in PDF infrastructure.
+
 Structural PDF application logic must depend on `StructuralPdfEngine`, never on
 qpdf executable names, command switches, process output, or exit codes. Keep all
 process-specific concepts and platform-specific runtime layout inside qpdf

@@ -561,6 +561,7 @@ name = "ilikepdf_core"
 version = "0.1.0"
 dependencies = [
  "ilikepdf_pdf",
+ "image",
  "tempfile",
 ]
 

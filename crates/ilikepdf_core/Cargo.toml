@@ -11,3 +11,6 @@ path = "src/lib.rs"
 [dependencies]
 ilikepdf_pdf = { path = "../ilikepdf_pdf" }
 tempfile.workspace = true
+
+[dev-dependencies]
+image = { version = "0.25.10", default-features = false, features = ["png"] }

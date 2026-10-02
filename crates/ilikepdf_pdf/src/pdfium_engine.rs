@@ -10,6 +10,9 @@ use crate::{
 };
 
 mod image_encoding;
+mod page_geometry;
+
+pub(crate) use page_geometry::inspect_page_geometry;
 
 const PDF_POINTS_PER_INCH: f32 = 72.0;
 

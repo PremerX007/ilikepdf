@@ -51,6 +51,8 @@ reorganized without creating a second API or changing bridge consumers.
 | Image-to-PDF workflow and output naming | `ilikepdf_core/src/application/image_to_pdf/` |
 | Destination validation, collision policy, and atomic publication | `ilikepdf_core/src/application/output/` |
 | PDFium page rendering and document inspection | `ilikepdf_pdf/src/pdfium_engine.rs` |
+| Read-only editor sessions, page geometry, and coordinate conversion | `ilikepdf_core/src/application/editor/` |
+| Native page-box and rotation inspection | `ilikepdf_pdf/src/pdfium_engine/page_geometry.rs` |
 | PNG/JPG encoding policy | `ilikepdf_pdf/src/pdfium_engine/image_encoding.rs` |
 | Image decoding, layout, and PDFium image placement | `ilikepdf_pdf/src/image_pdf/` |
 | Bundled PDFium loading | `ilikepdf_pdf/src/runtime.rs` |
@@ -136,6 +138,179 @@ The adapter pins `pdfium-render` to the released `pdfium_7881` ABI and bundles
 PDFium `151.0.7881.0`. Exact artifact/DLL hashes, source URLs, build flags, and
 licenses are recorded in `third_party/pdfium/README.md` and its adjacent notice
 files. Upgrade the binding feature and runtime as one reviewed change.
+
+## PDF editor foundation (Phase 2A.1)
+
+The editor foundation introduces no production Edit PDF route, widgets, editing
+operations, viewport controller, undo/redo, or save/export workflow. Existing
+preview, conversion, and structural tools retain their contracts and behavior.
+The boundary for future presentation is:
+
+```text
+Flutter/editor presentation (future; logical local coordinates)
+        |
+typed bridge adapter (future; no editor API exposed in this milestone)
+        |
+EditorSession / PageGeometry / PageTransform (application/core)
+        |
+engine-neutral PdfDocumentGeometry inspection (PDF infrastructure facade)
+        |
+private PDFium page/box/rotation APIs
+```
+
+`open_editor_session()` obtains every page's geometry in source order with one
+read-only document open. `EditorSession` is an immutable metadata snapshot with
+a process-local typed `EditorSessionId`, source path, `ReadOnly` state, page count
+derived from its ordered page list, and zero-based `EditorPageMetadata`. Identity
+is stable when that snapshot is cloned and different on a new open. Sessions
+retain no native document/page handles, bitmaps, passwords, or output files; each
+native page is released after inspection. They have no source-path Debug
+representation. Reopening a source in a future workflow must revalidate it;
+retaining a path does not guarantee the file has remained unchanged.
+
+`PageGeometry` contains validated `PageBox` values for the effective visible box
+and optional normalized, non-degenerate declared MediaBox/CropBox, plus intrinsic
+clockwise rotation (0, 90, 180, 270). Width/height in points derive from the
+unrotated visible box; display dimensions swap for 90/270. Full media dimensions
+are available from the optional declared MediaBox. Private fields and constructors
+prevent invalid boxes or stale derived dimensions. No PDFium type crosses the
+infrastructure boundary.
+
+Use the resolved visible box as the authority for rendering/edit alignment.
+`FPDF_GetPageBoundingBox` returns the effective MediaBox/CropBox intersection,
+including inherited attributes. Individual dictionary box getters can omit
+inherited entries, so a missing declared box does **not** imply a zero origin or
+absence of an effective crop. Declared boxes are provenance, not transform input.
+The pinned native engine normalizes reversed box bounds, defaults a missing/empty
+MediaBox to Letter, and defaults an absent/empty CropBox to the effective MediaBox.
+Inspection rejects a non-positive effective box (including disjoint boxes).
+Core also checks the native rotated dimensions against its derived dimensions,
+allowing the native API's f32 rounding tolerance. These behaviors are tested
+against the bundled PDFium, not inferred from declared boxes. See the primary
+[PDFium box API](https://pdfium.googlesource.com/pdfium/+/refs/heads/main/public/fpdfview.h)
+and [page dimension implementation](https://pdfium.googlesource.com/pdfium/+/refs/heads/main/core/fpdfapi/page/cpdf_page.cpp);
+the wrapper's description of its "bounding" box as painted-content bounds must
+not be used for this workflow.
+
+### Coordinate contract and transform
+
+Canonical editing coordinates are **unrotated source PDF points**, with positive
+x rightward and positive y upward. The PDF user-space origin remains `(0, 0)`;
+the effective visible page may start at a positive or negative offset. Do not
+renormalize persisted coordinates to a crop corner. Viewport coordinates are
+presentation-only local Flutter logical units, with positive x rightward and
+positive y downward. They have no fixed DPI or Windows pixel meaning.
+
+Every future text, image, signature, annotation, or form feature must share core's
+`PageTransform`; no feature may supply its own PDFium-specific or tool-specific
+coordinate system. Given visible box `(L, B, R, T)`, let `W = R-L`, `H = T-B`,
+`u = x-L`, `v = y-B`. Rotation yields top-left display coordinates:
+
+| Intrinsic rotation | `(a, b)` from PDF | `(u, v)` from display |
+| --- | --- | --- |
+| 0 | `(u, H-v)` | `(a, H-b)` |
+| 90 clockwise | `(v, u)` | `(b, a)` |
+| 180 | `(W-u, v)` | `(W-a, b)` |
+| 270 clockwise | `(H-v, W-u)` | `(W-b, H-a)` |
+
+For actual displayed page rectangle `(left, top, width, height)`, `sx` and `sy`
+are its dimensions divided by the rotated dimensions in PDF points. Forward
+conversion is `(left + sx*a, top + sy*b)`; inverse conversion first subtracts
+the rectangle origin and divides by each scale, applies the inverse row above,
+then adds `(L, B)`. `PageTransform::at_scale` builds an aspect-preserving rectangle
+from logical units per PDF point. `PageTransform::new` uses the exact displayed
+rectangle, accommodating independently rounded raster dimensions. Presentation
+must pass the rectangle occupied by the page image, excluding padding, and the
+point in that same local coordinate space. No widget viewport work is included.
+
+Boxes and display rectangles require finite positive dimensions. Conversion
+rejects non-finite points and points outside the closed visible/displayed page;
+only numerical boundary drift of at most `1e-7` PDF points is clamped. Errors are
+typed `PageGeometryError` values without document diagnostics or paths. Future
+off-page placement policy can be designed explicitly when needed.
+
+### Verification and limits
+
+Deterministic transform tests independently specify every corner mapping and
+round-trip corners, center, and asymmetric points for all four rotations, A4,
+Letter, wide/tall pages, positive/negative origins, six display scales, shifted
+display rectangles, and independently rounded axis scales. Invalid geometry,
+non-finite values, out-of-page inputs, and boundary tolerance are covered.
+
+`tests/fixtures/generate_geometry_fixtures.cjs` uses only Node's standard library
+to reproduce project-owned fixtures. PDF infrastructure integration tests inspect
+real native geometry. Core's native session tests verify ordered page metadata,
+identities, empty/invalid PDFs, native dimension disagreement, and byte-identical
+sources. They also locate two asymmetric colored PDF markers in real rendered
+PNGs for every rotation, inherited/cropped/shifted boxes, 72/144/150 DPI, and
+width-based raster rounding. The existing `image` crate is added only as a core
+dev dependency to decode those PNGs; runtime dependencies and native pins do not
+change.
+
+Unusual malformed page trees remain uncharacterized. The current bundled build
+has no XFA support. This milestone establishes a read-only snapshot and conversion
+contract only; editing and Phase 2A.2 remain future work.
+
+### Observed `/UserUnit` behavior in the bundled runtime
+
+Controlled native tests characterize PDFium `151.0.7881.0`, Windows x64, with
+`pdfium-render 0.9.4` and the `pdfium_7881` ABI. The tested DLL's SHA-256 is
+`79d4676b656cfb1abcea88f9ade3b4b0826c5200382db5f4ec72a636c598c118`, matching
+`third_party/pdfium/README.md`. This is an observation of that bundled binary,
+not an assumption about another PDFium build or PDF viewer.
+
+`editor_user_unit_1.pdf` and `editor_user_unit_2.pdf` differ only in four explicit
+page-dictionary `/UserUnit` values. Both contain identical MediaBox
+`[-50,-40,350,260]`, CropBox `[25,30,225,180]`, unmodified content streams, and
+pages rotated 0/90/180/270. Tests verify the input bytes become identical after
+replacing `/UserUnit 1` with `/UserUnit 2`, so geometry/content differences cannot
+confound the comparison. Blue/red square centers are source coordinates `(75,65)`
+and `(175,135)`; each square spans 10 source coordinate units per side.
+
+**The currently bundled PDFium ignores `/UserUnit` in both geometry inspection
+and the tested rendering paths.** The two files report exactly equal declared
+boxes, visible boxes, rotations, native display dimensions, and document-info
+results. At 0/180 degrees, the reported visible dimensions are 200 x 150; at
+90/270, they are 150 x 200. The visible box stays `[25,30,225,180]` for both values.
+
+| Rendering request | 0/180-degree raster | 90/270-degree raster | UserUnit 1 vs 2 |
+| --- | --- | --- | --- |
+| 72 DPI | 200 x 150 | 150 x 200 | Identical dimensions and decoded pixels |
+| 144 DPI | 400 x 300 | 300 x 400 | Identical dimensions and decoded pixels |
+| 150 DPI | 417 x 313 | 313 x 417 | Identical dimensions and decoded pixels |
+| Target width 401 | 401 x 301 | 401 x 535 | Identical dimensions and decoded pixels |
+
+The blue source marker `(75,65)` appears at these independently expected bitmap
+locations at 72 DPI for both files, relative to the bitmap's top-left corner:
+
+| Intrinsic rotation | Blue marker center |
+| --- | --- |
+| 0 | `(50,115)` |
+| 90 clockwise | `(35,50)` |
+| 180 | `(150,35)` |
+| 270 clockwise | `(115,150)` |
+
+The existing, unchanged `PageTransform` maps both source markers to the rendered
+colors for both files, all four rotations, 72/144/150 DPI, and width-based raster
+rounding. Tests also check the scale constructor at scales 1 and 2 against the
+independent blue-marker locations, shifted display origins, inverse round trips,
+and the native raster dimensions at 72/144 DPI. All source bytes remain unchanged.
+Geometry and rendering are therefore internally consistent for these fixtures;
+no editor/render misalignment or normalization fix is needed for this build.
+
+This establishes alignment with PDFium's effective convention, **not faithful
+physical-size support for non-default `/UserUnit`**. With `/UserUnit = 2`, the
+engine still treats the source numeric coordinates and dimensions as if the
+value were 1. There is no geometry-only multiplication by `/UserUnit`: changing
+width/height alone would not establish correct box, marker, content, and rendering
+semantics together. Any future support must normalize inspection, coordinates,
+and rendering consistently inside PDF infrastructure. Flutter and individual
+editor tools must continue to use the same engine-neutral `PageTransform`.
+
+The focused tests intentionally pin this observed behavior and must be revisited
+when the native runtime changes. Other `/UserUnit` values, unusual documents,
+and physical-scale correction are outside this characterization. No broader
+PDFium workaround or Phase 2A.2 implementation is introduced.
 
 ## Structural PDF engine
 

@@ -9,6 +9,11 @@ mod error;
 mod secret;
 
 pub use application::app_info::{ApplicationInfo, get_application_info};
+pub use application::editor::{
+    EditorPageMetadata, EditorSession, EditorSessionId, EditorSessionState, PageBox, PageGeometry,
+    PageGeometryError, PageRotation, PageTransform, PdfPoint, ViewportPoint, ViewportRect,
+    open_editor_session,
+};
 pub use application::image_to_pdf::{
     CreateImagePdfRequest, ImagePdfFailure, ImagePdfMargin, ImagePdfOrientation, ImagePdfPageSize,
     ImagePdfProgress, ImagePdfResult, create_pdfs_from_images,

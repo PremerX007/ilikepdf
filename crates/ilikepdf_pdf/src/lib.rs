@@ -1,5 +1,5 @@
 #![forbid(unsafe_code)]
-//! Native PDF infrastructure for rendering pages and creating image-backed PDFs.
+//! Native PDF infrastructure for page inspection, rendering, and image-backed PDFs.
 //!
 //! The free functions use the bundled application runtime. `PdfRenderer` is the
 //! explicit-runtime façade used by native integration tests and alternate hosts;
@@ -7,6 +7,7 @@
 
 mod error;
 mod image_pdf;
+mod page_geometry;
 mod pdfium_engine;
 mod runtime;
 
@@ -20,6 +21,7 @@ pub use image_pdf::{
     ImageInfo, ImagePdfLayout, ImagePdfMargin, ImagePdfOrientation, ImagePdfPageInfo,
     ImagePdfPageSize, ImagePdfRequest, ImagePdfResult,
 };
+pub use page_geometry::{PdfDocumentGeometry, PdfPageBox, PdfPageGeometry, PdfPageRotation};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct PdfPageSize {
@@ -74,6 +76,13 @@ impl PdfRenderer {
         pdfium_engine::inspect_document(&self.pdfium, source_path)
     }
 
+    pub fn inspect_page_geometry(
+        &self,
+        source_path: &Path,
+    ) -> Result<PdfDocumentGeometry, PdfError> {
+        pdfium_engine::inspect_page_geometry(&self.pdfium, source_path)
+    }
+
     pub fn inspect_document_with_password(
         &self,
         source_path: &Path,
@@ -123,6 +132,11 @@ impl PdfRenderer {
 
 pub fn inspect_document(source_path: &Path) -> Result<PdfDocumentInfo, PdfError> {
     pdfium_engine::inspect_document(runtime::pdfium()?, source_path)
+}
+
+/// Reads ordered page geometry without changing or rendering the source document.
+pub fn inspect_page_geometry(source_path: &Path) -> Result<PdfDocumentGeometry, PdfError> {
+    pdfium_engine::inspect_page_geometry(runtime::pdfium()?, source_path)
 }
 
 pub fn inspect_document_with_password(
