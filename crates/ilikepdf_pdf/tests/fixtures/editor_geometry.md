@@ -1,5 +1,11 @@
 # Editor geometry fixtures
 
+`editor_viewport_64.pdf` repeats A4 portrait, Letter landscape, a cropped custom
+page, and that custom page rotated 90 degrees, for 64 pages. It uses the same
+deterministic blue/red markers. Windows viewport tests use it to verify lazy
+opening, incremental scrolling, bounded decoded-image retention, and repeated
+zoom replacement. `editor_geometry.pdf` remains the four-rotation alignment oracle.
+
 Regenerate with `node crates/ilikepdf_pdf/tests/fixtures/generate_geometry_fixtures.cjs`.
 No network, private documents, PDF tooling, or third-party Node packages are used.
 PDF streams, object IDs, page order, and xref offsets are deterministic.

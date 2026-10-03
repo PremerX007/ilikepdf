@@ -6,6 +6,7 @@ class ApplicationShell extends StatelessWidget {
     required this.coreVersion,
     required this.child,
     this.onBack,
+    this.onOpenEditorViewport,
     super.key,
   });
 
@@ -13,6 +14,7 @@ class ApplicationShell extends StatelessWidget {
   final String coreVersion;
   final Widget child;
   final VoidCallback? onBack;
+  final VoidCallback? onOpenEditorViewport;
 
   @override
   Widget build(BuildContext context) {
@@ -60,6 +62,12 @@ class ApplicationShell extends StatelessWidget {
           ],
         ),
         actions: [
+          if (onOpenEditorViewport != null)
+            TextButton(
+              key: const ValueKey('internal-editor-viewport'),
+              onPressed: onOpenEditorViewport,
+              child: const Text('Viewport preview'),
+            ),
           Padding(
             padding: const EdgeInsets.only(right: 24),
             child: Text(

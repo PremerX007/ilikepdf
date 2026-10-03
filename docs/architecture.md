@@ -139,17 +139,19 @@ PDFium `151.0.7881.0`. Exact artifact/DLL hashes, source URLs, build flags, and
 licenses are recorded in `third_party/pdfium/README.md` and its adjacent notice
 files. Upgrade the binding feature and runtime as one reviewed change.
 
-## PDF editor foundation (Phase 2A.1)
+## PDF editor foundation and read-only viewport (Phases 2A.1–2A.2)
 
-The editor foundation introduces no production Edit PDF route, widgets, editing
-operations, viewport controller, undo/redo, or save/export workflow. Existing
-preview, conversion, and structural tools retain their contracts and behavior.
-The boundary for future presentation is:
+The editor foundation now has a read-only multi-page viewport. The production
+home still has no Edit PDF tool. The internal entry point is enabled with
+`flutter run -d windows --dart-define=ILIKEPDF_EDITOR_VIEWPORT=true`; the header's
+`Viewport preview` opens it. There are no editing, undo/redo, or save/export
+operations. Existing preview, conversion, and structural tools retain their
+contracts and behavior. The boundary is:
 
 ```text
-Flutter/editor presentation (future; logical local coordinates)
+Flutter EditorPanel / EditorViewport (logical workspace coordinates)
         |
-typed bridge adapter (future; no editor API exposed in this milestone)
+typed editor bridge (opaque immutable session/layout/transform bindings)
         |
 EditorSession / PageGeometry / PageTransform (application/core)
         |
@@ -221,13 +223,124 @@ then adds `(L, B)`. `PageTransform::at_scale` builds an aspect-preserving rectan
 from logical units per PDF point. `PageTransform::new` uses the exact displayed
 rectangle, accommodating independently rounded raster dimensions. Presentation
 must pass the rectangle occupied by the page image, excluding padding, and the
-point in that same local coordinate space. No widget viewport work is included.
+point in that same local coordinate space.
 
 Boxes and display rectangles require finite positive dimensions. Conversion
 rejects non-finite points and points outside the closed visible/displayed page;
 only numerical boundary drift of at most `1e-7` PDF points is clamped. Errors are
 typed `PageGeometryError` values without document diagnostics or paths. Future
 off-page placement policy can be designed explicitly when needed.
+
+### Multi-page viewport (Phase 2A.2)
+
+```text
+EditorSession (immutable source metadata)
+    |
+EditorViewport (Flutter scroll and desktop zoom interaction)
+    |
+EditorDocumentLayout / EditorPageLayout (core-owned document-surface rectangles)
+    |                         |
+PDF raster               PageTransform
+    |                         |
+shared page Stack         centralized viewport hit testing -> EditorHit / PdfPoint
+    |
+future object overlay uses the same rectangle and transform
+```
+
+Core owns vertical layout: each page uses its own resolved visible box and
+intrinsic rotation, with 24 logical units of outer padding and 24 between pages.
+Pages are centered in a document surface at least as wide as the workspace.
+`EditorPageLayout` holds the zero-based page index, geometry, typed zoom, and
+transform; its rectangle is **the transform's exact display rectangle**. Flutter
+positions the page Stack and fills that rectangle with the raster, absorbing
+integer bitmap rounding without recomputing PDF geometry. The border and page
+number are presentation only. Future overlays belong in this same Stack; no
+second canvas or independent page-positioning model is needed.
+
+`EditorZoom` is logical units per source PDF point: 100% means 1, with limits
+25%–400% and multiplicative 1.25/0.8 steps. `EditorZoomMode::FitWidth` fits the
+widest intrinsically rotated page, preserving one consistent scale for mixed
+sizes, subject to those limits. Vertical scrolling is primary; an independent
+horizontal scrollbar handles pages wider than the workspace. Resize recalculates
+fit width. Zoom preserves the source point nearest the viewport center; when the
+center lies in a gap or side margin it clamps to the nearest page edge. The new
+scroll offset is clamped at document boundaries. This policy is deterministic,
+with no infinite-canvas behavior. Zoom has no physical DPI meaning.
+
+The immutable session, core layout binding, and transforms cross the bridge as
+opaque engine-neutral objects. Layout, visibility queries, zoom stepping,
+anchoring, and transforms are pure synchronous calls; PDF opening and rendering
+run asynchronously on the existing native worker pool. Opening inspects ordered
+geometry but renders no pages. A binary search selects only pages intersecting
+the viewport plus 120 logical units of vertical overscan. Only those page widgets
+and requested rasters are created. Layout is recalculated on zoom, workspace
+size, or session changes, not on ordinary widget rebuilds or scrolling. A
+density-only change updates raster demand without recomputing geometry.
+
+The dedicated editor render path reuses PDFium's existing PNG encoder, returning
+PNG bytes in memory without publishing temporary preview files. It requests
+integer width and height for the displayed rectangle and device pixel ratio;
+that density affects **raster quality only**. The longest physical axis is rounded
+up to a 64-pixel bucket and the other axis follows the source aspect ratio.
+This avoids rerenders on tiny fit-width changes without undersampling text.
+Core and infrastructure enforce an 8192-pixel maximum axis and 32 Mi pixels
+(33,554,432 pixels, 128 MiB RGBA) per raster, rounding inward at these limits.
+This covers A4 and Letter at 400% with DPR 2; higher DPR or larger pages can still
+require upscaling at the limit. The former four-million-pixel / 4096-axis policy
+forced about 2.8x upscaling of A4 at 400% and DPR 2. Existing pixels may
+be shown temporarily after zoom, then replaced with the exact requested size.
+They are never treated as an exact cache hit at another resolution. Flutter uses
+bilinear (`FilterQuality.low`) sampling for fractional placement and small
+bucket downscaling, without mipmaps. PDFium text antialiasing is unchanged.
+
+`EditorRenderCache` owns decoded `ui.Image` objects directly, bypassing Flutter's
+global `ImageCache`. Keys include process-local session identity, page index,
+and both requested dimensions. It permits two asynchronous render/decode jobs
+whose combined target RGBA size is at most 128 MiB (large pages serialize),
+and retains at most 12 entries (including failures) and 256 MiB of decoded RGBA
+pixels. Demand admission respects both limits; recent offscreen pages are
+evicted in least-recently-used order. A zoom change drops offscreen obsolete
+resolutions, retains at most one temporary older raster per demanded page, and
+removes it when replacement completes. Images are disposed after the frame that
+replaces them. These limits describe retained decoded images, not total process
+memory: up to two bounded native renders/PNG transfers/decodes and one frame of
+retired images can also exist. An extreme view containing more pages than its
+render budget prompts zooming in for the unadmitted pages.
+
+One scheduler survives close/reopen and replacement within the panel, so old
+uncancellable work still occupies its slots instead of overlapping another
+pair of requests. Session identity/generation and current desired resolution
+checks discard stale results before decoding and again before retention.
+Unchanged quantized keys reuse in-flight work; rapid zoom clears obsolete queued
+sizes and coalesces demand after the frame. Queued offscreen work is
+removed; in-flight work can finish and be discarded. Closing or disposing the
+panel invalidates pending opening and rendering. Failed replacement preserves
+the prior session. One page failure produces a safe per-page error and explicit
+retry, without invalidating neighboring pages or causing automatic retry loops.
+
+Zoom computes core's layout and center source-point anchor synchronously.
+`EditorScrollController` stages both offsets and applies them with the new
+content extents during scroll layout, before paint. Pending offsets feed a
+subsequent rapid zoom step and visibility selection. No post-frame scroll jump
+publishes a frame with new page positions at the previous offset. Toolbar,
+fit-width resolution, page rectangles and scroll offsets share the same frame.
+Density-only rebuilds do not leave a pending offset masking normal scrolling.
+Raster arrival rebuilds only the page stack; it cannot change layout or anchors.
+
+Pointer positions are workspace-local Flutter logical units. The centralized
+core hit-test path adds horizontal/vertical scroll, binary-searches the ordered
+page rectangles, then uses that page's `PageTransform::viewport_to_pdf`.
+`EditorHit` contains the page index, canonical source PDF point, and page-local
+display point. Closed edges/corners are valid; page gaps and background miss.
+Future tool widgets must use this binding instead of local conversion math.
+
+`/UserUnit` remains unsupported for physical-size semantics and is not normalized.
+The characterized PDFium geometry/rendering convention and Phase 2A.1 transform
+tests remain intact. Session metadata is a snapshot, not a file lock: external
+source changes require reopening. Native rendering still reopens a source for
+each request and uses the existing PDFium synchronization; worker-process
+isolation, progressive/tiled rendering, password entry, and editing are future
+work outside this phase.
 
 ### Verification and limits
 
@@ -248,8 +361,13 @@ dev dependency to decode those PNGs; runtime dependencies and native pins do not
 change.
 
 Unusual malformed page trees remain uncharacterized. The current bundled build
-has no XFA support. This milestone establishes a read-only snapshot and conversion
-contract only; editing and Phase 2A.2 remain future work.
+has no XFA support. This milestone establishes read-only sessions, geometry, and
+a multi-page viewport; editing remains future work. New viewport tests cover
+mixed layout, fit width, zoom anchoring, scrolled coordinate round trips, closed
+corners/edges and gap misses, native marker alignment, bounded raster dimensions,
+stale render/decode rejection, replacement/close, per-page retry, and cache
+limits. The 64-page mixed fixture exercises incremental Windows scrolling and
+zoom; a pure 1000-page layout test verifies visibility queries stay local.
 
 ### Observed `/UserUnit` behavior in the bundled runtime
 
@@ -310,7 +428,7 @@ editor tools must continue to use the same engine-neutral `PageTransform`.
 The focused tests intentionally pin this observed behavior and must be revisited
 when the native runtime changes. Other `/UserUnit` values, unusual documents,
 and physical-scale correction are outside this characterization. No broader
-PDFium workaround or Phase 2A.2 implementation is introduced.
+PDFium workaround or physical-scale normalization is introduced by the viewport.
 
 ## Structural PDF engine
 

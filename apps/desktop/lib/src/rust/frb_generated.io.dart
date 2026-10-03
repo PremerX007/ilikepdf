@@ -4,6 +4,7 @@
 // ignore_for_file: unused_import, unused_element, unnecessary_import, duplicate_ignore, invalid_use_of_internal_member, annotate_overrides, non_constant_identifier_names, curly_braces_in_flow_control_structures, prefer_const_literals_to_create_immutables, unused_field
 
 import 'api/application.dart';
+import 'api/editor.dart';
 import 'api/error.dart';
 import 'api/image_to_pdf.dart';
 import 'api/merge_pdf.dart';
@@ -29,8 +30,74 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
     required super.portManager,
   });
 
+  CrossPlatformFinalizerArg
+  get rust_arc_decrement_strong_count_EditorLayoutBindingPtr => wire
+      ._rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorLayoutBindingPtr;
+
+  CrossPlatformFinalizerArg
+  get rust_arc_decrement_strong_count_EditorPageTransformPtr => wire
+      ._rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorPageTransformPtr;
+
+  CrossPlatformFinalizerArg
+  get rust_arc_decrement_strong_count_EditorSessionPtr => wire
+      ._rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorSessionPtr;
+
   @protected
   AnyhowException dco_decode_AnyhowException(dynamic raw);
+
+  @protected
+  EditorLayoutBinding
+  dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorLayoutBinding(
+    dynamic raw,
+  );
+
+  @protected
+  EditorPageTransform
+  dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorPageTransform(
+    dynamic raw,
+  );
+
+  @protected
+  EditorSession
+  dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorSession(
+    dynamic raw,
+  );
+
+  @protected
+  EditorLayoutBinding
+  dco_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorLayoutBinding(
+    dynamic raw,
+  );
+
+  @protected
+  EditorPageTransform
+  dco_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorPageTransform(
+    dynamic raw,
+  );
+
+  @protected
+  EditorSession
+  dco_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorSession(
+    dynamic raw,
+  );
+
+  @protected
+  EditorLayoutBinding
+  dco_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorLayoutBinding(
+    dynamic raw,
+  );
+
+  @protected
+  EditorPageTransform
+  dco_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorPageTransform(
+    dynamic raw,
+  );
+
+  @protected
+  EditorSession
+  dco_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorSession(
+    dynamic raw,
+  );
 
   @protected
   RustStreamSink<ImagePdfUpdate> dco_decode_StreamSink_image_pdf_update_Sse(
@@ -94,6 +161,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  EditorHit dco_decode_box_autoadd_editor_hit(dynamic raw);
+
+  @protected
+  EditorPageBox dco_decode_box_autoadd_editor_page_box(dynamic raw);
+
+  @protected
+  EditorPoint dco_decode_box_autoadd_editor_point(dynamic raw);
+
+  @protected
+  EditorRasterSize dco_decode_box_autoadd_editor_raster_size(dynamic raw);
+
+  @protected
   ExportPdfBatchRequest dco_decode_box_autoadd_export_pdf_batch_request(
     dynamic raw,
   );
@@ -136,6 +215,36 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   CreateImagePdfRequest dco_decode_create_image_pdf_request(dynamic raw);
 
   @protected
+  EditorDocumentLayout dco_decode_editor_document_layout(dynamic raw);
+
+  @protected
+  EditorHit dco_decode_editor_hit(dynamic raw);
+
+  @protected
+  EditorPageBox dco_decode_editor_page_box(dynamic raw);
+
+  @protected
+  EditorPageGeometry dco_decode_editor_page_geometry(dynamic raw);
+
+  @protected
+  EditorPageLayout dco_decode_editor_page_layout(dynamic raw);
+
+  @protected
+  EditorPageRotation dco_decode_editor_page_rotation(dynamic raw);
+
+  @protected
+  EditorPoint dco_decode_editor_point(dynamic raw);
+
+  @protected
+  EditorRaster dco_decode_editor_raster(dynamic raw);
+
+  @protected
+  EditorRasterSize dco_decode_editor_raster_size(dynamic raw);
+
+  @protected
+  EditorRect dco_decode_editor_rect(dynamic raw);
+
+  @protected
   ExportPdfBatchRequest dco_decode_export_pdf_batch_request(dynamic raw);
 
   @protected
@@ -166,6 +275,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<String> dco_decode_list_String(dynamic raw);
 
   @protected
+  List<EditorPageLayout> dco_decode_list_editor_page_layout(dynamic raw);
+
+  @protected
   List<OrganizePdfPageItem> dco_decode_list_organize_pdf_page_item(dynamic raw);
 
   @protected
@@ -180,6 +292,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<PdfBatchDocumentResult> dco_decode_list_pdf_batch_document_result(
     dynamic raw,
   );
+
+  @protected
+  Uint32List dco_decode_list_prim_u_32_strict(dynamic raw);
 
   @protected
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw);
@@ -207,6 +322,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   ApplicationError? dco_decode_opt_box_autoadd_application_error(dynamic raw);
+
+  @protected
+  EditorHit? dco_decode_opt_box_autoadd_editor_hit(dynamic raw);
+
+  @protected
+  EditorPageBox? dco_decode_opt_box_autoadd_editor_page_box(dynamic raw);
 
   @protected
   PdfPageSize? dco_decode_opt_box_autoadd_pdf_page_size(dynamic raw);
@@ -349,7 +470,64 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   UnlockPdfUpdate dco_decode_unlock_pdf_update(dynamic raw);
 
   @protected
+  BigInt dco_decode_usize(dynamic raw);
+
+  @protected
   AnyhowException sse_decode_AnyhowException(SseDeserializer deserializer);
+
+  @protected
+  EditorLayoutBinding
+  sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorLayoutBinding(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  EditorPageTransform
+  sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorPageTransform(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  EditorSession
+  sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorSession(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  EditorLayoutBinding
+  sse_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorLayoutBinding(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  EditorPageTransform
+  sse_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorPageTransform(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  EditorSession
+  sse_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorSession(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  EditorLayoutBinding
+  sse_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorLayoutBinding(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  EditorPageTransform
+  sse_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorPageTransform(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  EditorSession
+  sse_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorSession(
+    SseDeserializer deserializer,
+  );
 
   @protected
   RustStreamSink<ImagePdfUpdate> sse_decode_StreamSink_image_pdf_update_Sse(
@@ -419,6 +597,22 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  EditorHit sse_decode_box_autoadd_editor_hit(SseDeserializer deserializer);
+
+  @protected
+  EditorPageBox sse_decode_box_autoadd_editor_page_box(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  EditorPoint sse_decode_box_autoadd_editor_point(SseDeserializer deserializer);
+
+  @protected
+  EditorRasterSize sse_decode_box_autoadd_editor_raster_size(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   ExportPdfBatchRequest sse_decode_box_autoadd_export_pdf_batch_request(
     SseDeserializer deserializer,
   );
@@ -475,6 +669,42 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  EditorDocumentLayout sse_decode_editor_document_layout(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  EditorHit sse_decode_editor_hit(SseDeserializer deserializer);
+
+  @protected
+  EditorPageBox sse_decode_editor_page_box(SseDeserializer deserializer);
+
+  @protected
+  EditorPageGeometry sse_decode_editor_page_geometry(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  EditorPageLayout sse_decode_editor_page_layout(SseDeserializer deserializer);
+
+  @protected
+  EditorPageRotation sse_decode_editor_page_rotation(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  EditorPoint sse_decode_editor_point(SseDeserializer deserializer);
+
+  @protected
+  EditorRaster sse_decode_editor_raster(SseDeserializer deserializer);
+
+  @protected
+  EditorRasterSize sse_decode_editor_raster_size(SseDeserializer deserializer);
+
+  @protected
+  EditorRect sse_decode_editor_rect(SseDeserializer deserializer);
+
+  @protected
   ExportPdfBatchRequest sse_decode_export_pdf_batch_request(
     SseDeserializer deserializer,
   );
@@ -511,6 +741,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<String> sse_decode_list_String(SseDeserializer deserializer);
 
   @protected
+  List<EditorPageLayout> sse_decode_list_editor_page_layout(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   List<OrganizePdfPageItem> sse_decode_list_organize_pdf_page_item(
     SseDeserializer deserializer,
   );
@@ -529,6 +764,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<PdfBatchDocumentResult> sse_decode_list_pdf_batch_document_result(
     SseDeserializer deserializer,
   );
+
+  @protected
+  Uint32List sse_decode_list_prim_u_32_strict(SseDeserializer deserializer);
 
   @protected
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer);
@@ -560,6 +798,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   ApplicationError? sse_decode_opt_box_autoadd_application_error(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  EditorHit? sse_decode_opt_box_autoadd_editor_hit(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  EditorPageBox? sse_decode_opt_box_autoadd_editor_page_box(
     SseDeserializer deserializer,
   );
 
@@ -746,8 +994,74 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   UnlockPdfUpdate sse_decode_unlock_pdf_update(SseDeserializer deserializer);
 
   @protected
+  BigInt sse_decode_usize(SseDeserializer deserializer);
+
+  @protected
   void sse_encode_AnyhowException(
     AnyhowException self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void
+  sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorLayoutBinding(
+    EditorLayoutBinding self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void
+  sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorPageTransform(
+    EditorPageTransform self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void
+  sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorSession(
+    EditorSession self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void
+  sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorLayoutBinding(
+    EditorLayoutBinding self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void
+  sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorPageTransform(
+    EditorPageTransform self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void
+  sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorSession(
+    EditorSession self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void
+  sse_encode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorLayoutBinding(
+    EditorLayoutBinding self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void
+  sse_encode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorPageTransform(
+    EditorPageTransform self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void
+  sse_encode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorSession(
+    EditorSession self,
     SseSerializer serializer,
   );
 
@@ -836,6 +1150,30 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_box_autoadd_editor_hit(
+    EditorHit self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_editor_page_box(
+    EditorPageBox self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_editor_point(
+    EditorPoint self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_editor_raster_size(
+    EditorRasterSize self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_box_autoadd_export_pdf_batch_request(
     ExportPdfBatchRequest self,
     SseSerializer serializer,
@@ -902,6 +1240,51 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_editor_document_layout(
+    EditorDocumentLayout self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_editor_hit(EditorHit self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_editor_page_box(EditorPageBox self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_editor_page_geometry(
+    EditorPageGeometry self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_editor_page_layout(
+    EditorPageLayout self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_editor_page_rotation(
+    EditorPageRotation self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_editor_point(EditorPoint self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_editor_raster(EditorRaster self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_editor_raster_size(
+    EditorRasterSize self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_editor_rect(EditorRect self, SseSerializer serializer);
+
+  @protected
   void sse_encode_export_pdf_batch_request(
     ExportPdfBatchRequest self,
     SseSerializer serializer,
@@ -953,6 +1336,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_list_String(List<String> self, SseSerializer serializer);
 
   @protected
+  void sse_encode_list_editor_page_layout(
+    List<EditorPageLayout> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_organize_pdf_page_item(
     List<OrganizePdfPageItem> self,
     SseSerializer serializer,
@@ -973,6 +1362,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_list_pdf_batch_document_result(
     List<PdfBatchDocumentResult> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_prim_u_32_strict(
+    Uint32List self,
     SseSerializer serializer,
   );
 
@@ -1021,6 +1416,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_opt_box_autoadd_application_error(
     ApplicationError? self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_opt_box_autoadd_editor_hit(
+    EditorHit? self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_opt_box_autoadd_editor_page_box(
+    EditorPageBox? self,
     SseSerializer serializer,
   );
 
@@ -1269,6 +1676,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
     UnlockPdfUpdate self,
     SseSerializer serializer,
   );
+
+  @protected
+  void sse_encode_usize(BigInt self, SseSerializer serializer);
 }
 
 // Section: wire_class
@@ -1284,4 +1694,106 @@ class RustLibWire implements BaseWire {
   /// The symbols are looked up in [dynamicLibrary].
   RustLibWire(ffi.DynamicLibrary dynamicLibrary)
     : _lookup = dynamicLibrary.lookup;
+
+  void
+  rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorLayoutBinding(
+    ffi.Pointer<ffi.Void> ptr,
+  ) {
+    return _rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorLayoutBinding(
+      ptr,
+    );
+  }
+
+  late final _rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorLayoutBindingPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Void>)>>(
+        'frbgen_ilikepdf_rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorLayoutBinding',
+      );
+  late final _rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorLayoutBinding =
+      _rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorLayoutBindingPtr
+          .asFunction<void Function(ffi.Pointer<ffi.Void>)>();
+
+  void
+  rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorLayoutBinding(
+    ffi.Pointer<ffi.Void> ptr,
+  ) {
+    return _rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorLayoutBinding(
+      ptr,
+    );
+  }
+
+  late final _rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorLayoutBindingPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Void>)>>(
+        'frbgen_ilikepdf_rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorLayoutBinding',
+      );
+  late final _rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorLayoutBinding =
+      _rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorLayoutBindingPtr
+          .asFunction<void Function(ffi.Pointer<ffi.Void>)>();
+
+  void
+  rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorPageTransform(
+    ffi.Pointer<ffi.Void> ptr,
+  ) {
+    return _rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorPageTransform(
+      ptr,
+    );
+  }
+
+  late final _rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorPageTransformPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Void>)>>(
+        'frbgen_ilikepdf_rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorPageTransform',
+      );
+  late final _rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorPageTransform =
+      _rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorPageTransformPtr
+          .asFunction<void Function(ffi.Pointer<ffi.Void>)>();
+
+  void
+  rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorPageTransform(
+    ffi.Pointer<ffi.Void> ptr,
+  ) {
+    return _rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorPageTransform(
+      ptr,
+    );
+  }
+
+  late final _rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorPageTransformPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Void>)>>(
+        'frbgen_ilikepdf_rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorPageTransform',
+      );
+  late final _rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorPageTransform =
+      _rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorPageTransformPtr
+          .asFunction<void Function(ffi.Pointer<ffi.Void>)>();
+
+  void
+  rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorSession(
+    ffi.Pointer<ffi.Void> ptr,
+  ) {
+    return _rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorSession(
+      ptr,
+    );
+  }
+
+  late final _rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorSessionPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Void>)>>(
+        'frbgen_ilikepdf_rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorSession',
+      );
+  late final _rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorSession =
+      _rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorSessionPtr
+          .asFunction<void Function(ffi.Pointer<ffi.Void>)>();
+
+  void
+  rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorSession(
+    ffi.Pointer<ffi.Void> ptr,
+  ) {
+    return _rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorSession(
+      ptr,
+    );
+  }
+
+  late final _rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorSessionPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Void>)>>(
+        'frbgen_ilikepdf_rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorSession',
+      );
+  late final _rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorSession =
+      _rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorSessionPtr
+          .asFunction<void Function(ffi.Pointer<ffi.Void>)>();
 }

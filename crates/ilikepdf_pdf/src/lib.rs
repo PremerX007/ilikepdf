@@ -42,6 +42,20 @@ pub struct PdfRenderRequest {
     pub target_width: u32,
 }
 
+#[derive(Clone, PartialEq, Eq)]
+pub struct PdfPageRasterRequest {
+    pub source_path: PathBuf,
+    pub page_index: u32,
+    pub width_pixels: u32,
+    pub height_pixels: u32,
+}
+
+impl PdfPageRasterRequest {
+    /// Two such decoded pages fit the editor's 256 MiB retained-image budget.
+    pub const MAX_PIXELS: u64 = 32 * 1024 * 1024;
+    pub const MAX_AXIS: u32 = 8192;
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PdfDpiRenderRequest {
     pub source_path: PathBuf,
@@ -67,6 +81,13 @@ pub struct PdfRenderer {
 }
 
 impl PdfRenderer {
+    pub fn render_page_raster(
+        &self,
+        request: PdfPageRasterRequest,
+        output: &mut (impl Write + Seek),
+    ) -> Result<RenderedPage, PdfError> {
+        pdfium_engine::render_page_raster(&self.pdfium, request, output)
+    }
     /// Loads a controlled runtime path for native integration tests and hosts.
     pub fn from_library_path(library_path: &Path) -> Result<Self, PdfError> {
         runtime::load(library_path).map(|pdfium| Self { pdfium })
@@ -151,6 +172,13 @@ pub fn render_page_to_png(
     output: &mut (impl Write + Seek),
 ) -> Result<RenderedPage, PdfError> {
     pdfium_engine::render_page_to_png(runtime::pdfium()?, request, output)
+}
+
+pub fn render_page_raster(
+    request: PdfPageRasterRequest,
+    output: &mut (impl Write + Seek),
+) -> Result<RenderedPage, PdfError> {
+    pdfium_engine::render_page_raster(runtime::pdfium()?, request, output)
 }
 
 pub fn render_page_to_png_at_dpi(

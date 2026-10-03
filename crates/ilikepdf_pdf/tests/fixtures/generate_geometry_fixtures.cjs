@@ -66,3 +66,17 @@ for (const userUnit of [1, 2]) {
       `<< /Type /Page /Parent 2 0 R /Resources << >> /Contents 3 0 R /MediaBox [-50 -40 350 260] /CropBox [25 30 225 180] /Rotate ${rotation} /UserUnit ${userUnit} >>`),
   ]);
 }
+
+// A longer mixed-size document for lazy viewport/cache sanity checks.
+const viewportPages = Array.from({ length: 64 }, (_, index) => [
+  '/MediaBox [0 0 595.2756 841.8898]',
+  '/MediaBox [0 0 792 612]',
+  '/MediaBox [-50 -40 350 260] /CropBox [25 30 225 180]',
+  '/MediaBox [-50 -40 350 260] /CropBox [25 30 225 180] /Rotate 90',
+][index % 4]);
+writePdf('editor_viewport_64.pdf', [
+  '<< /Type /Catalog /Pages 2 0 R >>',
+  `<< /Type /Pages /Count 64 /Kids [${viewportPages.map((_, i) => `${i + 4} 0 R`).join(' ')}] >>`,
+  stream,
+  ...viewportPages.map(boxes => `<< /Type /Page /Parent 2 0 R /Resources << >> /Contents 3 0 R ${boxes} >>`),
+]);

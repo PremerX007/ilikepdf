@@ -20,6 +20,10 @@ PDF editor coordinates are canonical unrotated source PDF points. Future editor
 tools must use core's `PageTransform` for all PDF/viewport conversion and the
 resolved visible page box for render alignment; do not introduce tool-specific
 coordinate math in Flutter. PDFium types and handles stay in PDF infrastructure.
+Editor rasters and future overlays share core's exact `EditorPageLayout` rectangle
+and `PageTransform`. Zoom is logical units per source PDF point, independent of
+physical DPI; render density affects bitmap quality only. Keep viewport renders
+lazy and bounded, and reject stale session/zoom results before retaining bitmaps.
 
 Structural PDF application logic must depend on `StructuralPdfEngine`, never on
 qpdf executable names, command switches, process output, or exit codes. Keep all

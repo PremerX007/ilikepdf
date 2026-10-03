@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ilikepdf/src/app/editor/editor_panel.dart';
 
 import 'package:ilikepdf/src/app/home/tool_home.dart';
 import 'package:ilikepdf/src/app/image_to_pdf/image_to_pdf_panel.dart';
@@ -95,6 +96,7 @@ class IlikepdfApp extends StatelessWidget {
 }
 
 enum _ActiveTool {
+  editorViewport,
   home,
   pdfToImages,
   imagesToPdf,
@@ -152,6 +154,10 @@ class _ApplicationWorkspaceState extends State<_ApplicationWorkspace> {
     return ApplicationShell(
       applicationName: widget.applicationName,
       coreVersion: widget.coreVersion,
+      onOpenEditorViewport:
+          const bool.fromEnvironment('ILIKEPDF_EDITOR_VIEWPORT')
+          ? () => _show(_ActiveTool.editorViewport)
+          : null,
       onBack: _activeTool == _ActiveTool.home
           ? null
           : () => _show(_ActiveTool.home),
@@ -174,6 +180,9 @@ class _ApplicationWorkspaceState extends State<_ApplicationWorkspace> {
 
   Widget _buildActiveContent() {
     return switch (_activeTool) {
+      _ActiveTool.editorViewport => const EditorPanel(
+        key: ValueKey('editor-viewport-content'),
+      ),
       _ActiveTool.home => ToolHome(
         key: const ValueKey('home-content'),
         onOpenPdfToImages: () => _show(_ActiveTool.pdfToImages),

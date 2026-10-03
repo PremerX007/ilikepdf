@@ -4,6 +4,7 @@
 // ignore_for_file: unused_import, unused_element, unnecessary_import, duplicate_ignore, invalid_use_of_internal_member, annotate_overrides, non_constant_identifier_names, curly_braces_in_flow_control_structures, prefer_const_literals_to_create_immutables, unused_field
 
 import 'api/application.dart';
+import 'api/editor.dart';
 import 'api/error.dart';
 import 'api/image_to_pdf.dart';
 import 'api/merge_pdf.dart';
@@ -77,7 +78,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.13.0';
 
   @override
-  int get rustContentHash => 1454100309;
+  int get rustContentHash => -508556337;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -89,6 +90,54 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
 }
 
 abstract class RustLibApi extends BaseApi {
+  EditorPoint crateApiEditorEditorLayoutBindingAnchoredScroll({
+    required EditorLayoutBinding that,
+    required EditorLayoutBinding previous,
+    required EditorPoint scroll,
+    required EditorPoint viewport,
+  });
+
+  EditorHit? crateApiEditorEditorLayoutBindingHitTest({
+    required EditorLayoutBinding that,
+    required EditorPoint point,
+    required EditorPoint scroll,
+  });
+
+  EditorRasterSize crateApiEditorEditorLayoutBindingRenderSize({
+    required EditorLayoutBinding that,
+    required int pageIndex,
+    required double density,
+  });
+
+  Uint32List crateApiEditorEditorLayoutBindingVisiblePages({
+    required EditorLayoutBinding that,
+    required double top,
+    required double height,
+    required double overscan,
+  });
+
+  EditorPoint crateApiEditorEditorPageTransformPdfToDocument({
+    required EditorPageTransform that,
+    required EditorPoint point,
+  });
+
+  BigInt crateApiEditorEditorSessionIdentity({required EditorSession that});
+
+  EditorDocumentLayout crateApiEditorEditorSessionLayout({
+    required EditorSession that,
+    required double workspaceWidth,
+    required double scale,
+    required bool fitWidth,
+  });
+
+  int crateApiEditorEditorSessionPageCount({required EditorSession that});
+
+  Future<EditorRaster> crateApiEditorEditorSessionRender({
+    required EditorSession that,
+    required int pageIndex,
+    required EditorRasterSize size,
+  });
+
   Stream<ImagePdfUpdate> crateApiImageToPdfCreatePdfsFromImages({
     required CreateImagePdfRequest request,
   });
@@ -127,6 +176,10 @@ abstract class RustLibApi extends BaseApi {
     required MergePdfRequest request,
   });
 
+  Future<EditorSession> crateApiEditorOpenEditorSession({
+    required String sourcePath,
+  });
+
   Future<PdfDocumentInfo> crateApiPdfPreviewOpenPdfDocument({
     required String sourcePath,
   });
@@ -154,9 +207,41 @@ abstract class RustLibApi extends BaseApi {
     required SplitPdfRequest request,
   });
 
+  double crateApiEditorStepEditorZoom({
+    required double scale,
+    required bool increase,
+  });
+
   Stream<UnlockPdfUpdate> crateApiPdfSecurityUnlockPdf({
     required UnlockPdfRequest request,
   });
+
+  RustArcIncrementStrongCountFnType
+  get rust_arc_increment_strong_count_EditorLayoutBinding;
+
+  RustArcDecrementStrongCountFnType
+  get rust_arc_decrement_strong_count_EditorLayoutBinding;
+
+  CrossPlatformFinalizerArg
+  get rust_arc_decrement_strong_count_EditorLayoutBindingPtr;
+
+  RustArcIncrementStrongCountFnType
+  get rust_arc_increment_strong_count_EditorPageTransform;
+
+  RustArcDecrementStrongCountFnType
+  get rust_arc_decrement_strong_count_EditorPageTransform;
+
+  CrossPlatformFinalizerArg
+  get rust_arc_decrement_strong_count_EditorPageTransformPtr;
+
+  RustArcIncrementStrongCountFnType
+  get rust_arc_increment_strong_count_EditorSession;
+
+  RustArcDecrementStrongCountFnType
+  get rust_arc_decrement_strong_count_EditorSession;
+
+  CrossPlatformFinalizerArg
+  get rust_arc_decrement_strong_count_EditorSessionPtr;
 }
 
 class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
@@ -166,6 +251,321 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     required super.generalizedFrbRustBinding,
     required super.portManager,
   });
+
+  @override
+  EditorPoint crateApiEditorEditorLayoutBindingAnchoredScroll({
+    required EditorLayoutBinding that,
+    required EditorLayoutBinding previous,
+    required EditorPoint scroll,
+    required EditorPoint viewport,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorLayoutBinding(
+            that,
+            serializer,
+          );
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorLayoutBinding(
+            previous,
+            serializer,
+          );
+          sse_encode_box_autoadd_editor_point(scroll, serializer);
+          sse_encode_box_autoadd_editor_point(viewport, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 1)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_editor_point,
+          decodeErrorData: sse_decode_application_error,
+        ),
+        constMeta: kCrateApiEditorEditorLayoutBindingAnchoredScrollConstMeta,
+        argValues: [that, previous, scroll, viewport],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiEditorEditorLayoutBindingAnchoredScrollConstMeta =>
+      const TaskConstMeta(
+        debugName: "EditorLayoutBinding_anchored_scroll",
+        argNames: ["that", "previous", "scroll", "viewport"],
+      );
+
+  @override
+  EditorHit? crateApiEditorEditorLayoutBindingHitTest({
+    required EditorLayoutBinding that,
+    required EditorPoint point,
+    required EditorPoint scroll,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorLayoutBinding(
+            that,
+            serializer,
+          );
+          sse_encode_box_autoadd_editor_point(point, serializer);
+          sse_encode_box_autoadd_editor_point(scroll, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 2)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_opt_box_autoadd_editor_hit,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiEditorEditorLayoutBindingHitTestConstMeta,
+        argValues: [that, point, scroll],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiEditorEditorLayoutBindingHitTestConstMeta =>
+      const TaskConstMeta(
+        debugName: "EditorLayoutBinding_hit_test",
+        argNames: ["that", "point", "scroll"],
+      );
+
+  @override
+  EditorRasterSize crateApiEditorEditorLayoutBindingRenderSize({
+    required EditorLayoutBinding that,
+    required int pageIndex,
+    required double density,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorLayoutBinding(
+            that,
+            serializer,
+          );
+          sse_encode_u_32(pageIndex, serializer);
+          sse_encode_f_64(density, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 3)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_editor_raster_size,
+          decodeErrorData: sse_decode_application_error,
+        ),
+        constMeta: kCrateApiEditorEditorLayoutBindingRenderSizeConstMeta,
+        argValues: [that, pageIndex, density],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiEditorEditorLayoutBindingRenderSizeConstMeta =>
+      const TaskConstMeta(
+        debugName: "EditorLayoutBinding_render_size",
+        argNames: ["that", "pageIndex", "density"],
+      );
+
+  @override
+  Uint32List crateApiEditorEditorLayoutBindingVisiblePages({
+    required EditorLayoutBinding that,
+    required double top,
+    required double height,
+    required double overscan,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorLayoutBinding(
+            that,
+            serializer,
+          );
+          sse_encode_f_64(top, serializer);
+          sse_encode_f_64(height, serializer);
+          sse_encode_f_64(overscan, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 4)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_prim_u_32_strict,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiEditorEditorLayoutBindingVisiblePagesConstMeta,
+        argValues: [that, top, height, overscan],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiEditorEditorLayoutBindingVisiblePagesConstMeta =>
+      const TaskConstMeta(
+        debugName: "EditorLayoutBinding_visible_pages",
+        argNames: ["that", "top", "height", "overscan"],
+      );
+
+  @override
+  EditorPoint crateApiEditorEditorPageTransformPdfToDocument({
+    required EditorPageTransform that,
+    required EditorPoint point,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorPageTransform(
+            that,
+            serializer,
+          );
+          sse_encode_box_autoadd_editor_point(point, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 5)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_editor_point,
+          decodeErrorData: sse_decode_application_error,
+        ),
+        constMeta: kCrateApiEditorEditorPageTransformPdfToDocumentConstMeta,
+        argValues: [that, point],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiEditorEditorPageTransformPdfToDocumentConstMeta =>
+      const TaskConstMeta(
+        debugName: "EditorPageTransform_pdf_to_document",
+        argNames: ["that", "point"],
+      );
+
+  @override
+  BigInt crateApiEditorEditorSessionIdentity({required EditorSession that}) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorSession(
+            that,
+            serializer,
+          );
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 6)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_u_64,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiEditorEditorSessionIdentityConstMeta,
+        argValues: [that],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiEditorEditorSessionIdentityConstMeta =>
+      const TaskConstMeta(
+        debugName: "EditorSession_identity",
+        argNames: ["that"],
+      );
+
+  @override
+  EditorDocumentLayout crateApiEditorEditorSessionLayout({
+    required EditorSession that,
+    required double workspaceWidth,
+    required double scale,
+    required bool fitWidth,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorSession(
+            that,
+            serializer,
+          );
+          sse_encode_f_64(workspaceWidth, serializer);
+          sse_encode_f_64(scale, serializer);
+          sse_encode_bool(fitWidth, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 7)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_editor_document_layout,
+          decodeErrorData: sse_decode_application_error,
+        ),
+        constMeta: kCrateApiEditorEditorSessionLayoutConstMeta,
+        argValues: [that, workspaceWidth, scale, fitWidth],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiEditorEditorSessionLayoutConstMeta =>
+      const TaskConstMeta(
+        debugName: "EditorSession_layout",
+        argNames: ["that", "workspaceWidth", "scale", "fitWidth"],
+      );
+
+  @override
+  int crateApiEditorEditorSessionPageCount({required EditorSession that}) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorSession(
+            that,
+            serializer,
+          );
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 8)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_u_32,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiEditorEditorSessionPageCountConstMeta,
+        argValues: [that],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiEditorEditorSessionPageCountConstMeta =>
+      const TaskConstMeta(
+        debugName: "EditorSession_page_count",
+        argNames: ["that"],
+      );
+
+  @override
+  Future<EditorRaster> crateApiEditorEditorSessionRender({
+    required EditorSession that,
+    required int pageIndex,
+    required EditorRasterSize size,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorSession(
+            that,
+            serializer,
+          );
+          sse_encode_u_32(pageIndex, serializer);
+          sse_encode_box_autoadd_editor_raster_size(size, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 9,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_editor_raster,
+          decodeErrorData: sse_decode_application_error,
+        ),
+        constMeta: kCrateApiEditorEditorSessionRenderConstMeta,
+        argValues: [that, pageIndex, size],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiEditorEditorSessionRenderConstMeta =>
+      const TaskConstMeta(
+        debugName: "EditorSession_render",
+        argNames: ["that", "pageIndex", "size"],
+      );
 
   @override
   Stream<ImagePdfUpdate> crateApiImageToPdfCreatePdfsFromImages({
@@ -188,7 +588,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             pdeCallFfi(
               generalizedFrbRustBinding,
               serializer,
-              funcId: 1,
+              funcId: 10,
               port: port_,
             );
           },
@@ -232,7 +632,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             pdeCallFfi(
               generalizedFrbRustBinding,
               serializer,
-              funcId: 2,
+              funcId: 11,
               port: port_,
             );
           },
@@ -276,7 +676,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             pdeCallFfi(
               generalizedFrbRustBinding,
               serializer,
-              funcId: 3,
+              funcId: 12,
               port: port_,
             );
           },
@@ -308,7 +708,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 4,
+            funcId: 13,
             port: port_,
           );
         },
@@ -335,7 +735,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 5,
+            funcId: 14,
             port: port_,
           );
         },
@@ -368,7 +768,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 6,
+            funcId: 15,
             port: port_,
           );
         },
@@ -401,7 +801,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 7,
+            funcId: 16,
             port: port_,
           );
         },
@@ -434,7 +834,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 8,
+            funcId: 17,
             port: port_,
           );
         },
@@ -467,7 +867,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 9,
+            funcId: 18,
             port: port_,
           );
         },
@@ -506,7 +906,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             pdeCallFfi(
               generalizedFrbRustBinding,
               serializer,
-              funcId: 10,
+              funcId: 19,
               port: port_,
             );
           },
@@ -529,6 +929,40 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   );
 
   @override
+  Future<EditorSession> crateApiEditorOpenEditorSession({
+    required String sourcePath,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(sourcePath, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 20,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData:
+              sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorSession,
+          decodeErrorData: sse_decode_application_error,
+        ),
+        constMeta: kCrateApiEditorOpenEditorSessionConstMeta,
+        argValues: [sourcePath],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiEditorOpenEditorSessionConstMeta =>
+      const TaskConstMeta(
+        debugName: "open_editor_session",
+        argNames: ["sourcePath"],
+      );
+
+  @override
   Future<PdfDocumentInfo> crateApiPdfPreviewOpenPdfDocument({
     required String sourcePath,
   }) {
@@ -540,7 +974,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 11,
+            funcId: 21,
             port: port_,
           );
         },
@@ -579,7 +1013,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             pdeCallFfi(
               generalizedFrbRustBinding,
               serializer,
-              funcId: 12,
+              funcId: 22,
               port: port_,
             );
           },
@@ -620,7 +1054,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 13,
+            funcId: 23,
             port: port_,
           );
         },
@@ -659,7 +1093,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             pdeCallFfi(
               generalizedFrbRustBinding,
               serializer,
-              funcId: 14,
+              funcId: 24,
               port: port_,
             );
           },
@@ -694,7 +1128,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 15,
+            funcId: 25,
             port: port_,
           );
         },
@@ -730,7 +1164,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             pdeCallFfi(
               generalizedFrbRustBinding,
               serializer,
-              funcId: 16,
+              funcId: 26,
               port: port_,
             );
           },
@@ -753,6 +1187,36 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   );
 
   @override
+  double crateApiEditorStepEditorZoom({
+    required double scale,
+    required bool increase,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_f_64(scale, serializer);
+          sse_encode_bool(increase, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 27)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_f_64,
+          decodeErrorData: sse_decode_application_error,
+        ),
+        constMeta: kCrateApiEditorStepEditorZoomConstMeta,
+        argValues: [scale, increase],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiEditorStepEditorZoomConstMeta =>
+      const TaskConstMeta(
+        debugName: "step_editor_zoom",
+        argNames: ["scale", "increase"],
+      );
+
+  @override
   Stream<UnlockPdfUpdate> crateApiPdfSecurityUnlockPdf({
     required UnlockPdfRequest request,
   }) {
@@ -770,7 +1234,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             pdeCallFfi(
               generalizedFrbRustBinding,
               serializer,
-              funcId: 17,
+              funcId: 28,
               port: port_,
             );
           },
@@ -793,10 +1257,115 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         argNames: ["request", "progressSink"],
       );
 
+  RustArcIncrementStrongCountFnType
+  get rust_arc_increment_strong_count_EditorLayoutBinding => wire
+      .rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorLayoutBinding;
+
+  RustArcDecrementStrongCountFnType
+  get rust_arc_decrement_strong_count_EditorLayoutBinding => wire
+      .rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorLayoutBinding;
+
+  RustArcIncrementStrongCountFnType
+  get rust_arc_increment_strong_count_EditorPageTransform => wire
+      .rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorPageTransform;
+
+  RustArcDecrementStrongCountFnType
+  get rust_arc_decrement_strong_count_EditorPageTransform => wire
+      .rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorPageTransform;
+
+  RustArcIncrementStrongCountFnType
+  get rust_arc_increment_strong_count_EditorSession => wire
+      .rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorSession;
+
+  RustArcDecrementStrongCountFnType
+  get rust_arc_decrement_strong_count_EditorSession => wire
+      .rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorSession;
+
   @protected
   AnyhowException dco_decode_AnyhowException(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return AnyhowException(raw as String);
+  }
+
+  @protected
+  EditorLayoutBinding
+  dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorLayoutBinding(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return EditorLayoutBindingImpl.frbInternalDcoDecode(raw as List<dynamic>);
+  }
+
+  @protected
+  EditorPageTransform
+  dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorPageTransform(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return EditorPageTransformImpl.frbInternalDcoDecode(raw as List<dynamic>);
+  }
+
+  @protected
+  EditorSession
+  dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorSession(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return EditorSessionImpl.frbInternalDcoDecode(raw as List<dynamic>);
+  }
+
+  @protected
+  EditorLayoutBinding
+  dco_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorLayoutBinding(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return EditorLayoutBindingImpl.frbInternalDcoDecode(raw as List<dynamic>);
+  }
+
+  @protected
+  EditorPageTransform
+  dco_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorPageTransform(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return EditorPageTransformImpl.frbInternalDcoDecode(raw as List<dynamic>);
+  }
+
+  @protected
+  EditorSession
+  dco_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorSession(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return EditorSessionImpl.frbInternalDcoDecode(raw as List<dynamic>);
+  }
+
+  @protected
+  EditorLayoutBinding
+  dco_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorLayoutBinding(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return EditorLayoutBindingImpl.frbInternalDcoDecode(raw as List<dynamic>);
+  }
+
+  @protected
+  EditorPageTransform
+  dco_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorPageTransform(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return EditorPageTransformImpl.frbInternalDcoDecode(raw as List<dynamic>);
+  }
+
+  @protected
+  EditorSession
+  dco_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorSession(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return EditorSessionImpl.frbInternalDcoDecode(raw as List<dynamic>);
   }
 
   @protected
@@ -919,6 +1488,30 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  EditorHit dco_decode_box_autoadd_editor_hit(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_editor_hit(raw);
+  }
+
+  @protected
+  EditorPageBox dco_decode_box_autoadd_editor_page_box(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_editor_page_box(raw);
+  }
+
+  @protected
+  EditorPoint dco_decode_box_autoadd_editor_point(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_editor_point(raw);
+  }
+
+  @protected
+  EditorRasterSize dco_decode_box_autoadd_editor_raster_size(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_editor_raster_size(raw);
+  }
+
+  @protected
   ExportPdfBatchRequest dco_decode_box_autoadd_export_pdf_batch_request(
     dynamic raw,
   ) {
@@ -1003,6 +1596,137 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       orientation: dco_decode_image_pdf_orientation(arr[3]),
       margin: dco_decode_image_pdf_margin(arr[4]),
       merge: dco_decode_bool(arr[5]),
+    );
+  }
+
+  @protected
+  EditorDocumentLayout dco_decode_editor_document_layout(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    return EditorDocumentLayout(
+      binding:
+          dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorLayoutBinding(
+            arr[0],
+          ),
+      pages: dco_decode_list_editor_page_layout(arr[1]),
+      width: dco_decode_f_64(arr[2]),
+      height: dco_decode_f_64(arr[3]),
+      scale: dco_decode_f_64(arr[4]),
+    );
+  }
+
+  @protected
+  EditorHit dco_decode_editor_hit(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return EditorHit(
+      pageIndex: dco_decode_u_32(arr[0]),
+      pdfPoint: dco_decode_editor_point(arr[1]),
+      pageLocalPoint: dco_decode_editor_point(arr[2]),
+    );
+  }
+
+  @protected
+  EditorPageBox dco_decode_editor_page_box(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    return EditorPageBox(
+      left: dco_decode_f_64(arr[0]),
+      bottom: dco_decode_f_64(arr[1]),
+      right: dco_decode_f_64(arr[2]),
+      top: dco_decode_f_64(arr[3]),
+    );
+  }
+
+  @protected
+  EditorPageGeometry dco_decode_editor_page_geometry(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    return EditorPageGeometry(
+      visibleBox: dco_decode_editor_page_box(arr[0]),
+      declaredMediaBox: dco_decode_opt_box_autoadd_editor_page_box(arr[1]),
+      declaredCropBox: dco_decode_opt_box_autoadd_editor_page_box(arr[2]),
+      rotation: dco_decode_editor_page_rotation(arr[3]),
+    );
+  }
+
+  @protected
+  EditorPageLayout dco_decode_editor_page_layout(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    return EditorPageLayout(
+      pageIndex: dco_decode_u_32(arr[0]),
+      rect: dco_decode_editor_rect(arr[1]),
+      scale: dco_decode_f_64(arr[2]),
+      geometry: dco_decode_editor_page_geometry(arr[3]),
+      transform:
+          dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorPageTransform(
+            arr[4],
+          ),
+    );
+  }
+
+  @protected
+  EditorPageRotation dco_decode_editor_page_rotation(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return EditorPageRotation.values[raw as int];
+  }
+
+  @protected
+  EditorPoint dco_decode_editor_point(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return EditorPoint(x: dco_decode_f_64(arr[0]), y: dco_decode_f_64(arr[1]));
+  }
+
+  @protected
+  EditorRaster dco_decode_editor_raster(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return EditorRaster(
+      png: dco_decode_list_prim_u_8_strict(arr[0]),
+      width: dco_decode_u_32(arr[1]),
+      height: dco_decode_u_32(arr[2]),
+    );
+  }
+
+  @protected
+  EditorRasterSize dco_decode_editor_raster_size(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return EditorRasterSize(
+      width: dco_decode_u_32(arr[0]),
+      height: dco_decode_u_32(arr[1]),
+    );
+  }
+
+  @protected
+  EditorRect dco_decode_editor_rect(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    return EditorRect(
+      left: dco_decode_f_64(arr[0]),
+      top: dco_decode_f_64(arr[1]),
+      width: dco_decode_f_64(arr[2]),
+      height: dco_decode_f_64(arr[3]),
     );
   }
 
@@ -1096,6 +1820,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<EditorPageLayout> dco_decode_list_editor_page_layout(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_editor_page_layout).toList();
+  }
+
+  @protected
   List<OrganizePdfPageItem> dco_decode_list_organize_pdf_page_item(
     dynamic raw,
   ) {
@@ -1129,6 +1859,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     return (raw as List<dynamic>)
         .map(dco_decode_pdf_batch_document_result)
         .toList();
+  }
+
+  @protected
+  Uint32List dco_decode_list_prim_u_32_strict(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as Uint32List;
   }
 
   @protected
@@ -1204,6 +1940,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ApplicationError? dco_decode_opt_box_autoadd_application_error(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_box_autoadd_application_error(raw);
+  }
+
+  @protected
+  EditorHit? dco_decode_opt_box_autoadd_editor_hit(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_editor_hit(raw);
+  }
+
+  @protected
+  EditorPageBox? dco_decode_opt_box_autoadd_editor_page_box(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_editor_page_box(raw);
   }
 
   @protected
@@ -1698,10 +2446,124 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  BigInt dco_decode_usize(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dcoDecodeU64(raw);
+  }
+
+  @protected
   AnyhowException sse_decode_AnyhowException(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var inner = sse_decode_String(deserializer);
     return AnyhowException(inner);
+  }
+
+  @protected
+  EditorLayoutBinding
+  sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorLayoutBinding(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return EditorLayoutBindingImpl.frbInternalSseDecode(
+      sse_decode_usize(deserializer),
+      sse_decode_i_32(deserializer),
+    );
+  }
+
+  @protected
+  EditorPageTransform
+  sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorPageTransform(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return EditorPageTransformImpl.frbInternalSseDecode(
+      sse_decode_usize(deserializer),
+      sse_decode_i_32(deserializer),
+    );
+  }
+
+  @protected
+  EditorSession
+  sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorSession(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return EditorSessionImpl.frbInternalSseDecode(
+      sse_decode_usize(deserializer),
+      sse_decode_i_32(deserializer),
+    );
+  }
+
+  @protected
+  EditorLayoutBinding
+  sse_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorLayoutBinding(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return EditorLayoutBindingImpl.frbInternalSseDecode(
+      sse_decode_usize(deserializer),
+      sse_decode_i_32(deserializer),
+    );
+  }
+
+  @protected
+  EditorPageTransform
+  sse_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorPageTransform(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return EditorPageTransformImpl.frbInternalSseDecode(
+      sse_decode_usize(deserializer),
+      sse_decode_i_32(deserializer),
+    );
+  }
+
+  @protected
+  EditorSession
+  sse_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorSession(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return EditorSessionImpl.frbInternalSseDecode(
+      sse_decode_usize(deserializer),
+      sse_decode_i_32(deserializer),
+    );
+  }
+
+  @protected
+  EditorLayoutBinding
+  sse_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorLayoutBinding(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return EditorLayoutBindingImpl.frbInternalSseDecode(
+      sse_decode_usize(deserializer),
+      sse_decode_i_32(deserializer),
+    );
+  }
+
+  @protected
+  EditorPageTransform
+  sse_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorPageTransform(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return EditorPageTransformImpl.frbInternalSseDecode(
+      sse_decode_usize(deserializer),
+      sse_decode_i_32(deserializer),
+    );
+  }
+
+  @protected
+  EditorSession
+  sse_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorSession(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return EditorSessionImpl.frbInternalSseDecode(
+      sse_decode_usize(deserializer),
+      sse_decode_i_32(deserializer),
+    );
   }
 
   @protected
@@ -1828,6 +2690,36 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  EditorHit sse_decode_box_autoadd_editor_hit(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_editor_hit(deserializer));
+  }
+
+  @protected
+  EditorPageBox sse_decode_box_autoadd_editor_page_box(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_editor_page_box(deserializer));
+  }
+
+  @protected
+  EditorPoint sse_decode_box_autoadd_editor_point(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_editor_point(deserializer));
+  }
+
+  @protected
+  EditorRasterSize sse_decode_box_autoadd_editor_raster_size(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_editor_raster_size(deserializer));
+  }
+
+  @protected
   ExportPdfBatchRequest sse_decode_box_autoadd_export_pdf_batch_request(
     SseDeserializer deserializer,
   ) {
@@ -1929,6 +2821,146 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       orientation: var_orientation,
       margin: var_margin,
       merge: var_merge,
+    );
+  }
+
+  @protected
+  EditorDocumentLayout sse_decode_editor_document_layout(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_binding =
+        sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorLayoutBinding(
+          deserializer,
+        );
+    var var_pages = sse_decode_list_editor_page_layout(deserializer);
+    var var_width = sse_decode_f_64(deserializer);
+    var var_height = sse_decode_f_64(deserializer);
+    var var_scale = sse_decode_f_64(deserializer);
+    return EditorDocumentLayout(
+      binding: var_binding,
+      pages: var_pages,
+      width: var_width,
+      height: var_height,
+      scale: var_scale,
+    );
+  }
+
+  @protected
+  EditorHit sse_decode_editor_hit(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_pageIndex = sse_decode_u_32(deserializer);
+    var var_pdfPoint = sse_decode_editor_point(deserializer);
+    var var_pageLocalPoint = sse_decode_editor_point(deserializer);
+    return EditorHit(
+      pageIndex: var_pageIndex,
+      pdfPoint: var_pdfPoint,
+      pageLocalPoint: var_pageLocalPoint,
+    );
+  }
+
+  @protected
+  EditorPageBox sse_decode_editor_page_box(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_left = sse_decode_f_64(deserializer);
+    var var_bottom = sse_decode_f_64(deserializer);
+    var var_right = sse_decode_f_64(deserializer);
+    var var_top = sse_decode_f_64(deserializer);
+    return EditorPageBox(
+      left: var_left,
+      bottom: var_bottom,
+      right: var_right,
+      top: var_top,
+    );
+  }
+
+  @protected
+  EditorPageGeometry sse_decode_editor_page_geometry(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_visibleBox = sse_decode_editor_page_box(deserializer);
+    var var_declaredMediaBox = sse_decode_opt_box_autoadd_editor_page_box(
+      deserializer,
+    );
+    var var_declaredCropBox = sse_decode_opt_box_autoadd_editor_page_box(
+      deserializer,
+    );
+    var var_rotation = sse_decode_editor_page_rotation(deserializer);
+    return EditorPageGeometry(
+      visibleBox: var_visibleBox,
+      declaredMediaBox: var_declaredMediaBox,
+      declaredCropBox: var_declaredCropBox,
+      rotation: var_rotation,
+    );
+  }
+
+  @protected
+  EditorPageLayout sse_decode_editor_page_layout(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_pageIndex = sse_decode_u_32(deserializer);
+    var var_rect = sse_decode_editor_rect(deserializer);
+    var var_scale = sse_decode_f_64(deserializer);
+    var var_geometry = sse_decode_editor_page_geometry(deserializer);
+    var var_transform =
+        sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorPageTransform(
+          deserializer,
+        );
+    return EditorPageLayout(
+      pageIndex: var_pageIndex,
+      rect: var_rect,
+      scale: var_scale,
+      geometry: var_geometry,
+      transform: var_transform,
+    );
+  }
+
+  @protected
+  EditorPageRotation sse_decode_editor_page_rotation(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var inner = sse_decode_i_32(deserializer);
+    return EditorPageRotation.values[inner];
+  }
+
+  @protected
+  EditorPoint sse_decode_editor_point(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_x = sse_decode_f_64(deserializer);
+    var var_y = sse_decode_f_64(deserializer);
+    return EditorPoint(x: var_x, y: var_y);
+  }
+
+  @protected
+  EditorRaster sse_decode_editor_raster(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_png = sse_decode_list_prim_u_8_strict(deserializer);
+    var var_width = sse_decode_u_32(deserializer);
+    var var_height = sse_decode_u_32(deserializer);
+    return EditorRaster(png: var_png, width: var_width, height: var_height);
+  }
+
+  @protected
+  EditorRasterSize sse_decode_editor_raster_size(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_width = sse_decode_u_32(deserializer);
+    var var_height = sse_decode_u_32(deserializer);
+    return EditorRasterSize(width: var_width, height: var_height);
+  }
+
+  @protected
+  EditorRect sse_decode_editor_rect(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_left = sse_decode_f_64(deserializer);
+    var var_top = sse_decode_f_64(deserializer);
+    var var_width = sse_decode_f_64(deserializer);
+    var var_height = sse_decode_f_64(deserializer);
+    return EditorRect(
+      left: var_left,
+      top: var_top,
+      width: var_width,
+      height: var_height,
     );
   }
 
@@ -2046,6 +3078,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<EditorPageLayout> sse_decode_list_editor_page_layout(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <EditorPageLayout>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_editor_page_layout(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
   List<OrganizePdfPageItem> sse_decode_list_organize_pdf_page_item(
     SseDeserializer deserializer,
   ) {
@@ -2099,6 +3145,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       ans_.add(sse_decode_pdf_batch_document_result(deserializer));
     }
     return ans_;
+  }
+
+  @protected
+  Uint32List sse_decode_list_prim_u_32_strict(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var len_ = sse_decode_i_32(deserializer);
+    return deserializer.buffer.getUint32List(len_);
   }
 
   @protected
@@ -2209,6 +3262,32 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
     if (sse_decode_bool(deserializer)) {
       return (sse_decode_box_autoadd_application_error(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  EditorHit? sse_decode_opt_box_autoadd_editor_hit(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_editor_hit(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  EditorPageBox? sse_decode_opt_box_autoadd_editor_page_box(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_editor_page_box(deserializer));
     } else {
       return null;
     }
@@ -2835,12 +3914,135 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  BigInt sse_decode_usize(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return deserializer.buffer.getBigUint64();
+  }
+
+  @protected
   void sse_encode_AnyhowException(
     AnyhowException self,
     SseSerializer serializer,
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_String(self.message, serializer);
+  }
+
+  @protected
+  void
+  sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorLayoutBinding(
+    EditorLayoutBinding self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_usize(
+      (self as EditorLayoutBindingImpl).frbInternalSseEncode(move: true),
+      serializer,
+    );
+  }
+
+  @protected
+  void
+  sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorPageTransform(
+    EditorPageTransform self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_usize(
+      (self as EditorPageTransformImpl).frbInternalSseEncode(move: true),
+      serializer,
+    );
+  }
+
+  @protected
+  void
+  sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorSession(
+    EditorSession self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_usize(
+      (self as EditorSessionImpl).frbInternalSseEncode(move: true),
+      serializer,
+    );
+  }
+
+  @protected
+  void
+  sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorLayoutBinding(
+    EditorLayoutBinding self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_usize(
+      (self as EditorLayoutBindingImpl).frbInternalSseEncode(move: false),
+      serializer,
+    );
+  }
+
+  @protected
+  void
+  sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorPageTransform(
+    EditorPageTransform self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_usize(
+      (self as EditorPageTransformImpl).frbInternalSseEncode(move: false),
+      serializer,
+    );
+  }
+
+  @protected
+  void
+  sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorSession(
+    EditorSession self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_usize(
+      (self as EditorSessionImpl).frbInternalSseEncode(move: false),
+      serializer,
+    );
+  }
+
+  @protected
+  void
+  sse_encode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorLayoutBinding(
+    EditorLayoutBinding self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_usize(
+      (self as EditorLayoutBindingImpl).frbInternalSseEncode(move: null),
+      serializer,
+    );
+  }
+
+  @protected
+  void
+  sse_encode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorPageTransform(
+    EditorPageTransform self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_usize(
+      (self as EditorPageTransformImpl).frbInternalSseEncode(move: null),
+      serializer,
+    );
+  }
+
+  @protected
+  void
+  sse_encode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorSession(
+    EditorSession self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_usize(
+      (self as EditorSessionImpl).frbInternalSseEncode(move: null),
+      serializer,
+    );
   }
 
   @protected
@@ -3040,6 +4242,42 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_box_autoadd_editor_hit(
+    EditorHit self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_editor_hit(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_editor_page_box(
+    EditorPageBox self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_editor_page_box(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_editor_point(
+    EditorPoint self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_editor_point(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_editor_raster_size(
+    EditorRasterSize self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_editor_raster_size(self, serializer);
+  }
+
+  @protected
   void sse_encode_box_autoadd_export_pdf_batch_request(
     ExportPdfBatchRequest self,
     SseSerializer serializer,
@@ -3147,6 +4385,119 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_editor_document_layout(
+    EditorDocumentLayout self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorLayoutBinding(
+      self.binding,
+      serializer,
+    );
+    sse_encode_list_editor_page_layout(self.pages, serializer);
+    sse_encode_f_64(self.width, serializer);
+    sse_encode_f_64(self.height, serializer);
+    sse_encode_f_64(self.scale, serializer);
+  }
+
+  @protected
+  void sse_encode_editor_hit(EditorHit self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_u_32(self.pageIndex, serializer);
+    sse_encode_editor_point(self.pdfPoint, serializer);
+    sse_encode_editor_point(self.pageLocalPoint, serializer);
+  }
+
+  @protected
+  void sse_encode_editor_page_box(
+    EditorPageBox self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_f_64(self.left, serializer);
+    sse_encode_f_64(self.bottom, serializer);
+    sse_encode_f_64(self.right, serializer);
+    sse_encode_f_64(self.top, serializer);
+  }
+
+  @protected
+  void sse_encode_editor_page_geometry(
+    EditorPageGeometry self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_editor_page_box(self.visibleBox, serializer);
+    sse_encode_opt_box_autoadd_editor_page_box(
+      self.declaredMediaBox,
+      serializer,
+    );
+    sse_encode_opt_box_autoadd_editor_page_box(
+      self.declaredCropBox,
+      serializer,
+    );
+    sse_encode_editor_page_rotation(self.rotation, serializer);
+  }
+
+  @protected
+  void sse_encode_editor_page_layout(
+    EditorPageLayout self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_u_32(self.pageIndex, serializer);
+    sse_encode_editor_rect(self.rect, serializer);
+    sse_encode_f_64(self.scale, serializer);
+    sse_encode_editor_page_geometry(self.geometry, serializer);
+    sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorPageTransform(
+      self.transform,
+      serializer,
+    );
+  }
+
+  @protected
+  void sse_encode_editor_page_rotation(
+    EditorPageRotation self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
+  void sse_encode_editor_point(EditorPoint self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_f_64(self.x, serializer);
+    sse_encode_f_64(self.y, serializer);
+  }
+
+  @protected
+  void sse_encode_editor_raster(EditorRaster self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_list_prim_u_8_strict(self.png, serializer);
+    sse_encode_u_32(self.width, serializer);
+    sse_encode_u_32(self.height, serializer);
+  }
+
+  @protected
+  void sse_encode_editor_raster_size(
+    EditorRasterSize self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_u_32(self.width, serializer);
+    sse_encode_u_32(self.height, serializer);
+  }
+
+  @protected
+  void sse_encode_editor_rect(EditorRect self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_f_64(self.left, serializer);
+    sse_encode_f_64(self.top, serializer);
+    sse_encode_f_64(self.width, serializer);
+    sse_encode_f_64(self.height, serializer);
+  }
+
+  @protected
   void sse_encode_export_pdf_batch_request(
     ExportPdfBatchRequest self,
     SseSerializer serializer,
@@ -3243,6 +4594,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_list_editor_page_layout(
+    List<EditorPageLayout> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_editor_page_layout(item, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_list_organize_pdf_page_item(
     List<OrganizePdfPageItem> self,
     SseSerializer serializer,
@@ -3288,6 +4651,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     for (final item in self) {
       sse_encode_pdf_batch_document_result(item, serializer);
     }
+  }
+
+  @protected
+  void sse_encode_list_prim_u_32_strict(
+    Uint32List self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    serializer.buffer.putUint32List(self);
   }
 
   @protected
@@ -3391,6 +4764,32 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_bool(self != null, serializer);
     if (self != null) {
       sse_encode_box_autoadd_application_error(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_editor_hit(
+    EditorHit? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_editor_hit(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_editor_page_box(
+    EditorPageBox? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_editor_page_box(self, serializer);
     }
   }
 
@@ -3893,4 +5292,160 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_bool(self.hasWarnings, serializer);
     sse_encode_opt_box_autoadd_application_error(self.error, serializer);
   }
+
+  @protected
+  void sse_encode_usize(BigInt self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    serializer.buffer.putBigUint64(self);
+  }
+}
+
+@sealed
+class EditorLayoutBindingImpl extends RustOpaque
+    implements EditorLayoutBinding {
+  // Not to be used by end users
+  EditorLayoutBindingImpl.frbInternalDcoDecode(List<dynamic> wire)
+    : super.frbInternalDcoDecode(wire, _kStaticData);
+
+  // Not to be used by end users
+  EditorLayoutBindingImpl.frbInternalSseDecode(
+    BigInt ptr,
+    int externalSizeOnNative,
+  ) : super.frbInternalSseDecode(ptr, externalSizeOnNative, _kStaticData);
+
+  static final _kStaticData = RustArcStaticData(
+    rustArcIncrementStrongCount: RustLib
+        .instance
+        .api
+        .rust_arc_increment_strong_count_EditorLayoutBinding,
+    rustArcDecrementStrongCount: RustLib
+        .instance
+        .api
+        .rust_arc_decrement_strong_count_EditorLayoutBinding,
+    rustArcDecrementStrongCountPtr: RustLib
+        .instance
+        .api
+        .rust_arc_decrement_strong_count_EditorLayoutBindingPtr,
+  );
+
+  EditorPoint anchoredScroll({
+    required EditorLayoutBinding previous,
+    required EditorPoint scroll,
+    required EditorPoint viewport,
+  }) => RustLib.instance.api.crateApiEditorEditorLayoutBindingAnchoredScroll(
+    that: this,
+    previous: previous,
+    scroll: scroll,
+    viewport: viewport,
+  );
+
+  EditorHit? hitTest({
+    required EditorPoint point,
+    required EditorPoint scroll,
+  }) => RustLib.instance.api.crateApiEditorEditorLayoutBindingHitTest(
+    that: this,
+    point: point,
+    scroll: scroll,
+  );
+
+  EditorRasterSize renderSize({
+    required int pageIndex,
+    required double density,
+  }) => RustLib.instance.api.crateApiEditorEditorLayoutBindingRenderSize(
+    that: this,
+    pageIndex: pageIndex,
+    density: density,
+  );
+
+  Uint32List visiblePages({
+    required double top,
+    required double height,
+    required double overscan,
+  }) => RustLib.instance.api.crateApiEditorEditorLayoutBindingVisiblePages(
+    that: this,
+    top: top,
+    height: height,
+    overscan: overscan,
+  );
+}
+
+@sealed
+class EditorPageTransformImpl extends RustOpaque
+    implements EditorPageTransform {
+  // Not to be used by end users
+  EditorPageTransformImpl.frbInternalDcoDecode(List<dynamic> wire)
+    : super.frbInternalDcoDecode(wire, _kStaticData);
+
+  // Not to be used by end users
+  EditorPageTransformImpl.frbInternalSseDecode(
+    BigInt ptr,
+    int externalSizeOnNative,
+  ) : super.frbInternalSseDecode(ptr, externalSizeOnNative, _kStaticData);
+
+  static final _kStaticData = RustArcStaticData(
+    rustArcIncrementStrongCount: RustLib
+        .instance
+        .api
+        .rust_arc_increment_strong_count_EditorPageTransform,
+    rustArcDecrementStrongCount: RustLib
+        .instance
+        .api
+        .rust_arc_decrement_strong_count_EditorPageTransform,
+    rustArcDecrementStrongCountPtr: RustLib
+        .instance
+        .api
+        .rust_arc_decrement_strong_count_EditorPageTransformPtr,
+  );
+
+  EditorPoint pdfToDocument({required EditorPoint point}) => RustLib
+      .instance
+      .api
+      .crateApiEditorEditorPageTransformPdfToDocument(that: this, point: point);
+}
+
+@sealed
+class EditorSessionImpl extends RustOpaque implements EditorSession {
+  // Not to be used by end users
+  EditorSessionImpl.frbInternalDcoDecode(List<dynamic> wire)
+    : super.frbInternalDcoDecode(wire, _kStaticData);
+
+  // Not to be used by end users
+  EditorSessionImpl.frbInternalSseDecode(BigInt ptr, int externalSizeOnNative)
+    : super.frbInternalSseDecode(ptr, externalSizeOnNative, _kStaticData);
+
+  static final _kStaticData = RustArcStaticData(
+    rustArcIncrementStrongCount:
+        RustLib.instance.api.rust_arc_increment_strong_count_EditorSession,
+    rustArcDecrementStrongCount:
+        RustLib.instance.api.rust_arc_decrement_strong_count_EditorSession,
+    rustArcDecrementStrongCountPtr:
+        RustLib.instance.api.rust_arc_decrement_strong_count_EditorSessionPtr,
+  );
+
+  BigInt identity() =>
+      RustLib.instance.api.crateApiEditorEditorSessionIdentity(that: this);
+
+  /// Pure geometry; native rendering remains asynchronous on the worker pool.
+  EditorDocumentLayout layout({
+    required double workspaceWidth,
+    required double scale,
+    required bool fitWidth,
+  }) => RustLib.instance.api.crateApiEditorEditorSessionLayout(
+    that: this,
+    workspaceWidth: workspaceWidth,
+    scale: scale,
+    fitWidth: fitWidth,
+  );
+
+  int pageCount() =>
+      RustLib.instance.api.crateApiEditorEditorSessionPageCount(that: this);
+
+  Future<EditorRaster> render({
+    required int pageIndex,
+    required EditorRasterSize size,
+  }) => RustLib.instance.api.crateApiEditorEditorSessionRender(
+    that: this,
+    pageIndex: pageIndex,
+    size: size,
+  );
 }

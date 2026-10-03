@@ -12,6 +12,39 @@ use crate::{
 mod image_encoding;
 mod page_geometry;
 
+pub(crate) fn render_page_raster(
+    pdfium: &Pdfium,
+    request: crate::PdfPageRasterRequest,
+    output: &mut (impl Write + Seek),
+) -> Result<RenderedPage, PdfError> {
+    if request.width_pixels == 0
+        || request.height_pixels == 0
+        || request.width_pixels > crate::PdfPageRasterRequest::MAX_AXIS
+        || request.height_pixels > crate::PdfPageRasterRequest::MAX_AXIS
+        || u64::from(request.width_pixels) * u64::from(request.height_pixels)
+            > crate::PdfPageRasterRequest::MAX_PIXELS
+    {
+        return Err(PdfError::new(PdfErrorKind::RenderFailed));
+    }
+    validate_source(&request.source_path)?;
+    let document = pdfium
+        .load_pdf_from_file(&request.source_path, None)
+        .map_err(map_document_load_error)?;
+    let index = i32::try_from(request.page_index)
+        .map_err(|_| PdfError::new(PdfErrorKind::PageOutOfBounds))?;
+    let page = document
+        .pages()
+        .get(index)
+        .map_err(|_| PdfError::new(PdfErrorKind::PageOutOfBounds))?;
+    render_page_with_config(
+        &page,
+        PdfRenderConfig::new()
+            .set_target_size(request.width_pixels as i32, request.height_pixels as i32),
+        PdfImageFormat::Png,
+        output,
+    )
+}
+
 pub(crate) use page_geometry::inspect_page_geometry;
 
 const PDF_POINTS_PER_INCH: f32 = 72.0;

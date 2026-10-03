@@ -1,6 +1,7 @@
 //! Dart-facing feature contracts and endpoints.
 
 pub mod application;
+pub mod editor;
 pub mod error;
 pub mod image_to_pdf;
 pub mod lifecycle;

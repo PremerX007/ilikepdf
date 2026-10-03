@@ -72,7 +72,7 @@ pub fn open_editor_session(source_path: &Path) -> ApplicationResult<EditorSessio
     open_with_inspector(source_path, ilikepdf_pdf::inspect_page_geometry)
 }
 
-fn open_with_inspector(
+pub(super) fn open_with_inspector(
     source_path: &Path,
     inspect: impl FnOnce(&Path) -> Result<PdfDocumentGeometry, PdfError>,
 ) -> ApplicationResult<EditorSession> {
