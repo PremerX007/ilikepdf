@@ -24,6 +24,12 @@ Editor rasters and future overlays share core's exact `EditorPageLayout` rectang
 and `PageTransform`. Zoom is logical units per source PDF point, independent of
 physical DPI; render density affects bitmap quality only. Keep viewport renders
 lazy and bounded, and reject stale session/zoom results before retaining bitmaps.
+Editor objects and command history belong in core and use stable session-scoped
+identities and canonical source-point rectangles. Flutter gesture previews are
+transient; one completed gesture commits one bounded history command. Keep object
+overlays in the raster's page stack and use the same core layout/transform. Scope
+object shortcuts to the editor's own keyboard focus so future text inputs can own
+their editing keys. In-memory object edits never authorize source-PDF mutation.
 
 Structural PDF application logic must depend on `StructuralPdfEngine`, never on
 qpdf executable names, command switches, process output, or exit codes. Keep all

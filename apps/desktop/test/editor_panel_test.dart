@@ -57,6 +57,8 @@ class _Session implements EditorSession {
   @override
   BigInt identity() => BigInt.from(id);
   @override
+  EditorEdits createEdits() => _Edits(id);
+  @override
   int pageCount() => 1;
   @override
   EditorDocumentLayout layout({
@@ -97,6 +99,30 @@ class _Session implements EditorSession {
     );
   }
 
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _Edits implements EditorEdits {
+  _Edits(this.id);
+  final int id;
+  @override
+  EditorEditSnapshot snapshot() => EditorEditSnapshot(
+    sessionId: BigInt.from(id),
+    objects: const [],
+    undoCount: 0,
+    redoCount: 0,
+  );
+  @override
+  List<EditorObjectDisplay> projectPage({
+    required EditorLayoutBinding layout,
+    required int pageIndex,
+  }) => [];
+  @override
+  EditorObjectGesture? beginGesture({
+    required EditorLayoutBinding layout,
+    required EditorPoint point,
+  }) => null;
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }

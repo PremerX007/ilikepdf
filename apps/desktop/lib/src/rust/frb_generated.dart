@@ -78,7 +78,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.13.0';
 
   @override
-  int get rustContentHash => -508556337;
+  int get rustContentHash => -1110837200;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -90,6 +90,41 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
 }
 
 abstract class RustLibApi extends BaseApi {
+  void crateApiEditorEditorEditsAddPrototype({
+    required EditorEdits that,
+    required int pageIndex,
+  });
+
+  EditorObjectGesture? crateApiEditorEditorEditsBeginGesture({
+    required EditorEdits that,
+    required EditorLayoutBinding layout,
+    required EditorPoint point,
+  });
+
+  void crateApiEditorEditorEditsClearSelection({required EditorEdits that});
+
+  bool crateApiEditorEditorEditsDeleteSelected({required EditorEdits that});
+
+  bool crateApiEditorEditorEditsFinishGesture({
+    required EditorEdits that,
+    required EditorObjectGesture gesture,
+    required EditorPoint point,
+  });
+
+  List<EditorObjectDisplay> crateApiEditorEditorEditsProjectPage({
+    required EditorEdits that,
+    required EditorLayoutBinding layout,
+    required int pageIndex,
+  });
+
+  bool crateApiEditorEditorEditsRedo({required EditorEdits that});
+
+  EditorEditSnapshot crateApiEditorEditorEditsSnapshot({
+    required EditorEdits that,
+  });
+
+  bool crateApiEditorEditorEditsUndo({required EditorEdits that});
+
   EditorPoint crateApiEditorEditorLayoutBindingAnchoredScroll({
     required EditorLayoutBinding that,
     required EditorLayoutBinding previous,
@@ -116,9 +151,22 @@ abstract class RustLibApi extends BaseApi {
     required double overscan,
   });
 
+  int crateApiEditorEditorObjectGesturePageIndex({
+    required EditorObjectGesture that,
+  });
+
+  EditorObjectDisplay crateApiEditorEditorObjectGesturePreview({
+    required EditorObjectGesture that,
+    required EditorPoint point,
+  });
+
   EditorPoint crateApiEditorEditorPageTransformPdfToDocument({
     required EditorPageTransform that,
     required EditorPoint point,
+  });
+
+  EditorEdits crateApiEditorEditorSessionCreateEdits({
+    required EditorSession that,
   });
 
   BigInt crateApiEditorEditorSessionIdentity({required EditorSession that});
@@ -217,6 +265,14 @@ abstract class RustLibApi extends BaseApi {
   });
 
   RustArcIncrementStrongCountFnType
+  get rust_arc_increment_strong_count_EditorEdits;
+
+  RustArcDecrementStrongCountFnType
+  get rust_arc_decrement_strong_count_EditorEdits;
+
+  CrossPlatformFinalizerArg get rust_arc_decrement_strong_count_EditorEditsPtr;
+
+  RustArcIncrementStrongCountFnType
   get rust_arc_increment_strong_count_EditorLayoutBinding;
 
   RustArcDecrementStrongCountFnType
@@ -224,6 +280,15 @@ abstract class RustLibApi extends BaseApi {
 
   CrossPlatformFinalizerArg
   get rust_arc_decrement_strong_count_EditorLayoutBindingPtr;
+
+  RustArcIncrementStrongCountFnType
+  get rust_arc_increment_strong_count_EditorObjectGesture;
+
+  RustArcDecrementStrongCountFnType
+  get rust_arc_decrement_strong_count_EditorObjectGesture;
+
+  CrossPlatformFinalizerArg
+  get rust_arc_decrement_strong_count_EditorObjectGesturePtr;
 
   RustArcIncrementStrongCountFnType
   get rust_arc_increment_strong_count_EditorPageTransform;
@@ -253,6 +318,295 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   });
 
   @override
+  void crateApiEditorEditorEditsAddPrototype({
+    required EditorEdits that,
+    required int pageIndex,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorEdits(
+            that,
+            serializer,
+          );
+          sse_encode_u_32(pageIndex, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 1)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_application_error,
+        ),
+        constMeta: kCrateApiEditorEditorEditsAddPrototypeConstMeta,
+        argValues: [that, pageIndex],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiEditorEditorEditsAddPrototypeConstMeta =>
+      const TaskConstMeta(
+        debugName: "EditorEdits_add_prototype",
+        argNames: ["that", "pageIndex"],
+      );
+
+  @override
+  EditorObjectGesture? crateApiEditorEditorEditsBeginGesture({
+    required EditorEdits that,
+    required EditorLayoutBinding layout,
+    required EditorPoint point,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorEdits(
+            that,
+            serializer,
+          );
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorLayoutBinding(
+            layout,
+            serializer,
+          );
+          sse_encode_box_autoadd_editor_point(point, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 2)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData:
+              sse_decode_opt_box_autoadd_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorObjectGesture,
+          decodeErrorData: sse_decode_application_error,
+        ),
+        constMeta: kCrateApiEditorEditorEditsBeginGestureConstMeta,
+        argValues: [that, layout, point],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiEditorEditorEditsBeginGestureConstMeta =>
+      const TaskConstMeta(
+        debugName: "EditorEdits_begin_gesture",
+        argNames: ["that", "layout", "point"],
+      );
+
+  @override
+  void crateApiEditorEditorEditsClearSelection({required EditorEdits that}) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorEdits(
+            that,
+            serializer,
+          );
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 3)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_application_error,
+        ),
+        constMeta: kCrateApiEditorEditorEditsClearSelectionConstMeta,
+        argValues: [that],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiEditorEditorEditsClearSelectionConstMeta =>
+      const TaskConstMeta(
+        debugName: "EditorEdits_clear_selection",
+        argNames: ["that"],
+      );
+
+  @override
+  bool crateApiEditorEditorEditsDeleteSelected({required EditorEdits that}) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorEdits(
+            that,
+            serializer,
+          );
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 4)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_bool,
+          decodeErrorData: sse_decode_application_error,
+        ),
+        constMeta: kCrateApiEditorEditorEditsDeleteSelectedConstMeta,
+        argValues: [that],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiEditorEditorEditsDeleteSelectedConstMeta =>
+      const TaskConstMeta(
+        debugName: "EditorEdits_delete_selected",
+        argNames: ["that"],
+      );
+
+  @override
+  bool crateApiEditorEditorEditsFinishGesture({
+    required EditorEdits that,
+    required EditorObjectGesture gesture,
+    required EditorPoint point,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorEdits(
+            that,
+            serializer,
+          );
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorObjectGesture(
+            gesture,
+            serializer,
+          );
+          sse_encode_box_autoadd_editor_point(point, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 5)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_bool,
+          decodeErrorData: sse_decode_application_error,
+        ),
+        constMeta: kCrateApiEditorEditorEditsFinishGestureConstMeta,
+        argValues: [that, gesture, point],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiEditorEditorEditsFinishGestureConstMeta =>
+      const TaskConstMeta(
+        debugName: "EditorEdits_finish_gesture",
+        argNames: ["that", "gesture", "point"],
+      );
+
+  @override
+  List<EditorObjectDisplay> crateApiEditorEditorEditsProjectPage({
+    required EditorEdits that,
+    required EditorLayoutBinding layout,
+    required int pageIndex,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorEdits(
+            that,
+            serializer,
+          );
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorLayoutBinding(
+            layout,
+            serializer,
+          );
+          sse_encode_u_32(pageIndex, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 6)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_editor_object_display,
+          decodeErrorData: sse_decode_application_error,
+        ),
+        constMeta: kCrateApiEditorEditorEditsProjectPageConstMeta,
+        argValues: [that, layout, pageIndex],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiEditorEditorEditsProjectPageConstMeta =>
+      const TaskConstMeta(
+        debugName: "EditorEdits_project_page",
+        argNames: ["that", "layout", "pageIndex"],
+      );
+
+  @override
+  bool crateApiEditorEditorEditsRedo({required EditorEdits that}) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorEdits(
+            that,
+            serializer,
+          );
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 7)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_bool,
+          decodeErrorData: sse_decode_application_error,
+        ),
+        constMeta: kCrateApiEditorEditorEditsRedoConstMeta,
+        argValues: [that],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiEditorEditorEditsRedoConstMeta =>
+      const TaskConstMeta(debugName: "EditorEdits_redo", argNames: ["that"]);
+
+  @override
+  EditorEditSnapshot crateApiEditorEditorEditsSnapshot({
+    required EditorEdits that,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorEdits(
+            that,
+            serializer,
+          );
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 8)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_editor_edit_snapshot,
+          decodeErrorData: sse_decode_application_error,
+        ),
+        constMeta: kCrateApiEditorEditorEditsSnapshotConstMeta,
+        argValues: [that],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiEditorEditorEditsSnapshotConstMeta =>
+      const TaskConstMeta(
+        debugName: "EditorEdits_snapshot",
+        argNames: ["that"],
+      );
+
+  @override
+  bool crateApiEditorEditorEditsUndo({required EditorEdits that}) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorEdits(
+            that,
+            serializer,
+          );
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 9)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_bool,
+          decodeErrorData: sse_decode_application_error,
+        ),
+        constMeta: kCrateApiEditorEditorEditsUndoConstMeta,
+        argValues: [that],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiEditorEditorEditsUndoConstMeta =>
+      const TaskConstMeta(debugName: "EditorEdits_undo", argNames: ["that"]);
+
+  @override
   EditorPoint crateApiEditorEditorLayoutBindingAnchoredScroll({
     required EditorLayoutBinding that,
     required EditorLayoutBinding previous,
@@ -273,7 +627,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           );
           sse_encode_box_autoadd_editor_point(scroll, serializer);
           sse_encode_box_autoadd_editor_point(viewport, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 1)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 10)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_editor_point,
@@ -308,7 +662,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           );
           sse_encode_box_autoadd_editor_point(point, serializer);
           sse_encode_box_autoadd_editor_point(scroll, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 2)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 11)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_opt_box_autoadd_editor_hit,
@@ -343,7 +697,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           );
           sse_encode_u_32(pageIndex, serializer);
           sse_encode_f_64(density, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 3)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 12)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_editor_raster_size,
@@ -380,7 +734,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           sse_encode_f_64(top, serializer);
           sse_encode_f_64(height, serializer);
           sse_encode_f_64(overscan, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 4)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 13)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_list_prim_u_32_strict,
@@ -400,6 +754,70 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
+  int crateApiEditorEditorObjectGesturePageIndex({
+    required EditorObjectGesture that,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorObjectGesture(
+            that,
+            serializer,
+          );
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 14)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_u_32,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiEditorEditorObjectGesturePageIndexConstMeta,
+        argValues: [that],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiEditorEditorObjectGesturePageIndexConstMeta =>
+      const TaskConstMeta(
+        debugName: "EditorObjectGesture_page_index",
+        argNames: ["that"],
+      );
+
+  @override
+  EditorObjectDisplay crateApiEditorEditorObjectGesturePreview({
+    required EditorObjectGesture that,
+    required EditorPoint point,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorObjectGesture(
+            that,
+            serializer,
+          );
+          sse_encode_box_autoadd_editor_point(point, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 15)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_editor_object_display,
+          decodeErrorData: sse_decode_application_error,
+        ),
+        constMeta: kCrateApiEditorEditorObjectGesturePreviewConstMeta,
+        argValues: [that, point],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiEditorEditorObjectGesturePreviewConstMeta =>
+      const TaskConstMeta(
+        debugName: "EditorObjectGesture_preview",
+        argNames: ["that", "point"],
+      );
+
+  @override
   EditorPoint crateApiEditorEditorPageTransformPdfToDocument({
     required EditorPageTransform that,
     required EditorPoint point,
@@ -413,7 +831,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             serializer,
           );
           sse_encode_box_autoadd_editor_point(point, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 5)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 16)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_editor_point,
@@ -433,6 +851,38 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
+  EditorEdits crateApiEditorEditorSessionCreateEdits({
+    required EditorSession that,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorSession(
+            that,
+            serializer,
+          );
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 17)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData:
+              sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorEdits,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiEditorEditorSessionCreateEditsConstMeta,
+        argValues: [that],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiEditorEditorSessionCreateEditsConstMeta =>
+      const TaskConstMeta(
+        debugName: "EditorSession_create_edits",
+        argNames: ["that"],
+      );
+
+  @override
   BigInt crateApiEditorEditorSessionIdentity({required EditorSession that}) {
     return handler.executeSync(
       SyncTask(
@@ -442,7 +892,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             that,
             serializer,
           );
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 6)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 18)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_u_64,
@@ -479,7 +929,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           sse_encode_f_64(workspaceWidth, serializer);
           sse_encode_f_64(scale, serializer);
           sse_encode_bool(fitWidth, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 7)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 19)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_editor_document_layout,
@@ -508,7 +958,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             that,
             serializer,
           );
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 8)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 20)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_u_32,
@@ -546,7 +996,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 9,
+            funcId: 21,
             port: port_,
           );
         },
@@ -588,7 +1038,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             pdeCallFfi(
               generalizedFrbRustBinding,
               serializer,
-              funcId: 10,
+              funcId: 22,
               port: port_,
             );
           },
@@ -632,7 +1082,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             pdeCallFfi(
               generalizedFrbRustBinding,
               serializer,
-              funcId: 11,
+              funcId: 23,
               port: port_,
             );
           },
@@ -676,7 +1126,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             pdeCallFfi(
               generalizedFrbRustBinding,
               serializer,
-              funcId: 12,
+              funcId: 24,
               port: port_,
             );
           },
@@ -708,7 +1158,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 13,
+            funcId: 25,
             port: port_,
           );
         },
@@ -735,7 +1185,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 14,
+            funcId: 26,
             port: port_,
           );
         },
@@ -768,7 +1218,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 15,
+            funcId: 27,
             port: port_,
           );
         },
@@ -801,7 +1251,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 16,
+            funcId: 28,
             port: port_,
           );
         },
@@ -834,7 +1284,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 17,
+            funcId: 29,
             port: port_,
           );
         },
@@ -867,7 +1317,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 18,
+            funcId: 30,
             port: port_,
           );
         },
@@ -906,7 +1356,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             pdeCallFfi(
               generalizedFrbRustBinding,
               serializer,
-              funcId: 19,
+              funcId: 31,
               port: port_,
             );
           },
@@ -940,7 +1390,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 20,
+            funcId: 32,
             port: port_,
           );
         },
@@ -974,7 +1424,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 21,
+            funcId: 33,
             port: port_,
           );
         },
@@ -1013,7 +1463,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             pdeCallFfi(
               generalizedFrbRustBinding,
               serializer,
-              funcId: 22,
+              funcId: 34,
               port: port_,
             );
           },
@@ -1054,7 +1504,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 23,
+            funcId: 35,
             port: port_,
           );
         },
@@ -1093,7 +1543,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             pdeCallFfi(
               generalizedFrbRustBinding,
               serializer,
-              funcId: 24,
+              funcId: 36,
               port: port_,
             );
           },
@@ -1128,7 +1578,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 25,
+            funcId: 37,
             port: port_,
           );
         },
@@ -1164,7 +1614,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             pdeCallFfi(
               generalizedFrbRustBinding,
               serializer,
-              funcId: 26,
+              funcId: 38,
               port: port_,
             );
           },
@@ -1197,7 +1647,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_f_64(scale, serializer);
           sse_encode_bool(increase, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 27)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 39)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_f_64,
@@ -1234,7 +1684,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             pdeCallFfi(
               generalizedFrbRustBinding,
               serializer,
-              funcId: 28,
+              funcId: 40,
               port: port_,
             );
           },
@@ -1258,12 +1708,28 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   RustArcIncrementStrongCountFnType
+  get rust_arc_increment_strong_count_EditorEdits => wire
+      .rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorEdits;
+
+  RustArcDecrementStrongCountFnType
+  get rust_arc_decrement_strong_count_EditorEdits => wire
+      .rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorEdits;
+
+  RustArcIncrementStrongCountFnType
   get rust_arc_increment_strong_count_EditorLayoutBinding => wire
       .rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorLayoutBinding;
 
   RustArcDecrementStrongCountFnType
   get rust_arc_decrement_strong_count_EditorLayoutBinding => wire
       .rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorLayoutBinding;
+
+  RustArcIncrementStrongCountFnType
+  get rust_arc_increment_strong_count_EditorObjectGesture => wire
+      .rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorObjectGesture;
+
+  RustArcDecrementStrongCountFnType
+  get rust_arc_decrement_strong_count_EditorObjectGesture => wire
+      .rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorObjectGesture;
 
   RustArcIncrementStrongCountFnType
   get rust_arc_increment_strong_count_EditorPageTransform => wire
@@ -1288,12 +1754,30 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  EditorEdits
+  dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorEdits(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return EditorEditsImpl.frbInternalDcoDecode(raw as List<dynamic>);
+  }
+
+  @protected
   EditorLayoutBinding
   dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorLayoutBinding(
     dynamic raw,
   ) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return EditorLayoutBindingImpl.frbInternalDcoDecode(raw as List<dynamic>);
+  }
+
+  @protected
+  EditorObjectGesture
+  dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorObjectGesture(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return EditorObjectGestureImpl.frbInternalDcoDecode(raw as List<dynamic>);
   }
 
   @protected
@@ -1315,12 +1799,30 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  EditorEdits
+  dco_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorEdits(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return EditorEditsImpl.frbInternalDcoDecode(raw as List<dynamic>);
+  }
+
+  @protected
   EditorLayoutBinding
   dco_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorLayoutBinding(
     dynamic raw,
   ) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return EditorLayoutBindingImpl.frbInternalDcoDecode(raw as List<dynamic>);
+  }
+
+  @protected
+  EditorObjectGesture
+  dco_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorObjectGesture(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return EditorObjectGestureImpl.frbInternalDcoDecode(raw as List<dynamic>);
   }
 
   @protected
@@ -1342,12 +1844,30 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  EditorEdits
+  dco_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorEdits(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return EditorEditsImpl.frbInternalDcoDecode(raw as List<dynamic>);
+  }
+
+  @protected
   EditorLayoutBinding
   dco_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorLayoutBinding(
     dynamic raw,
   ) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return EditorLayoutBindingImpl.frbInternalDcoDecode(raw as List<dynamic>);
+  }
+
+  @protected
+  EditorObjectGesture
+  dco_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorObjectGesture(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return EditorObjectGestureImpl.frbInternalDcoDecode(raw as List<dynamic>);
   }
 
   @protected
@@ -1471,6 +1991,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   bool dco_decode_bool(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as bool;
+  }
+
+  @protected
+  EditorObjectGesture
+  dco_decode_box_autoadd_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorObjectGesture(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorObjectGesture(
+      raw,
+    );
   }
 
   @protected
@@ -1618,6 +2149,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  EditorEditSnapshot dco_decode_editor_edit_snapshot(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    return EditorEditSnapshot(
+      sessionId: dco_decode_u_64(arr[0]),
+      objects: dco_decode_list_editor_object(arr[1]),
+      selected: dco_decode_opt_box_autoadd_u_64(arr[2]),
+      undoCount: dco_decode_u_32(arr[3]),
+      redoCount: dco_decode_u_32(arr[4]),
+    );
+  }
+
+  @protected
   EditorHit dco_decode_editor_hit(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
@@ -1628,6 +2174,40 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       pdfPoint: dco_decode_editor_point(arr[1]),
       pageLocalPoint: dco_decode_editor_point(arr[2]),
     );
+  }
+
+  @protected
+  EditorObject dco_decode_editor_object(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    return EditorObject(
+      id: dco_decode_u_64(arr[0]),
+      pageIndex: dco_decode_u_32(arr[1]),
+      kind: dco_decode_editor_object_kind(arr[2]),
+      rectangle: dco_decode_editor_page_box(arr[3]),
+    );
+  }
+
+  @protected
+  EditorObjectDisplay dco_decode_editor_object_display(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    return EditorObjectDisplay(
+      id: dco_decode_u_64(arr[0]),
+      rect: dco_decode_editor_rect(arr[1]),
+      selected: dco_decode_bool(arr[2]),
+      handles: dco_decode_list_editor_point(arr[3]),
+    );
+  }
+
+  @protected
+  EditorObjectKind dco_decode_editor_object_kind(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return EditorObjectKind.values[raw as int];
   }
 
   @protected
@@ -1820,9 +2400,29 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<EditorObject> dco_decode_list_editor_object(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_editor_object).toList();
+  }
+
+  @protected
+  List<EditorObjectDisplay> dco_decode_list_editor_object_display(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>)
+        .map(dco_decode_editor_object_display)
+        .toList();
+  }
+
+  @protected
   List<EditorPageLayout> dco_decode_list_editor_page_layout(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_editor_page_layout).toList();
+  }
+
+  @protected
+  List<EditorPoint> dco_decode_list_editor_point(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_editor_point).toList();
   }
 
   @protected
@@ -1934,6 +2534,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   String? dco_decode_opt_String(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_String(raw);
+  }
+
+  @protected
+  EditorObjectGesture?
+  dco_decode_opt_box_autoadd_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorObjectGesture(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null
+        ? null
+        : dco_decode_box_autoadd_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorObjectGesture(
+            raw,
+          );
   }
 
   @protected
@@ -2459,12 +3072,36 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  EditorEdits
+  sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorEdits(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return EditorEditsImpl.frbInternalSseDecode(
+      sse_decode_usize(deserializer),
+      sse_decode_i_32(deserializer),
+    );
+  }
+
+  @protected
   EditorLayoutBinding
   sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorLayoutBinding(
     SseDeserializer deserializer,
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return EditorLayoutBindingImpl.frbInternalSseDecode(
+      sse_decode_usize(deserializer),
+      sse_decode_i_32(deserializer),
+    );
+  }
+
+  @protected
+  EditorObjectGesture
+  sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorObjectGesture(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return EditorObjectGestureImpl.frbInternalSseDecode(
       sse_decode_usize(deserializer),
       sse_decode_i_32(deserializer),
     );
@@ -2495,12 +3132,36 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  EditorEdits
+  sse_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorEdits(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return EditorEditsImpl.frbInternalSseDecode(
+      sse_decode_usize(deserializer),
+      sse_decode_i_32(deserializer),
+    );
+  }
+
+  @protected
   EditorLayoutBinding
   sse_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorLayoutBinding(
     SseDeserializer deserializer,
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return EditorLayoutBindingImpl.frbInternalSseDecode(
+      sse_decode_usize(deserializer),
+      sse_decode_i_32(deserializer),
+    );
+  }
+
+  @protected
+  EditorObjectGesture
+  sse_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorObjectGesture(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return EditorObjectGestureImpl.frbInternalSseDecode(
       sse_decode_usize(deserializer),
       sse_decode_i_32(deserializer),
     );
@@ -2531,12 +3192,36 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  EditorEdits
+  sse_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorEdits(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return EditorEditsImpl.frbInternalSseDecode(
+      sse_decode_usize(deserializer),
+      sse_decode_i_32(deserializer),
+    );
+  }
+
+  @protected
   EditorLayoutBinding
   sse_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorLayoutBinding(
     SseDeserializer deserializer,
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return EditorLayoutBindingImpl.frbInternalSseDecode(
+      sse_decode_usize(deserializer),
+      sse_decode_i_32(deserializer),
+    );
+  }
+
+  @protected
+  EditorObjectGesture
+  sse_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorObjectGesture(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return EditorObjectGestureImpl.frbInternalSseDecode(
       sse_decode_usize(deserializer),
       sse_decode_i_32(deserializer),
     );
@@ -2671,6 +3356,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   bool sse_decode_bool(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return deserializer.buffer.getUint8() != 0;
+  }
+
+  @protected
+  EditorObjectGesture
+  sse_decode_box_autoadd_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorObjectGesture(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorObjectGesture(
+      deserializer,
+    ));
   }
 
   @protected
@@ -2847,6 +3543,25 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  EditorEditSnapshot sse_decode_editor_edit_snapshot(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_sessionId = sse_decode_u_64(deserializer);
+    var var_objects = sse_decode_list_editor_object(deserializer);
+    var var_selected = sse_decode_opt_box_autoadd_u_64(deserializer);
+    var var_undoCount = sse_decode_u_32(deserializer);
+    var var_redoCount = sse_decode_u_32(deserializer);
+    return EditorEditSnapshot(
+      sessionId: var_sessionId,
+      objects: var_objects,
+      selected: var_selected,
+      undoCount: var_undoCount,
+      redoCount: var_redoCount,
+    );
+  }
+
+  @protected
   EditorHit sse_decode_editor_hit(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_pageIndex = sse_decode_u_32(deserializer);
@@ -2857,6 +3572,45 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       pdfPoint: var_pdfPoint,
       pageLocalPoint: var_pageLocalPoint,
     );
+  }
+
+  @protected
+  EditorObject sse_decode_editor_object(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_id = sse_decode_u_64(deserializer);
+    var var_pageIndex = sse_decode_u_32(deserializer);
+    var var_kind = sse_decode_editor_object_kind(deserializer);
+    var var_rectangle = sse_decode_editor_page_box(deserializer);
+    return EditorObject(
+      id: var_id,
+      pageIndex: var_pageIndex,
+      kind: var_kind,
+      rectangle: var_rectangle,
+    );
+  }
+
+  @protected
+  EditorObjectDisplay sse_decode_editor_object_display(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_id = sse_decode_u_64(deserializer);
+    var var_rect = sse_decode_editor_rect(deserializer);
+    var var_selected = sse_decode_bool(deserializer);
+    var var_handles = sse_decode_list_editor_point(deserializer);
+    return EditorObjectDisplay(
+      id: var_id,
+      rect: var_rect,
+      selected: var_selected,
+      handles: var_handles,
+    );
+  }
+
+  @protected
+  EditorObjectKind sse_decode_editor_object_kind(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var inner = sse_decode_i_32(deserializer);
+    return EditorObjectKind.values[inner];
   }
 
   @protected
@@ -3078,6 +3832,34 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<EditorObject> sse_decode_list_editor_object(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <EditorObject>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_editor_object(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<EditorObjectDisplay> sse_decode_list_editor_object_display(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <EditorObjectDisplay>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_editor_object_display(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
   List<EditorPageLayout> sse_decode_list_editor_page_layout(
     SseDeserializer deserializer,
   ) {
@@ -3087,6 +3869,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var ans_ = <EditorPageLayout>[];
     for (var idx_ = 0; idx_ < len_; ++idx_) {
       ans_.add(sse_decode_editor_page_layout(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<EditorPoint> sse_decode_list_editor_point(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <EditorPoint>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_editor_point(deserializer));
     }
     return ans_;
   }
@@ -3249,6 +4043,22 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
     if (sse_decode_bool(deserializer)) {
       return (sse_decode_String(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  EditorObjectGesture?
+  sse_decode_opt_box_autoadd_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorObjectGesture(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorObjectGesture(
+        deserializer,
+      ));
     } else {
       return null;
     }
@@ -3930,6 +4740,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   void
+  sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorEdits(
+    EditorEdits self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_usize(
+      (self as EditorEditsImpl).frbInternalSseEncode(move: true),
+      serializer,
+    );
+  }
+
+  @protected
+  void
   sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorLayoutBinding(
     EditorLayoutBinding self,
     SseSerializer serializer,
@@ -3937,6 +4760,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_usize(
       (self as EditorLayoutBindingImpl).frbInternalSseEncode(move: true),
+      serializer,
+    );
+  }
+
+  @protected
+  void
+  sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorObjectGesture(
+    EditorObjectGesture self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_usize(
+      (self as EditorObjectGestureImpl).frbInternalSseEncode(move: true),
       serializer,
     );
   }
@@ -3969,6 +4805,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   void
+  sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorEdits(
+    EditorEdits self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_usize(
+      (self as EditorEditsImpl).frbInternalSseEncode(move: false),
+      serializer,
+    );
+  }
+
+  @protected
+  void
   sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorLayoutBinding(
     EditorLayoutBinding self,
     SseSerializer serializer,
@@ -3976,6 +4825,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_usize(
       (self as EditorLayoutBindingImpl).frbInternalSseEncode(move: false),
+      serializer,
+    );
+  }
+
+  @protected
+  void
+  sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorObjectGesture(
+    EditorObjectGesture self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_usize(
+      (self as EditorObjectGestureImpl).frbInternalSseEncode(move: false),
       serializer,
     );
   }
@@ -4008,6 +4870,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   void
+  sse_encode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorEdits(
+    EditorEdits self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_usize(
+      (self as EditorEditsImpl).frbInternalSseEncode(move: null),
+      serializer,
+    );
+  }
+
+  @protected
+  void
   sse_encode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorLayoutBinding(
     EditorLayoutBinding self,
     SseSerializer serializer,
@@ -4015,6 +4890,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_usize(
       (self as EditorLayoutBindingImpl).frbInternalSseEncode(move: null),
+      serializer,
+    );
+  }
+
+  @protected
+  void
+  sse_encode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorObjectGesture(
+    EditorObjectGesture self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_usize(
+      (self as EditorObjectGestureImpl).frbInternalSseEncode(move: null),
       serializer,
     );
   }
@@ -4224,6 +5112,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void
+  sse_encode_box_autoadd_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorObjectGesture(
+    EditorObjectGesture self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorObjectGesture(
+      self,
+      serializer,
+    );
+  }
+
+  @protected
   void sse_encode_box_autoadd_application_error(
     ApplicationError self,
     SseSerializer serializer,
@@ -4401,11 +5302,54 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_editor_edit_snapshot(
+    EditorEditSnapshot self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_u_64(self.sessionId, serializer);
+    sse_encode_list_editor_object(self.objects, serializer);
+    sse_encode_opt_box_autoadd_u_64(self.selected, serializer);
+    sse_encode_u_32(self.undoCount, serializer);
+    sse_encode_u_32(self.redoCount, serializer);
+  }
+
+  @protected
   void sse_encode_editor_hit(EditorHit self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_u_32(self.pageIndex, serializer);
     sse_encode_editor_point(self.pdfPoint, serializer);
     sse_encode_editor_point(self.pageLocalPoint, serializer);
+  }
+
+  @protected
+  void sse_encode_editor_object(EditorObject self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_u_64(self.id, serializer);
+    sse_encode_u_32(self.pageIndex, serializer);
+    sse_encode_editor_object_kind(self.kind, serializer);
+    sse_encode_editor_page_box(self.rectangle, serializer);
+  }
+
+  @protected
+  void sse_encode_editor_object_display(
+    EditorObjectDisplay self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_u_64(self.id, serializer);
+    sse_encode_editor_rect(self.rect, serializer);
+    sse_encode_bool(self.selected, serializer);
+    sse_encode_list_editor_point(self.handles, serializer);
+  }
+
+  @protected
+  void sse_encode_editor_object_kind(
+    EditorObjectKind self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
   }
 
   @protected
@@ -4594,6 +5538,30 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_list_editor_object(
+    List<EditorObject> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_editor_object(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_editor_object_display(
+    List<EditorObjectDisplay> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_editor_object_display(item, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_list_editor_page_layout(
     List<EditorPageLayout> self,
     SseSerializer serializer,
@@ -4602,6 +5570,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_i_32(self.length, serializer);
     for (final item in self) {
       sse_encode_editor_page_layout(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_editor_point(
+    List<EditorPoint> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_editor_point(item, serializer);
     }
   }
 
@@ -4751,6 +5731,23 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_bool(self != null, serializer);
     if (self != null) {
       sse_encode_String(self, serializer);
+    }
+  }
+
+  @protected
+  void
+  sse_encode_opt_box_autoadd_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorObjectGesture(
+    EditorObjectGesture? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEditorObjectGesture(
+        self,
+        serializer,
+      );
     }
   }
 
@@ -5301,6 +6298,69 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 }
 
 @sealed
+class EditorEditsImpl extends RustOpaque implements EditorEdits {
+  // Not to be used by end users
+  EditorEditsImpl.frbInternalDcoDecode(List<dynamic> wire)
+    : super.frbInternalDcoDecode(wire, _kStaticData);
+
+  // Not to be used by end users
+  EditorEditsImpl.frbInternalSseDecode(BigInt ptr, int externalSizeOnNative)
+    : super.frbInternalSseDecode(ptr, externalSizeOnNative, _kStaticData);
+
+  static final _kStaticData = RustArcStaticData(
+    rustArcIncrementStrongCount:
+        RustLib.instance.api.rust_arc_increment_strong_count_EditorEdits,
+    rustArcDecrementStrongCount:
+        RustLib.instance.api.rust_arc_decrement_strong_count_EditorEdits,
+    rustArcDecrementStrongCountPtr:
+        RustLib.instance.api.rust_arc_decrement_strong_count_EditorEditsPtr,
+  );
+
+  void addPrototype({required int pageIndex}) => RustLib.instance.api
+      .crateApiEditorEditorEditsAddPrototype(that: this, pageIndex: pageIndex);
+
+  EditorObjectGesture? beginGesture({
+    required EditorLayoutBinding layout,
+    required EditorPoint point,
+  }) => RustLib.instance.api.crateApiEditorEditorEditsBeginGesture(
+    that: this,
+    layout: layout,
+    point: point,
+  );
+
+  void clearSelection() =>
+      RustLib.instance.api.crateApiEditorEditorEditsClearSelection(that: this);
+
+  bool deleteSelected() =>
+      RustLib.instance.api.crateApiEditorEditorEditsDeleteSelected(that: this);
+
+  bool finishGesture({
+    required EditorObjectGesture gesture,
+    required EditorPoint point,
+  }) => RustLib.instance.api.crateApiEditorEditorEditsFinishGesture(
+    that: this,
+    gesture: gesture,
+    point: point,
+  );
+
+  List<EditorObjectDisplay> projectPage({
+    required EditorLayoutBinding layout,
+    required int pageIndex,
+  }) => RustLib.instance.api.crateApiEditorEditorEditsProjectPage(
+    that: this,
+    layout: layout,
+    pageIndex: pageIndex,
+  );
+
+  bool redo() => RustLib.instance.api.crateApiEditorEditorEditsRedo(that: this);
+
+  EditorEditSnapshot snapshot() =>
+      RustLib.instance.api.crateApiEditorEditorEditsSnapshot(that: this);
+
+  bool undo() => RustLib.instance.api.crateApiEditorEditorEditsUndo(that: this);
+}
+
+@sealed
 class EditorLayoutBindingImpl extends RustOpaque
     implements EditorLayoutBinding {
   // Not to be used by end users
@@ -5370,6 +6430,43 @@ class EditorLayoutBindingImpl extends RustOpaque
 }
 
 @sealed
+class EditorObjectGestureImpl extends RustOpaque
+    implements EditorObjectGesture {
+  // Not to be used by end users
+  EditorObjectGestureImpl.frbInternalDcoDecode(List<dynamic> wire)
+    : super.frbInternalDcoDecode(wire, _kStaticData);
+
+  // Not to be used by end users
+  EditorObjectGestureImpl.frbInternalSseDecode(
+    BigInt ptr,
+    int externalSizeOnNative,
+  ) : super.frbInternalSseDecode(ptr, externalSizeOnNative, _kStaticData);
+
+  static final _kStaticData = RustArcStaticData(
+    rustArcIncrementStrongCount: RustLib
+        .instance
+        .api
+        .rust_arc_increment_strong_count_EditorObjectGesture,
+    rustArcDecrementStrongCount: RustLib
+        .instance
+        .api
+        .rust_arc_decrement_strong_count_EditorObjectGesture,
+    rustArcDecrementStrongCountPtr: RustLib
+        .instance
+        .api
+        .rust_arc_decrement_strong_count_EditorObjectGesturePtr,
+  );
+
+  int pageIndex() => RustLib.instance.api
+      .crateApiEditorEditorObjectGesturePageIndex(that: this);
+
+  EditorObjectDisplay preview({required EditorPoint point}) => RustLib
+      .instance
+      .api
+      .crateApiEditorEditorObjectGesturePreview(that: this, point: point);
+}
+
+@sealed
 class EditorPageTransformImpl extends RustOpaque
     implements EditorPageTransform {
   // Not to be used by end users
@@ -5421,6 +6518,9 @@ class EditorSessionImpl extends RustOpaque implements EditorSession {
     rustArcDecrementStrongCountPtr:
         RustLib.instance.api.rust_arc_decrement_strong_count_EditorSessionPtr,
   );
+
+  EditorEdits createEdits() =>
+      RustLib.instance.api.crateApiEditorEditorSessionCreateEdits(that: this);
 
   BigInt identity() =>
       RustLib.instance.api.crateApiEditorEditorSessionIdentity(that: this);

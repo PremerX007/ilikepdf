@@ -118,6 +118,24 @@ impl PageTransform {
         self.scale_y
     }
 
+    /// Pure inverse vector for pointer deltas, including captured pointers outside
+    /// the page. Object boundary policy is owned by the editor interaction model.
+    pub fn viewport_vector_to_pdf(
+        self,
+        vector: ViewportPoint,
+    ) -> Result<PdfPoint, PageGeometryError> {
+        finite_point(vector.x, vector.y)?;
+        let (a, b) = (vector.x / self.scale_x, vector.y / self.scale_y);
+        let (x, y) = match self.geometry.rotation() {
+            PageRotation::None => (a, -b),
+            PageRotation::Clockwise90 => (b, a),
+            PageRotation::HalfTurn => (-a, b),
+            PageRotation::Clockwise270 => (-b, -a),
+        };
+        finite_point(x, y)?;
+        Ok(PdfPoint { x, y })
+    }
+
     /// Closed page boundaries are accepted. Points outside the visible box fail;
     /// no tool-specific clipping or off-page placement policy is applied.
     pub fn pdf_to_viewport(self, point: PdfPoint) -> Result<ViewportPoint, PageGeometryError> {

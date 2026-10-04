@@ -10,10 +10,13 @@ mod secret;
 
 pub use application::app_info::{ApplicationInfo, get_application_info};
 pub use application::editor::{
-    EditorDocumentLayout, EditorHit, EditorPageLayout, EditorPageMetadata, EditorPageRaster,
-    EditorRenderSize, EditorSession, EditorSessionId, EditorSessionState, EditorZoom,
-    EditorZoomMode, PageBox, PageGeometry, PageGeometryError, PageRotation, PageTransform,
-    PdfPoint, ViewportPoint, ViewportRect, open_editor_session, render_editor_page,
+    EDITOR_HISTORY_LIMIT, EDITOR_OBJECT_LIMIT, EditorCommand, EditorDocumentLayout,
+    EditorEditError, EditorEditState, EditorGesture, EditorGestureKind, EditorHit, EditorObject,
+    EditorObjectId, EditorObjectKind, EditorPageLayout, EditorPageMetadata, EditorPageRaster,
+    EditorRectangle, EditorRenderSize, EditorResizeHandle, EditorSession, EditorSessionId,
+    EditorSessionState, EditorZoom, EditorZoomMode, MIN_OBJECT_SIZE_POINTS, PageBox, PageGeometry,
+    PageGeometryError, PageRotation, PageTransform, PdfPoint, ViewportPoint, ViewportRect,
+    open_editor_session, render_editor_page,
 };
 pub use application::image_to_pdf::{
     CreateImagePdfRequest, ImagePdfFailure, ImagePdfMargin, ImagePdfOrientation, ImagePdfPageSize,

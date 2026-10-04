@@ -2,6 +2,7 @@ use super::error::{ApplicationError, ApplicationErrorCode};
 use flutter_rust_bridge::frb;
 use ilikepdf_core as core;
 use std::path::Path;
+use std::sync::{Mutex, MutexGuard};
 
 #[frb(opaque)]
 pub struct EditorSession {
@@ -89,6 +90,12 @@ pub fn open_editor_session(source_path: String) -> Result<EditorSession, Applica
 }
 
 impl EditorSession {
+    #[frb(sync)]
+    pub fn create_edits(&self) -> EditorEdits {
+        EditorEdits {
+            inner: Mutex::new(core::EditorEditState::new(&self.inner)),
+        }
+    }
     #[frb(sync)]
     pub fn identity(&self) -> u64 {
         self.inner.id().value()
@@ -276,5 +283,229 @@ fn geometry_error(_: core::PageGeometryError) -> ApplicationError {
     ApplicationError {
         code: ApplicationErrorCode::InvalidRequest,
         message: "The editor viewport geometry is invalid".into(),
+    }
+}
+
+#[frb(opaque)]
+pub struct EditorEdits {
+    inner: Mutex<core::EditorEditState>,
+}
+#[frb(opaque)]
+pub struct EditorObjectGesture {
+    inner: core::EditorGesture,
+}
+
+#[derive(Clone, Copy)]
+pub enum EditorObjectKind {
+    PrototypeRectangle,
+}
+#[derive(Clone)]
+pub struct EditorObject {
+    pub id: u64,
+    pub page_index: u32,
+    pub kind: EditorObjectKind,
+    pub rectangle: EditorPageBox,
+}
+pub struct EditorEditSnapshot {
+    pub session_id: u64,
+    pub objects: Vec<EditorObject>,
+    pub selected: Option<u64>,
+    pub undo_count: u32,
+    pub redo_count: u32,
+}
+pub struct EditorObjectDisplay {
+    pub id: u64,
+    /// Document-surface logical rectangle, projected by the authoritative transform.
+    pub rect: EditorRect,
+    pub selected: bool,
+    /// Eight display handle centers in clockwise order from top-left.
+    pub handles: Vec<EditorPoint>,
+}
+
+impl EditorEdits {
+    fn lock(&self) -> Result<MutexGuard<'_, core::EditorEditState>, ApplicationError> {
+        self.inner
+            .lock()
+            .map_err(|_| edit_error(core::EditorEditError::StaleGesture))
+    }
+    #[frb(sync)]
+    pub fn snapshot(&self) -> Result<EditorEditSnapshot, ApplicationError> {
+        let state = self.lock()?;
+        Ok(EditorEditSnapshot {
+            session_id: state.session_id().value(),
+            objects: state
+                .objects()
+                .iter()
+                .map(|o| EditorObject {
+                    id: o.id().value(),
+                    page_index: o.page_index(),
+                    kind: EditorObjectKind::PrototypeRectangle,
+                    rectangle: map_box(o.rectangle().bounds()),
+                })
+                .collect(),
+            selected: state.selected().map(|id| id.value()),
+            undo_count: state.undo_count() as u32,
+            redo_count: state.redo_count() as u32,
+        })
+    }
+    #[frb(sync)]
+    pub fn add_prototype(&self, page_index: u32) -> Result<(), ApplicationError> {
+        self.lock()?
+            .add_prototype(page_index)
+            .map(|_| ())
+            .map_err(edit_error)
+    }
+    #[frb(sync)]
+    pub fn clear_selection(&self) -> Result<(), ApplicationError> {
+        self.lock()?.clear_selection();
+        Ok(())
+    }
+    #[frb(sync)]
+    pub fn delete_selected(&self) -> Result<bool, ApplicationError> {
+        Ok(self.lock()?.delete_selected())
+    }
+    #[frb(sync)]
+    pub fn undo(&self) -> Result<bool, ApplicationError> {
+        Ok(self.lock()?.undo())
+    }
+    #[frb(sync)]
+    pub fn redo(&self) -> Result<bool, ApplicationError> {
+        Ok(self.lock()?.redo())
+    }
+    #[frb(sync)]
+    pub fn project_page(
+        &self,
+        layout: &EditorLayoutBinding,
+        page_index: u32,
+    ) -> Result<Vec<EditorObjectDisplay>, ApplicationError> {
+        let state = self.lock()?;
+        validate_edit_layout(&state, layout)?;
+        let page = layout
+            .inner
+            .pages()
+            .get(page_index as usize)
+            .ok_or_else(|| edit_error(core::EditorEditError::InvalidPage))?;
+        state
+            .objects()
+            .iter()
+            .filter(|o| o.page_index() == page_index)
+            .map(|o| {
+                let rect = o
+                    .rectangle()
+                    .display_rect(page.transform)
+                    .map_err(edit_error)?;
+                let selected = Some(o.id()) == state.selected();
+                Ok(display_object(o.id().value(), rect, selected))
+            })
+            .collect()
+    }
+    #[frb(sync)]
+    pub fn begin_gesture(
+        &self,
+        layout: &EditorLayoutBinding,
+        point: EditorPoint,
+    ) -> Result<Option<EditorObjectGesture>, ApplicationError> {
+        let mut state = self.lock()?;
+        validate_edit_layout(&state, layout)?;
+        let point = viewport_point(point);
+        // Selection decoration can straddle the page edge, so test its handles first.
+        let selected_page = state
+            .objects()
+            .iter()
+            .find(|o| Some(o.id()) == state.selected())
+            .map(|o| o.page_index());
+        let page_index = if let Some(index) = selected_page {
+            if state
+                .hit_handle(index, layout.inner.pages()[index as usize].transform, point)
+                .map_err(edit_error)?
+                .is_some()
+            {
+                Some(index)
+            } else {
+                layout
+                    .inner
+                    .hit_test(point, core::ViewportPoint { x: 0.0, y: 0.0 })
+                    .map(|hit| hit.page_index)
+            }
+        } else {
+            layout
+                .inner
+                .hit_test(point, core::ViewportPoint { x: 0.0, y: 0.0 })
+                .map(|hit| hit.page_index)
+        };
+        let Some(index) = page_index else {
+            state.clear_selection();
+            return Ok(None);
+        };
+        state
+            .begin_gesture(index, layout.inner.pages()[index as usize].transform, point)
+            .map(|gesture| gesture.map(|inner| EditorObjectGesture { inner }))
+            .map_err(edit_error)
+    }
+    #[frb(sync)]
+    pub fn finish_gesture(
+        &self,
+        gesture: &EditorObjectGesture,
+        point: EditorPoint,
+    ) -> Result<bool, ApplicationError> {
+        self.lock()?
+            .finish_gesture(&gesture.inner, viewport_point(point))
+            .map_err(edit_error)
+    }
+}
+impl EditorObjectGesture {
+    #[frb(sync)]
+    pub fn page_index(&self) -> u32 {
+        self.inner.page_index()
+    }
+    #[frb(sync)]
+    pub fn preview(&self, point: EditorPoint) -> Result<EditorObjectDisplay, ApplicationError> {
+        self.inner
+            .preview_display(viewport_point(point))
+            .map(|rect| display_object(self.inner.object_id().value(), rect, true))
+            .map_err(edit_error)
+    }
+}
+fn validate_edit_layout(
+    state: &core::EditorEditState,
+    layout: &EditorLayoutBinding,
+) -> Result<(), ApplicationError> {
+    if state.session_id().value() != layout.session_id {
+        Err(edit_error(core::EditorEditError::StaleGesture))
+    } else {
+        Ok(())
+    }
+}
+fn display_object(id: u64, rect: core::ViewportRect, selected: bool) -> EditorObjectDisplay {
+    EditorObjectDisplay {
+        id,
+        rect: EditorRect {
+            left: rect.left(),
+            top: rect.top(),
+            width: rect.width(),
+            height: rect.height(),
+        },
+        selected,
+        handles: if selected {
+            core::EditorResizeHandle::ALL
+                .into_iter()
+                .map(|h| map_point(h.point(rect)))
+                .collect()
+        } else {
+            vec![]
+        },
+    }
+}
+fn edit_error(error: core::EditorEditError) -> ApplicationError {
+    ApplicationError {
+        code: ApplicationErrorCode::InvalidRequest,
+        message: match error {
+            core::EditorEditError::CapacityReached => {
+                "The internal editor object limit has been reached"
+            }
+            core::EditorEditError::StaleGesture => "The editor interaction is no longer current",
+            _ => "The editor object geometry or interaction is invalid",
+        }
+        .into(),
     }
 }

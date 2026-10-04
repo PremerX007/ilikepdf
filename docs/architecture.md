@@ -52,6 +52,7 @@ reorganized without creating a second API or changing bridge consumers.
 | Destination validation, collision policy, and atomic publication | `ilikepdf_core/src/application/output/` |
 | PDFium page rendering and document inspection | `ilikepdf_pdf/src/pdfium_engine.rs` |
 | Read-only editor sessions, page geometry, and coordinate conversion | `ilikepdf_core/src/application/editor/` |
+| In-memory editor objects, gesture policy and bounded command history | `ilikepdf_core/src/application/editor/objects.rs`, `interaction.rs` |
 | Native page-box and rotation inspection | `ilikepdf_pdf/src/pdfium_engine/page_geometry.rs` |
 | PNG/JPG encoding policy | `ilikepdf_pdf/src/pdfium_engine/image_encoding.rs` |
 | Image decoding, layout, and PDFium image placement | `ilikepdf_pdf/src/image_pdf/` |
@@ -139,13 +140,14 @@ PDFium `151.0.7881.0`. Exact artifact/DLL hashes, source URLs, build flags, and
 licenses are recorded in `third_party/pdfium/README.md` and its adjacent notice
 files. Upgrade the binding feature and runtime as one reviewed change.
 
-## PDF editor foundation and read-only viewport (Phases 2A.1–2A.2)
+## PDF editor foundation and in-memory objects (Phases 2A.1–2A.3)
 
-The editor foundation now has a read-only multi-page viewport. The production
+The editor foundation has a multi-page viewport with in-memory object overlays. The production
 home still has no Edit PDF tool. The internal entry point is enabled with
 `flutter run -d windows --dart-define=ILIKEPDF_EDITOR_VIEWPORT=true`; the header's
-`Viewport preview` opens it. There are no editing, undo/redo, or save/export
-operations. Existing preview, conversion, and structural tools retain their
+`Viewport preview` opens it. The internal editor now supports prototype rectangle
+objects with selection, move, resize, delete, undo and redo. There are no real PDF
+content tools or save/export operations. Existing preview, conversion, and structural tools retain their
 contracts and behavior. The boundary is:
 
 ```text
@@ -339,7 +341,7 @@ The characterized PDFium geometry/rendering convention and Phase 2A.1 transform
 tests remain intact. Session metadata is a snapshot, not a file lock: external
 source changes require reopening. Native rendering still reopens a source for
 each request and uses the existing PDFium synchronization; worker-process
-isolation, progressive/tiled rendering, password entry, and editing are future
+isolation, progressive/tiled rendering, password entry, and PDF content editing are future
 work outside this phase.
 
 ### Verification and limits
@@ -362,12 +364,120 @@ change.
 
 Unusual malformed page trees remain uncharacterized. The current bundled build
 has no XFA support. This milestone establishes read-only sessions, geometry, and
-a multi-page viewport; editing remains future work. New viewport tests cover
+a multi-page viewport; writing PDF edits remains future work. New viewport tests cover
 mixed layout, fit width, zoom anchoring, scrolled coordinate round trips, closed
 corners/edges and gap misses, native marker alignment, bounded raster dimensions,
 stale render/decode rejection, replacement/close, per-page retry, and cache
 limits. The 64-page mixed fixture exercises incremental Windows scrolling and
 zoom; a pure 1000-page layout test verifies visibility queries stay local.
+
+### In-memory object model and interaction (Phase 2A.3)
+
+```text
+EditorSession (immutable source metadata)
+├─ PageGeometry / PageTransform
+└─ EditorEditState (one new state per opened session)
+   ├─ EditorObjects
+   └─ EditHistory
+
+EditorViewport
+└─ Page Stack (exact EditorPageLayout rectangle)
+   ├─ PDF raster
+   └─ Object overlay
+      ├─ prototype rectangles
+      └─ selection border / eight handles
+```
+
+Core's `objects.rs` owns `EditorObject`, `EditorObjectId`, `EditorObjectKind`,
+`EditorRectangle`, typed commands and `EditorEditState`. Objects have a private
+stable ID, one validated zero-based source page index, one kind (only
+`PrototypeRectangle`), and a validated rectangle. Rectangles use finite
+`left/bottom/right/top` in unrotated source PDF points, positive finite width and
+height, including finite coordinate differences. Insertion enforces the visible
+page bounds and an explicit minimum of 4 source points per axis, reduced only if
+that entire visible page axis is smaller than 4 points. No zoom, scroll, DPR,
+raster dimensions or native handles live in an object. IDs are monotonic within
+the edit state, never list indices or recycled after undo. Logical identity is
+the pair of session ID and object ID.
+
+`EditorSession` remains the immutable read-only metadata snapshot. The bridge's
+opaque `EditorEdits` owns a mutex-protected core `EditorEditState` initialized
+from that snapshot; it does not retain another source path or native document.
+Layout projection and interaction reject a layout from another session. The
+panel creates a fresh edit state only after opening a new document succeeds.
+Closing drops its state; successful replacement resets objects, selection,
+gesture and both history branches. Failed replacement retains the previous
+valid edit state. No writer, PDFium mutation, qpdf edit or output operation is
+introduced. The source remains byte-identical through edit operations.
+
+Object vector order is deterministic drawing order, filtered per page. Body
+hit testing scans it in reverse, selecting the topmost containing rectangle.
+Selection is single-object and not recorded in history. Empty page/gap/background
+clicks clear it. Selected handle targets are tested before object bodies; nearest
+handle wins when targets overlap. A central body region stays available for
+moving at low zoom. Eight handle centers come from core's projected object
+rectangle; Flutter draws 8-logical-unit squares with 12-unit hit targets in core.
+Selection UI remains independent of PDF zoom and does not alter object geometry.
+
+Core's `interaction.rs` freezes a small `EditorGesture` containing session ID,
+state revision, object ID/page, before-rectangle, pointer origin, existing
+`PageTransform`, and move/resize kind. Flutter's `EditorInteraction` tracks the
+captured pointer and one transient `EditorObjectDisplay` preview. Every pointer
+frame makes a synchronous **pure geometry** bridge call: it converts the delta
+through `PageTransform::viewport_vector_to_pdf`, clamps in core, and projects the
+result through that same transform. It performs no native work, document edit,
+state mutation, whole-document snapshot or history allocation. This small FFI
+call deliberately avoids a second transform or boundary-policy implementation
+in Dart. Pointer-up calls `finish_gesture` once; core rechecks session/revision
+and the object's original geometry, then records at most one command. No-op,
+cancelled, stale and interrupted gestures create no command. Scroll, zoom,
+window relayout, focus loss, Escape and replacement cancel an unfinished
+gesture; pending pointer-up events cannot commit it.
+
+Move clamps the entire rectangle to the resolved visible `PageGeometry` box
+while preserving size and page ownership. Resize resolves the chosen *display*
+handle to canonical edges by inverse-transforming its center, then moves only
+those edges. Opposite edges stay fixed; active edges clamp to page bounds and
+the minimum size before inversion/zero size can occur. All four rotations and
+positive/negative CropBox origins therefore share the same controls. No raster
+pixel bounds participate in these policies.
+
+Typed `EditorCommand` variants are `AddObject`, `MoveObject`, `ResizeObject` and
+`DeleteObject`. Add/delete hold the object plus its original stacking position;
+move/resize hold ID and before/after rectangles. Undo reverses exactly one edit;
+redo replays it with the same identity/page/geometry/stacking. Selection remains
+presentation state: removing a selected object clears it, and undoing deletion
+does not automatically reselect the restored object. A new effective edit clears
+the redo branch; selection/no-op gestures do not. At most **100 commands total**
+are retained across undo/redo branches, and at most **1,000 live objects** exist.
+History drops its oldest command when full. Neither pointer-frame count nor
+raster cache churn grows history.
+
+`EditorObjectOverlay` sits inside each existing page stack, using core's
+`project_page` results and subtracting only the page-stack origin for local
+widget placement. It never computes PDF transformations. Raster replacement,
+DPR and cache keys cannot write to the edit state. Raster jobs, lazy page
+admission, byte/entry limits, center anchors and stale-render guards are unchanged.
+The internal toolbar adds `Add test object` (on the center/first visible page),
+Undo, Redo and Delete. The production home still does not expose Edit PDF.
+Delete, Ctrl+Z, Ctrl+Y and Ctrl+Shift+Z operate only when the workspace's own
+focus node is primary. Descendant/sibling inputs retain their keyboard focus and
+editing keys. Toolbar actions explicitly activate the editor context.
+
+Offline tests cover IDs, per-page insertion, geometry validation, z order,
+restoration, full command sequences, redo branching, history/object caps, 80-frame
+transactions, minimum-size and page-edge clamping, every handle at every rotation,
+CropBox offsets, mixed page dimensions, zoom, scroll and raster-size independence.
+Flutter unit tests cover transient commit/cancel behavior and projected overlay
+placement/constant handle size. Windows integration tests run real core/bridge/
+PDFium workflows for selection, move, resize, delete, keyboard history, raster
+replacement, all rotations, zoom/scroll, session replacement and focus ownership.
+The existing viewport suite continues to verify lazy rendering, bounded cache,
+DPR-aware raster quality, fit width, zoom anchoring and stale results.
+
+This is foundation-only. Cross-page dragging, multi-selection, object rotation,
+snapping, aspect locks, persistence, save/export and Text Box are absent. A source
+changed externally still requires reopening. There is no Phase 2B implementation.
 
 ### Observed `/UserUnit` behavior in the bundled runtime
 

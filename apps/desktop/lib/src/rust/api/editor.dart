@@ -8,8 +8,8 @@ import 'error.dart';
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `geometry_error`, `map_box`, `map_point`, `viewport_point`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`
+// These functions are ignored because they are not marked as `pub`: `display_object`, `edit_error`, `geometry_error`, `lock`, `map_box`, `map_point`, `validate_edit_layout`, `viewport_point`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`
 
 Future<EditorSession> openEditorSession({required String sourcePath}) => RustLib
     .instance
@@ -21,6 +21,36 @@ double stepEditorZoom({required double scale, required bool increase}) =>
       scale: scale,
       increase: increase,
     );
+
+// Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<EditorEdits>>
+abstract class EditorEdits implements RustOpaqueInterface {
+  void addPrototype({required int pageIndex});
+
+  EditorObjectGesture? beginGesture({
+    required EditorLayoutBinding layout,
+    required EditorPoint point,
+  });
+
+  void clearSelection();
+
+  bool deleteSelected();
+
+  bool finishGesture({
+    required EditorObjectGesture gesture,
+    required EditorPoint point,
+  });
+
+  List<EditorObjectDisplay> projectPage({
+    required EditorLayoutBinding layout,
+    required int pageIndex,
+  });
+
+  bool redo();
+
+  EditorEditSnapshot snapshot();
+
+  bool undo();
+}
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<EditorLayoutBinding>>
 abstract class EditorLayoutBinding implements RustOpaqueInterface {
@@ -44,6 +74,13 @@ abstract class EditorLayoutBinding implements RustOpaqueInterface {
   });
 }
 
+// Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<EditorObjectGesture>>
+abstract class EditorObjectGesture implements RustOpaqueInterface {
+  int pageIndex();
+
+  EditorObjectDisplay preview({required EditorPoint point});
+}
+
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<EditorPageTransform>>
 abstract class EditorPageTransform implements RustOpaqueInterface {
   EditorPoint pdfToDocument({required EditorPoint point});
@@ -51,6 +88,8 @@ abstract class EditorPageTransform implements RustOpaqueInterface {
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<EditorSession>>
 abstract class EditorSession implements RustOpaqueInterface {
+  EditorEdits createEdits();
+
   BigInt identity();
 
   /// Pure geometry; native rendering remains asynchronous on the worker pool.
@@ -103,6 +142,41 @@ class EditorDocumentLayout {
           scale == other.scale;
 }
 
+class EditorEditSnapshot {
+  final BigInt sessionId;
+  final List<EditorObject> objects;
+  final BigInt? selected;
+  final int undoCount;
+  final int redoCount;
+
+  const EditorEditSnapshot({
+    required this.sessionId,
+    required this.objects,
+    this.selected,
+    required this.undoCount,
+    required this.redoCount,
+  });
+
+  @override
+  int get hashCode =>
+      sessionId.hashCode ^
+      objects.hashCode ^
+      selected.hashCode ^
+      undoCount.hashCode ^
+      redoCount.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is EditorEditSnapshot &&
+          runtimeType == other.runtimeType &&
+          sessionId == other.sessionId &&
+          objects == other.objects &&
+          selected == other.selected &&
+          undoCount == other.undoCount &&
+          redoCount == other.redoCount;
+}
+
 class EditorHit {
   final int pageIndex;
   final EditorPoint pdfPoint;
@@ -127,6 +201,68 @@ class EditorHit {
           pdfPoint == other.pdfPoint &&
           pageLocalPoint == other.pageLocalPoint;
 }
+
+class EditorObject {
+  final BigInt id;
+  final int pageIndex;
+  final EditorObjectKind kind;
+  final EditorPageBox rectangle;
+
+  const EditorObject({
+    required this.id,
+    required this.pageIndex,
+    required this.kind,
+    required this.rectangle,
+  });
+
+  @override
+  int get hashCode =>
+      id.hashCode ^ pageIndex.hashCode ^ kind.hashCode ^ rectangle.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is EditorObject &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          pageIndex == other.pageIndex &&
+          kind == other.kind &&
+          rectangle == other.rectangle;
+}
+
+class EditorObjectDisplay {
+  final BigInt id;
+
+  /// Document-surface logical rectangle, projected by the authoritative transform.
+  final EditorRect rect;
+  final bool selected;
+
+  /// Eight display handle centers in clockwise order from top-left.
+  final List<EditorPoint> handles;
+
+  const EditorObjectDisplay({
+    required this.id,
+    required this.rect,
+    required this.selected,
+    required this.handles,
+  });
+
+  @override
+  int get hashCode =>
+      id.hashCode ^ rect.hashCode ^ selected.hashCode ^ handles.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is EditorObjectDisplay &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          rect == other.rect &&
+          selected == other.selected &&
+          handles == other.handles;
+}
+
+enum EditorObjectKind { prototypeRectangle }
 
 class EditorPageBox {
   final double left;

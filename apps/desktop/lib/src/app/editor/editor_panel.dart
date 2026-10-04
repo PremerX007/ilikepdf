@@ -16,6 +16,7 @@ class EditorPanel extends StatefulWidget {
 class _EditorPanelState extends State<EditorPanel> {
   final _cache = EditorRenderCache();
   EditorSession? _session;
+  EditorEdits? _edits;
   String? _name;
   String? _error;
   bool _opening = false;
@@ -34,9 +35,11 @@ class _EditorPanelState extends State<EditorPanel> {
       });
       final session = await widget.workflow.open(source);
       if (!mounted || generation != _openGeneration) return;
+      final edits = session.createEdits();
       _cache.bind(session);
       setState(() {
         _session = session;
+        _edits = edits;
         _name = source.name;
       });
     } on ApplicationError catch (problem) {
@@ -59,6 +62,7 @@ class _EditorPanelState extends State<EditorPanel> {
     _cache.bind(null);
     setState(() {
       _session = null;
+      _edits = null;
       _name = null;
       _error = null;
       _opening = false;
@@ -84,7 +88,7 @@ class _EditorPanelState extends State<EditorPanel> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Editor viewport · Internal preview',
+                    'Editor foundation · Internal preview',
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   Text(
@@ -122,8 +126,12 @@ class _EditorPanelState extends State<EditorPanel> {
         ),
       Expanded(
         child: _session == null
-            ? const Center(child: Text('Read-only multi-page preview.'))
-            : EditorViewport(session: _session!, cache: _cache),
+            ? const Center(
+                child: Text(
+                  'In-memory object prototype. Source PDF remains unchanged.',
+                ),
+              )
+            : EditorViewport(session: _session!, cache: _cache, edits: _edits),
       ),
     ],
   );
